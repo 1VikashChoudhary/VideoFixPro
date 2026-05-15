@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>VideoFixPro</AssemblyName>
+    <RootNamespace>VideoFixPro</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Platforms>AnyCPU</Platforms>
+    <ApplicationIcon>Assets\app_icon.ico</ApplicationIcon>
+    <StartupObject>VideoFixPro.App</StartupObject>
+  </PropertyGroup>
+
+  <!--
+    NOTE: Place ffmpeg.exe and ffprobe.exe inside the  VideoFixPro\ffmpeg\  folder.
+    They will be copied to the output directory on build.
+  -->
+  <ItemGroup>
+    <None Update="ffmpeg\ffmpeg.exe" Condition="Exists('ffmpeg\ffmpeg.exe')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ffmpeg\ffprobe.exe" Condition="Exists('ffmpeg\ffprobe.exe')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Resource Include="Assets\app_icon.png" />
+    <Resource Include="Assets\app_icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+  </ItemGroup>
+</Project>

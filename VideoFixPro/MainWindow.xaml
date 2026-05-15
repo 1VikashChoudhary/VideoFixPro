@@ -1,0 +1,709 @@
+<Window x:Class="VideoFixPro.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:local="clr-namespace:VideoFixPro"
+        xmlns:models="clr-namespace:VideoFixPro.Models"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Video Fix Pro"
+        Width="1178" Height="881"
+        MinWidth="820" MinHeight="560"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="False"
+        Background="{StaticResource BgBrush}"
+        AllowDrop="True"
+        Icon="Assets/app_icon.png">
+
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="TaskbarProgress"/>
+    </Window.TaskbarItemInfo>
+
+    <!-- ══════════════════════ WINDOW CHROME ══════════════════════ -->
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            ResizeBorderThickness="6"
+                            GlassFrameThickness="0,0,0,1"
+                            CornerRadius="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- Status colour converter -->
+        <local:StatusColorConverter x:Key="StatusColorConverter"/>
+        <local:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter"/>
+        <local:StatusMatchConverter x:Key="StatusMatchConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <ObjectDataProvider x:Key="RepairModeProvider" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:RepairMode"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <!-- Always on Top toggle style -->
+        <Style x:Key="TitleBarToggleButton" TargetType="ToggleButton">
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="Foreground"   Value="{StaticResource Text2Brush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width"        Value="46"/>
+            <Setter Property="Height"       Value="32"/>
+            <Setter Property="FontSize"     Value="12"/>
+            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1F3152"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Content" Value="📍"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#21262D"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#2D333B"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- ══════════════════════ ROOT LAYOUT ══════════════════════ -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <!-- 0: Title bar -->
+            <RowDefinition Height="1"/>
+            <!-- 1: Separator line -->
+            <RowDefinition Height="*"/>
+            <!-- 2: Main content -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3: Log panel -->
+            <RowDefinition Height="30"/>
+            <!-- 4: Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════ TITLE BAR ══════════════════════ -->
+        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}"
+              MouseLeftButtonDown="TitleBar_MouseDown">
+            <!-- App identity -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
+                <Image Source="Assets/app_icon.png" Width="25" Height="25" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock Text="Video Fix Pro" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}"
+                           FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                <Border Background="#21262D" CornerRadius="3" Padding="5,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="v1.0" FontSize="10" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Window controls -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ToggleButton x:Name="TopmostBtn" Content="📌" Style="{StaticResource TitleBarToggleButton}"
+                              shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                              Click="TopmostBtn_Click" ToolTip="Always on Top"/>
+                <Button x:Name="MinBtn" Content="─" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="MinBtn_Click" ToolTip="Minimize"/>
+                <Button x:Name="MaxBtn" Content="□" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="MaxBtn_Click" ToolTip="Maximize/Restore"/>
+                <Button Content="✕" Style="{StaticResource TitleBarCloseButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="CloseBtn_Click" ToolTip="Close"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Separator -->
+        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+
+        <!-- ══════════════════════ MAIN CONTENT ══════════════════════ -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="320"/>
+                <ColumnDefinition Width="1"/>
+                <ColumnDefinition Width="2*" MinWidth="260"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ─────── LEFT PANEL ─────── -->
+            <Grid Grid.Column="0" Margin="14,12,10,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Drop zone -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Video info -->
+                    <RowDefinition Height="*"/>
+                    <!-- Queue -->
+                </Grid.RowDefinitions>
+
+                <!-- ── DROP ZONE ── -->
+                <Border x:Name="DropZoneBorder"
+                        Grid.Row="0"
+                        Height="120"
+                        BorderBrush="{StaticResource MutedBrush}"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        Background="{StaticResource SurfaceBrush}"
+                        AllowDrop="True"
+                        DragEnter="DropZone_DragEnter"
+                        DragOver="DropZone_DragOver"
+                        DragLeave="DropZone_DragLeave"
+                        Drop="DropZone_Drop"
+                        Cursor="Hand"
+                        MouseLeftButtonDown="DropZone_Click">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1C2128"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="DropIcon" Text="📂"
+                                   FontSize="28" HorizontalAlignment="Center"
+                                   Margin="0,0,0,6"/>
+                        <TextBlock x:Name="DropMainText"
+                                   Text="Drop video files here"
+                                   Foreground="{StaticResource Text2Brush}"
+                                   FontFamily="Segoe UI" FontSize="13"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="or click to browse  •  MP4, MKV, AVI, MOV, WMV, FLV"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontFamily="Segoe UI" FontSize="11"
+                                   HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── VIDEO INFO CARD ── -->
+                <Border x:Name="VideoInfoCard"
+                        Grid.Row="1"
+                        Margin="0,8,0,0"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Visibility="Collapsed"
+                        Padding="12,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="🎬 " FontSize="12"/>
+                            <TextBlock x:Name="InfoFileName" Text="video.mp4"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <!-- Row 1 -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,2">
+                            <TextBlock Text="DURATION" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoDuration" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,2">
+                            <TextBlock Text="SIZE" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoSize" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+
+                        <!-- Row 2 -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,5,0,2">
+                            <TextBlock Text="VIDEO CODEC" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoVideoCodec" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,5,0,2">
+                            <TextBlock Text="AUDIO CODEC" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoAudioCodec" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+
+                        <!-- Row 3 -->
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,5,0,0">
+                            <TextBlock Text="RESOLUTION" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoResolution" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,5,0,0">
+                            <TextBlock Text="BITRATE / FPS" Foreground="{StaticResource MutedBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="InfoBitrateAndFps" Text="—" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="12"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ── QUEUE SECTION ── -->
+                <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Queue header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Queue" Foreground="{StaticResource Text2Brush}"
+                                       FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                            <Border x:Name="QueueCountBadge"
+                                    Background="{StaticResource CardBrush}"
+                                    CornerRadius="8" Padding="6,1" Margin="7,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock x:Name="QueueCountText" Text="0"
+                                           Foreground="{StaticResource Text2Brush}"
+                                           FontFamily="Segoe UI" FontSize="11"/>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="+ Folder" Style="{StaticResource GhostButton}"
+                                    Padding="8,4" FontSize="11" Margin="0,0,4,0"
+                                    Click="AddFolder_Click" ToolTip="Import all videos from a folder"/>
+                            <Button Content="Clear Queue" Style="{StaticResource GhostButton}"
+                                    Padding="8,4" FontSize="11"
+                                    Click="ClearQueue_Click" ToolTip="Remove all items from queue"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Queue list -->
+                    <Border Grid.Row="1"
+                            Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="8">
+                        <ListView x:Name="QueueList"
+                                  ItemsSource="{Binding}"
+                                  SelectionMode="Single"
+                                  SelectionChanged="QueueList_SelectionChanged"
+                                  Padding="6,4">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8" Background="#1C2128" CornerRadius="8" Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="30"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Thumbnail -->
+                                            <Grid Grid.Column="0" Margin="0,0,12,0">
+                                                <Border Width="80" Height="45" Background="#0D1117" CornerRadius="4" ClipToBounds="True">
+                                                    <Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                </Border>
+                                                <!-- Status icon overlay -->
+                                                <Border Background="#99000000" Width="20" Height="20" CornerRadius="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-5,-5">
+                                                    <TextBlock Text="{Binding StatusIcon}" Foreground="{Binding StatusColor}" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Info -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding FileName}" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <TextBlock Text="{Binding FileSize}" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                                    <TextBlock Text=" • " Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                                    <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}" FontSize="10" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding ETA, StringFormat=' • ETA: {0}'}" Foreground="{StaticResource Text2Brush}" FontSize="10">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ETA}" Value="">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding ETA}" Value="{x:Null}">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+
+                                                <!-- Progress Bar -->
+                                                <ProgressBar Value="{Binding Progress}" Height="2" Margin="0,6,0,0" Style="{StaticResource LinearProgress}" 
+                                                             Foreground="{Binding StatusColor}" Background="#2D333B" BorderThickness="0"
+                                                             Visibility="{Binding Status, Converter={StaticResource StatusToVisibilityConverter}, ConverterParameter=Running}"/>
+                                            </StackPanel>
+
+                                            <!-- Per-job mode selector -->
+                                            <ComboBox Grid.Column="2" SelectedItem="{Binding PreferredMode}" 
+                                                      ItemsSource="{Binding Source={StaticResource RepairModeProvider}}"
+                                                      Width="100" Height="26" VerticalAlignment="Center" Margin="10,0"
+                                                      FontSize="10">
+                                                <ComboBox.IsEnabled>
+                                                    <MultiBinding Converter="{StaticResource StatusMatchConverter}" ConverterParameter="Waiting">
+                                                        <Binding Path="Status"/>
+                                                    </MultiBinding>
+                                                </ComboBox.IsEnabled>
+                                            </ComboBox>
+
+                                            <!-- Remove button -->
+                                            <Button Grid.Column="3" Style="{StaticResource GhostButton}" Click="RemoveJob_Click" Tag="{Binding}" 
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center" Padding="4" ToolTip="Remove from queue">
+                                                <TextBlock Text="✕" Foreground="#F85149" FontSize="11"/>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Vertical separator -->
+            <Rectangle Grid.Column="1" Fill="{StaticResource BorderBrush}"/>
+
+            <!-- ─────── RIGHT PANEL ─────── -->
+            <Grid Grid.Column="2" Margin="10,12,14,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Repair Mode -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Output Settings -->
+                    <RowDefinition Height="*"/>
+                    <!-- Spacer -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Action Buttons -->
+                </Grid.RowDefinitions>
+
+                <!-- ── REPAIR MODE ── -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="14,12">
+                    <StackPanel>
+                        <TextBlock Text="Repair Mode"
+                                   Foreground="{StaticResource Text2Brush}"
+                                   FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                                   Margin="0,0,0,10"/>
+
+                        <RadioButton x:Name="ModeAuto" Content="Auto  (tries fast → deep)" IsChecked="True"
+                                     ToolTip="Tries Stream Copy first; falls back to Deep Recover on failure"/>
+                        <RadioButton x:Name="ModeStreamCopy" Content="Stream Copy  ·  fastest, lossless"
+                                     ToolTip="Re-mux without re-encoding. Very fast but may not fix all issues."/>
+                        <RadioButton x:Name="ModeReEncode" Content="Re-encode  ·  H.264 + AAC"
+                                     ToolTip="Full re-encode to H.264 video and AAC audio. Fixes most issues."/>
+                        <RadioButton x:Name="ModeDeepRecover" Content="Deep Recover  ·  error-tolerant"
+                                     ToolTip="Enables error detection bypass and full re-encode. Slowest but most powerful."/>
+
+                        <!-- Mode description -->
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="5"
+                                Padding="10,7" Margin="0,10,0,0">
+                            <TextBlock x:Name="ModeDescription"
+                                       Text="Automatically selects the best strategy. Starts with a fast lossless copy; if that fails, escalates to a deep error-tolerant re-encode."
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontFamily="Segoe UI" FontSize="11"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── OUTPUT SETTINGS ── -->
+                <Border Grid.Row="1"
+                        Margin="0,10,0,0"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="14,12">
+                    <StackPanel>
+                        <TextBlock Text="Output Settings"
+                                   Foreground="{StaticResource Text2Brush}"
+                                   FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                                   Margin="0,0,0,10"/>
+
+                        <!-- Format row -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Format" Foreground="{StaticResource Text2Brush}"
+                                       FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="FormatBox" Grid.Column="1"
+                                      SelectedIndex="0">
+                                <ComboBoxItem Content="MP4"/>
+                                <ComboBoxItem Content="MKV"/>
+                                <ComboBoxItem Content="AVI"/>
+                                <ComboBoxItem Content="MOV"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Output path row -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Folder" Foreground="{StaticResource Text2Brush}"
+                                       FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1"
+                                    Background="{StaticResource CardBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="5"
+                                    Padding="8,5" Height="32">
+                                <TextBlock x:Name="OutputFolderText"
+                                           Text="Same as source file"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontFamily="Segoe UI" FontSize="12"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <Button Grid.Column="2" Content="Browse"
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="6,0,0,0" Height="32"
+                                    Click="BrowseOutput_Click"
+                                    ToolTip="Choose output folder"/>
+                        </Grid>
+
+                        <!-- Reset output path -->
+                        <Button Content="↩ Reset to source folder"
+                                Style="{StaticResource GhostButton}"
+                                HorizontalAlignment="Left"
+                                Padding="0,3" BorderThickness="0"
+                                FontSize="11" Margin="70,6,0,0"
+                                Foreground="{StaticResource MutedBrush}"
+                                Click="ResetOutput_Click"/>
+
+                        <!-- Quality Slider -->
+                        <Grid Margin="0,15,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="35"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Quality" Foreground="{StaticResource Text2Brush}"
+                                       FontFamily="Segoe UI" FontSize="11" VerticalAlignment="Center"/>
+                            <Slider x:Name="QualitySlider" Grid.Column="1"
+                                    Minimum="0" Maximum="100" Value="70"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" Margin="5,0"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding ElementName=QualitySlider, Path=Value, StringFormat={}{0:F0}}"
+                                           Foreground="{StaticResource Text2Brush}"
+                                           FontFamily="Segoe UI" FontSize="11" 
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="%" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="1,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="100% = Best quality, largest file. 70% is recommended."
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontFamily="Segoe UI" FontSize="9" Margin="75,2,0,0"/>
+
+                        <!-- GPU Toggle -->
+                        <CheckBox x:Name="GpuCheck" 
+                                  Content="GPU Hardware Acceleration"
+                                  Foreground="{StaticResource SuccessBrush}"
+                                  FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                                  Margin="70,10,0,0" Cursor="Hand"
+                                  Visibility="Collapsed"
+                                  ToolTip="Uses Nvidia (NVENC) or AMD (AMF) for significantly faster processing"/>
+
+                        <!-- Auto-delete toggle -->
+                        <CheckBox x:Name="AutoDeleteCheck" 
+                                  Content="Delete source file after success"
+                                  Foreground="{StaticResource Text2Brush}"
+                                  FontFamily="Segoe UI" FontSize="11"
+                                  Margin="70,10,0,0" Cursor="Hand"
+                                  ToolTip="Caution: Permanently deletes the original file once repair is confirmed successful"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Spacer -->
+                <Grid Grid.Row="2"/>
+
+                <!-- ── ACTION BUTTONS ── -->
+                <StackPanel Grid.Row="3" Margin="0,10,0,0">
+                    <!-- Primary: Fix All -->
+                    <Button x:Name="FixAllBtn"
+                            Content="▶  Fix All Videos"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="40" FontSize="14"
+                            HorizontalAlignment="Stretch"
+                            Click="FixAll_Click"/>
+
+                    <!-- Trim Tool button -->
+                    <Button Content="✂  Open Trim Tool"
+                            Style="{StaticResource GhostButton}"
+                            Height="34" Margin="0,6,0,0"
+                            HorizontalAlignment="Stretch"
+                            Click="OpenTrimTool_Click"
+                            ToolTip="Open the Video Trim Tool to cut, crop and export segments"/>
+
+                    <!-- Secondary row -->
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="CancelBtn"
+                                Grid.Column="0"
+                                Content="◼  Cancel"
+                                Style="{StaticResource DangerButton}"
+                                IsEnabled="False"
+                                Height="34"
+                                Click="Cancel_Click"
+                                ToolTip="Stop the current repair operation"/>
+                        <Button x:Name="OpenFolderBtn"
+                                Grid.Column="2"
+                                Content="📂  Open Folder"
+                                Style="{StaticResource GhostButton}"
+                                Height="34"
+                                IsEnabled="False"
+                                Click="OpenFolder_Click"
+                                ToolTip="Open the output folder in Explorer"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ══════════════════════ LOG PANEL ══════════════════════ -->
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1"/>
+                <!-- separator -->
+                <RowDefinition Height="Auto"/>
+                <!-- header -->
+                <RowDefinition x:Name="LogRow" Height="160"/>
+            </Grid.RowDefinitions>
+
+            <Rectangle Grid.Row="0" Fill="{StaticResource BorderBrush}"/>
+
+            <!-- Log header bar -->
+            <Grid Grid.Row="1" Background="{StaticResource SurfaceBrush}" Height="30">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
+                    <TextBlock Text="Repair Log"
+                               Foreground="{StaticResource Text2Brush}"
+                               FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Button Content="Copy" Style="{StaticResource GhostButton}"
+                            Padding="8,3" Height="22" FontSize="11"
+                            Margin="0,0,4,0"
+                            Click="CopyLog_Click" ToolTip="Copy log to clipboard"/>
+                    <Button Content="Save" Style="{StaticResource GhostButton}"
+                            Padding="8,3" Height="22" FontSize="11"
+                            Margin="0,0,4,0"
+                            Click="SaveLog_Click" ToolTip="Save log to a file"/>
+                    <Button Content="Clear" Style="{StaticResource GhostButton}"
+                            Padding="8,3" Height="22" FontSize="11"
+                            Margin="0,0,4,0"
+                            Click="ClearLog_Click" ToolTip="Clear the log"/>
+                    <Button x:Name="ToggleLogBtn" Content="▼" Style="{StaticResource GhostButton}"
+                            Padding="8,3" Height="22" FontSize="11"
+                            Click="ToggleLog_Click" ToolTip="Collapse/Expand log"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Log text area -->
+            <TextBox x:Name="LogBox"
+                     Grid.Row="2"
+                     Background="{StaticResource LogBgBrush}"
+                     Foreground="{StaticResource LogTextBrush}"
+                     FontFamily="Consolas, Segoe UI"
+                     FontSize="12"
+                     BorderThickness="0"
+                     IsReadOnly="True"
+                     TextWrapping="NoWrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     Padding="12,8"/>
+        </Grid>
+
+        <!-- ══════════════════════ STATUS BAR ══════════════════════ -->
+        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Status text -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                        VerticalAlignment="Center" Margin="14,0">
+                <Ellipse x:Name="StatusDot" Width="7" Height="7"
+                         Fill="{StaticResource MutedBrush}"
+                         VerticalAlignment="Center" Margin="0,0,7,0"/>
+                <TextBlock x:Name="StatusText"
+                           Text="Ready"
+                           Foreground="{StaticResource Text2Brush}"
+                           FontFamily="Segoe UI" FontSize="11"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Global progress bar -->
+            <ProgressBar x:Name="GlobalProgress"
+                         Grid.Column="1"
+                         Style="{StaticResource StatusProgress}"
+                         Value="0" Minimum="0" Maximum="100"
+                         Margin="0,0,14,0"
+                         Visibility="Hidden"/>
+
+            <!-- Version -->
+            <TextBlock Grid.Column="2"
+                       Text="Video Fix Pro v1.0  •  ffmpeg"
+                       Foreground="{StaticResource MutedBrush}"
+                       FontFamily="Segoe UI" FontSize="10"
+                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+        </Grid>
+        <!-- ══════════════════════ MODAL OVERLAYS ══════════════════════ -->
+        <Grid x:Name="DownloadModal" Grid.RowSpan="5" Visibility="Collapsed" Panel.ZIndex="1000">
+            <Rectangle Fill="#B2000000"/>
+            <Border Width="420" Height="250" Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="16" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" Opacity="0.6" ShadowDepth="0" Color="Black"/>
+                </Border.Effect>
+                <Grid Margin="32">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+                        <Image Source="Assets/app_icon.png" Width="36" Height="36" Margin="0,0,16,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <TextBlock Text="FFmpeg Required" FontSize="20" FontWeight="Bold"
+                                   Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1" TextWrapping="Wrap" Foreground="{StaticResource Text2Brush}"
+                               FontSize="14" LineHeight="20">
+                        Video Fix Pro requires FFmpeg binaries to process and repair your videos. Would you like to automatically download and install them now?
+                    </TextBlock>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                        <Button x:Name="CancelDownloadBtn" Content="Not Now" Style="{StaticResource GhostButton}"
+                                Padding="20,8" Margin="0,0,12,0" Click="CancelDownload_Click"/>
+                        <Button x:Name="StartDownloadBtn" Content="Download &amp; Install" Style="{StaticResource PrimaryButton}"
+                                Padding="28,8" Click="StartDownload_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
