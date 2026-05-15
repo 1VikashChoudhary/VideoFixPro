@@ -198,7 +198,7 @@ If you contribute:
 
 This project is licensed under the `MIT` License.
 
-See [LICENSE.txt](/C:/Users/vikas/Downloads/VideoFixPro_v5/VideoFixPro_v3/LICENSE.txt) for details.
+See [LICENSE.txt](LICENSE.txt) for details.
 
 ## Author
 
