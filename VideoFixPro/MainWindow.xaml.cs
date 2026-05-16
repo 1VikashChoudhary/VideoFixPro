@@ -661,21 +661,10 @@ public partial class MainWindow : Window
 
     private void ShowCompletionNotification(int done, int failed)
     {
-        try
-        {
-            var ni = new WinForms.NotifyIcon
-            {
-                Icon = System.Drawing.Icon.ExtractAssociatedIcon(Process.GetCurrentProcess().MainModule?.FileName ?? ""),
-                Visible = true,
-                BalloonTipTitle = "Video Fix Pro - Done",
-                BalloonTipText = $"Processed {done + failed} files.\n{done} Success, {failed} Failed.",
-                BalloonTipIcon = failed == 0 ? WinForms.ToolTipIcon.Info : WinForms.ToolTipIcon.Warning
-            };
-            ni.ShowBalloonTip(3000);
-            // Clean up after tip shows
-            Task.Delay(5000).ContinueWith(_ => { ni.Dispose(); });
-        }
-        catch { }
+        DesktopNotification.Show(
+            "Video Fix Pro - Done",
+            $"Processed {done + failed} files.\n{done} Success, {failed} Failed.",
+            failed != 0);
     }
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1062,6 +1051,19 @@ public partial class MainWindow : Window
         var trim = new TrimWindow(preloadPath, _hasNvidia, _hasAmd, (int)QualitySlider.Value);
         trim.Owner = this;
         trim.Show();
+    }
+
+    private void OpenAudioMuxer_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var muxer = new AudioMuxerWindow(preloadPath)
+        {
+            Owner = this
+        };
+        muxer.Show();
     }
 
         /// <summary>
