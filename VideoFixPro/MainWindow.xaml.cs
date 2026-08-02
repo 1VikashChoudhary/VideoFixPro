@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -1064,6 +1064,15 @@ public partial class MainWindow : Window
             Owner = this
         };
         muxer.Show();
+    }
+
+    private void OpenAudioExtractor_Click(object sender, RoutedEventArgs e)
+    {
+        var extractor = new AudioExtractorWindow
+        {
+            Owner = this
+        };
+        extractor.Show();
     }
 
         /// <summary>
