@@ -1,4 +1,7 @@
 # VideoFixPro
+<img width="1178" height="881" alt="Screenshot 2026-08-03 102958" src="https://github.com/user-attachments/assets/45fb1a35-1e3e-4313-8206-a24f47c25b73" />
+<img width="1134" height="775" alt="Screenshot 2026-08-03 103005" src="https://github.com/user-attachments/assets/71023bdd-ba53-4beb-9253-837cfc594b29" />
+<img width="1366" height="893" alt="Screenshot 2026-08-03 103010" src="https://github.com/user-attachments/assets/dd1a9011-0bed-48d7-85e1-926338ab95b2" />
 <img width="1186" height="793" alt="Screenshot 2026-08-03 103015" src="https://github.com/user-attachments/assets/dc6f9fee-197e-448c-9b32-b68760afff09" />
 
 VideoFixPro is a Windows desktop app for repairing, trimming, and batch-processing video files with a clean WPF interface powered by `ffmpeg` and `ffprobe`.
