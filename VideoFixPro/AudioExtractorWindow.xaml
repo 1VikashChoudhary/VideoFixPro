@@ -96,13 +96,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Output Format" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="FormatBox" Grid.Column="1" Width="200" HorizontalAlignment="Left">
-                                <ComboBoxItem Content="Original Copy (Fastest)" IsSelected="True" ToolTip="Copy original stream without re-encoding"/>
-                                <ComboBoxItem Content="MP3" ToolTip="High compatibility"/>
-                                <ComboBoxItem Content="AAC" ToolTip="Good quality/size ratio"/>
-                                <ComboBoxItem Content="FLAC" ToolTip="Lossless quality"/>
-                                <ComboBoxItem Content="WAV" ToolTip="Uncompressed waveform"/>
-                                <ComboBoxItem Content="M4A" ToolTip="Apple lossless / AAC"/>
+                            <ComboBox x:Name="FormatBox" Grid.Column="1" Width="200" HorizontalAlignment="Left" SelectedIndex="0">
                             </ComboBox>
                         </Grid>
 

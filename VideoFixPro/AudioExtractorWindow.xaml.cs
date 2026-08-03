@@ -43,6 +43,16 @@ public partial class AudioExtractorWindow : Window
         Loaded += (_, _) => UiTextSanitizer.Apply(this);
         JobGrid.DataContext = _queue;
         JobGrid.ItemsSource = _queue;
+
+        FormatBox.ItemsSource = new[] {
+            "Original Copy (Fastest)",
+            "MP3",
+            "AAC",
+            "FLAC",
+            "WAV",
+            "M4A"
+        };
+        FormatBox.SelectedIndex = 0;
     }
 
     private void Window_DragEnter(object sender, DragEventArgs e)
@@ -211,7 +221,8 @@ public partial class AudioExtractorWindow : Window
         _isRunning = true;
 
         bool extractAll = ExtractAllRadio.IsChecked == true;
-        string formatStr = (FormatBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Original Copy (Fastest)";
+        string formatStr = FormatBox.SelectedItem?.ToString() ?? FormatBox.Text;
+        if (string.IsNullOrWhiteSpace(formatStr)) formatStr = "Original Copy (Fastest)";
         string targetExt = GetTargetExtension(formatStr);
         string audioCodec = GetAudioCodecArg(formatStr);
 

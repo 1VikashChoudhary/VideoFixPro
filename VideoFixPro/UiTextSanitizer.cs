@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 
@@ -18,11 +19,11 @@ internal static class UiTextSanitizer
         ("ðŸ—‘ Remove", "Remove"),
         ("â†© Reset to source folder", "<- Reset to source folder"),
         ("â†© Full", "Reset Full"),
-        ("â‡§ â† â†’", "Shift+Left/Right"),
-        ("â† â†’", "Left/Right"),
+        ("â‡§ â†  â†’", "Shift+Left/Right"),
+        ("â†  â†’", "Left/Right"),
         ("ðŸŽ¬ ", "VIDEO "),
         ("ðŸ“Œ", "PIN"),
-        ("ðŸ“", "PIN"),
+        ("ðŸ“ ", "PIN"),
         ("ðŸ“‚", "DIR"),
         ("âœ‚", "TRIM"),
         ("âœ•", "X"),
@@ -56,10 +57,16 @@ internal static class UiTextSanitizer
 
     private static void TraverseVisual(DependencyObject root)
     {
+        if (root is ComboBox or ComboBoxItem or DataGrid or ListView)
+            return;
+
         var count = VisualTreeHelper.GetChildrenCount(root);
         for (var i = 0; i < count; i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
+            if (child is ComboBox or ComboBoxItem or DataGrid or ListView)
+                continue;
+
             SanitizeNode(child);
             TraverseVisual(child);
         }
@@ -70,19 +77,28 @@ internal static class UiTextSanitizer
         switch (node)
         {
             case TextBlock textBlock:
-                textBlock.Text = Normalize(textBlock.Text);
+                if (!BindingOperations.IsDataBound(textBlock, TextBlock.TextProperty))
+                {
+                    textBlock.Text = Normalize(textBlock.Text);
+                }
                 break;
             case Run run:
                 run.Text = Normalize(run.Text);
                 break;
-            case ContentControl contentControl when contentControl.Content is string text:
-                contentControl.Content = Normalize(text);
+            case ContentControl contentControl when contentControl is not ComboBoxItem:
+                if (contentControl.Content is string text && !BindingOperations.IsDataBound(contentControl, ContentControl.ContentProperty))
+                {
+                    contentControl.Content = Normalize(text);
+                }
                 break;
-            case HeaderedContentControl headeredContentControl when headeredContentControl.Header is string text:
-                headeredContentControl.Header = Normalize(text);
+            case HeaderedContentControl headeredContentControl:
+                if (headeredContentControl.Header is string headerText && !BindingOperations.IsDataBound(headeredContentControl, HeaderedContentControl.HeaderProperty))
+                {
+                    headeredContentControl.Header = Normalize(headerText);
+                }
                 break;
             case TextBox textBox:
-                if (textBox.Text.Contains("â"))
+                if (textBox.Text.Contains("â") && !BindingOperations.IsDataBound(textBox, TextBox.TextProperty))
                 {
                     textBox.Text = Normalize(textBox.Text);
                 }

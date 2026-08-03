@@ -283,6 +283,7 @@
                                                       x:Name="ToggleButton"
                                                       Background="Transparent"
                                                       BorderThickness="0"
+                                                      Focusable="False"
                                                       IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                                       ClickMode="Press">
                                             <ToggleButton.Template>
@@ -304,8 +305,8 @@
                                             CornerRadius="5"
                                             MinWidth="{TemplateBinding ActualWidth}"
                                             Margin="0,2,0,0">
-                                        <ScrollViewer MaxHeight="200">
-                                            <StackPanel IsItemsHost="True"/>
+                                        <ScrollViewer MaxHeight="200" CanContentScroll="True">
+                                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                                         </ScrollViewer>
                                     </Border>
                                 </Popup>
