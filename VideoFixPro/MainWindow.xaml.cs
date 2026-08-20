@@ -1467,15 +1467,19 @@ public partial class MainWindow : Window
 
         try
         {
+            // Step 1: Detect physical GPU hardware via WMI
+            var gpuHardware = await Task.Run(() => DetectPhysicalGpus());
+
+            // Step 2: Test FFmpeg encoder availability
             var encoders = await RunProcessAsync(FFmpeg, "-v quiet -encoders");
             bool nvencCompiled = encoders.Contains("h264_nvenc");
             bool amfCompiled   = encoders.Contains("h264_amf");
             bool qsvCompiled   = encoders.Contains("h264_qsv");
 
             // Perform rapid hardware functionality test
-            var nvTest  = nvencCompiled ? await TestHardwareEncoderAsync("h264_nvenc") : new EncoderTestResult(false, "");
-            var amfTest = amfCompiled   ? await TestHardwareEncoderAsync("h264_amf")   : new EncoderTestResult(false, "");
-            var qsvTest = qsvCompiled   ? await TestHardwareEncoderAsync("h264_qsv")   : new EncoderTestResult(false, "");
+            var nvTest  = nvencCompiled ? await TestHardwareEncoderAsync("h264_nvenc") : new EncoderTestResult(false, "not compiled");
+            var amfTest = amfCompiled   ? await TestHardwareEncoderAsync("h264_amf")   : new EncoderTestResult(false, "not compiled");
+            var qsvTest = qsvCompiled   ? await TestHardwareEncoderAsync("h264_qsv")   : new EncoderTestResult(false, "not compiled");
 
             _hasNvidia = nvTest.Success;
             _hasAmd    = amfTest.Success;
@@ -1487,21 +1491,32 @@ public partial class MainWindow : Window
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    Log("[INFO] GPU Acceleration active: Nvidia NVENC");
+                    Log($"[INFO] GPU Acceleration active: Nvidia NVENC ({gpuHardware.NvidiaName ?? "detected"})");
                 }
                 else if (_hasAmd)
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    Log("[INFO] GPU Acceleration active: AMD AMF");
+                    Log($"[INFO] GPU Acceleration active: AMD AMF ({gpuHardware.AmdName ?? "detected"})");
+
+                    // If NVIDIA hardware exists but NVENC failed, inform the user
+                    if (gpuHardware.HasNvidia && !nvTest.Success)
+                    {
+                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable.");
+                        if (nvTest.Error.Contains("nvcuda"))
+                            Log("[WARN] → Install full NVIDIA GeForce driver from nvidia.com/drivers (CUDA components required for NVENC).");
+                    }
                 }
                 else if (_hasIntel)
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    if (!string.IsNullOrEmpty(nvTest.Error) && (nvTest.Error.Contains("nvcuda") || nvTest.Error.Contains("Nvenc")))
+
+                    if (gpuHardware.HasNvidia && !nvTest.Success)
                     {
-                        Log("[INFO] GPU Acceleration active: Intel QuickSync (Nvidia NVENC requires updated Nvidia drivers/CUDA runtime)");
+                        Log($"[INFO] GPU Acceleration active: Intel QuickSync");
+                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable (nvcuda.dll missing).");
+                        Log("[WARN] → Install full NVIDIA GeForce driver from nvidia.com/drivers (Custom → select CUDA). Current NVIDIA driver lacks CUDA/NVENC runtime.");
                     }
                     else
                     {
@@ -1512,11 +1527,74 @@ public partial class MainWindow : Window
                 {
                     GpuCheck.Visibility = Visibility.Collapsed;
                     GpuCheck.IsChecked  = false;
-                    Log("[INFO] Hardware GPU encoder not available. Using multi-threaded CPU (libx264).");
+
+                    // Check if hardware exists but all encoders failed
+                    if (gpuHardware.HasNvidia)
+                    {
+                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable (nvcuda.dll missing).");
+                        Log("[WARN] → Install full NVIDIA GeForce driver from nvidia.com/drivers (Custom → select CUDA).");
+                    }
+                    if (gpuHardware.HasAmd)
+                    {
+                        Log($"[WARN] AMD GPU ({gpuHardware.AmdName}) detected but AMF encoder test failed.");
+                    }
+                    Log("[INFO] Using multi-threaded CPU (libx264).");
                 }
             });
         }
         catch { }
+    }
+
+    private record GpuHardwareInfo(bool HasNvidia, string? NvidiaName, bool HasAmd, string? AmdName, bool HasIntel, string? IntelName);
+
+    private static GpuHardwareInfo DetectPhysicalGpus()
+    {
+        bool hasNvidia = false, hasAmd = false, hasIntel = false;
+        string? nvidiaName = null, amdName = null, intelName = null;
+
+        try
+        {
+            // Use PowerShell to query WMI (no System.Management NuGet dependency needed)
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -Command \"Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            using var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                string output = proc.StandardOutput.ReadToEnd();
+                proc.WaitForExit(3000);
+
+                foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    var upper = line.ToUpperInvariant();
+                    if (upper.Contains("NVIDIA") || upper.Contains("GEFORCE") || upper.Contains("QUADRO") || upper.Contains("RTX") || upper.Contains("GTX"))
+                    {
+                        hasNvidia = true;
+                        nvidiaName = line.Trim();
+                    }
+                    else if (upper.Contains("AMD") || upper.Contains("RADEON"))
+                    {
+                        hasAmd = true;
+                        // Prefer dedicated GPU name (skip integrated if dedicated exists)
+                        if (amdName == null || (!upper.Contains("INTEGRATED") && !upper.Contains("VEGA") && !upper.Contains("(TM) GRAPHICS")))
+                            amdName = line.Trim();
+                    }
+                    else if (upper.Contains("INTEL"))
+                    {
+                        hasIntel = true;
+                        intelName = line.Trim();
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return new GpuHardwareInfo(hasNvidia, nvidiaName, hasAmd, amdName, hasIntel, intelName);
     }
 
     private record EncoderTestResult(bool Success, string Error);
