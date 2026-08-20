@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -17,9 +17,10 @@ namespace VideoFixPro
 {
     public partial class SocialFormatWindow : Window
     {
-        private readonly bool _hasNvidia;
-        private readonly bool _hasAmd;
-        private readonly bool _hasIntel;
+        private bool _hasNvidia;
+        private bool _hasAmd;
+        private bool _hasIntel;
+        private string _gpuName = "Detecting GPU...";
 
         private string? _filePath;
         private double _durationSeconds;
@@ -57,18 +58,89 @@ namespace VideoFixPro
             _hasAmd = hasAmd;
             _hasIntel = hasIntel;
 
-            GpuCheck.IsChecked = _hasNvidia || _hasAmd || _hasIntel;
-
             _playheadTimer.Interval = TimeSpan.FromMilliseconds(40);
             _playheadTimer.Tick += PlayheadTimer_Tick;
 
-            Loaded += (_, _) =>
+            Loaded += async (_, _) =>
             {
-                string gpuInfo = _hasAmd ? "AMD AMF (Radeon RX Hardware Encoder)" :
-                                 _hasNvidia ? "NVIDIA NVENC Hardware Encoder" :
-                                 _hasIntel ? "Intel QSV Hardware Encoder" : "CPU (Software)";
-                Log($"[INIT] GPU Acceleration: {gpuInfo}");
+                await DetectGpuAsync();
             };
+        }
+
+        private async Task DetectGpuAsync()
+        {
+            if (!File.Exists(FFmpeg)) return;
+
+            try
+            {
+                var amfTest = await TestEncoderAsync("h264_amf", "-pix_fmt", "yuv420p");
+                var nvTest = await TestEncoderAsync("h264_nvenc", "-pix_fmt", "yuv420p");
+                var qsvTest = await TestEncoderAsync("h264_qsv", "-pix_fmt", "nv12");
+
+                _hasAmd = amfTest;
+                _hasNvidia = nvTest;
+                _hasIntel = qsvTest;
+
+                if (_hasAmd) _gpuName = "AMD AMF (Radeon RX VCN)";
+                else if (_hasNvidia) _gpuName = "NVIDIA NVENC";
+                else if (_hasIntel) _gpuName = "Intel QSV";
+                else _gpuName = "CPU Software";
+
+                if (GpuCheck != null)
+                {
+                    if (_hasAmd || _hasNvidia || _hasIntel)
+                    {
+                        GpuCheck.Content = $"GPU Hardware Acceleration ({_gpuName})";
+                        GpuCheck.IsChecked = true;
+                        GpuCheck.IsEnabled = true;
+                    }
+                    else
+                    {
+                        GpuCheck.Content = "GPU Hardware Acceleration (Not Available)";
+                        GpuCheck.IsChecked = false;
+                        GpuCheck.IsEnabled = false;
+                    }
+                }
+
+                Log($"[GPU DETECT] Active Engine: {_gpuName} (AMF={_hasAmd}, NVENC={_hasNvidia}, QSV={_hasIntel})");
+            }
+            catch (Exception ex)
+            {
+                Log($"[WARN] GPU detection warning: {ex.Message}");
+            }
+        }
+
+        private static async Task<bool> TestEncoderAsync(string encoder, string pixFlag, string pixVal)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = FFmpeg,
+                    Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 {pixFlag} {pixVal} -c:v {encoder} -f null -",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true
+                };
+                if (encoder.Contains("nvenc")) GpuHelper.InjectNvCudaPath(psi);
+
+                using var proc = new Process { StartInfo = psi };
+                proc.Start();
+                ProcessGuard.Watch(proc);
+                try
+                {
+                    await proc.WaitForExitAsync();
+                    return proc.ExitCode == 0;
+                }
+                finally
+                {
+                    ProcessGuard.Unwatch(proc);
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -338,7 +410,6 @@ namespace VideoFixPro
         {
             try
             {
-                // Pause upon loading first frame so user sees clean preview
                 Player.Pause();
                 BgPlayer.Pause();
                 _isPlayerPlaying = false;
@@ -421,7 +492,6 @@ namespace VideoFixPro
                 SeekSlider.Value = pos;
                 SeekTimeText.Text = $"{FormatTime(pos)} / {FormatTime(_durationSeconds)}";
 
-                // Keep background player tightly synced
                 if (BgPlayer != null && BgPlayer.Visibility == Visibility.Visible)
                 {
                     double bgPos = BgPlayer.Position.TotalSeconds;
@@ -542,7 +612,6 @@ namespace VideoFixPro
 
             try
             {
-                // Pause preview during rendering
                 try { Player.Pause(); BgPlayer.Pause(); _isPlayerPlaying = false; _playheadTimer.Stop(); UpdatePlayPauseUI(); } catch { }
 
                 _isRendering = true;
@@ -578,7 +647,7 @@ namespace VideoFixPro
                     case 3: outW = 1920; outH = 1080; break;
                 }
 
-                // Construct Ultra-Fast High Performance Filter Complex
+                // Construct Fast Bokeh Filter Complex
                 string filter = "";
                 if (BgModeBox.SelectedIndex == 0) // Dynamic Blurred Video
                 {
@@ -597,7 +666,7 @@ namespace VideoFixPro
                     filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; color=c={color}:s={outW}x{outH}:d={_durationSeconds.ToString(CultureInfo.InvariantCulture)}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]";
                 }
 
-                // Codec Options & GPU Acceleration Selection
+                // Codec Options & GPU Hardware Acceleration
                 bool useGpu = GpuCheck.IsChecked == true;
                 bool isAv1 = Av1Check.IsChecked == true;
                 string vCodecArgs;
@@ -605,20 +674,20 @@ namespace VideoFixPro
 
                 if (isAv1)
                 {
-                    if (useGpu && _hasNvidia) { vCodecArgs = "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (AV1)"; }
-                    else if (useGpu && _hasAmd) { vCodecArgs = "-c:v av1_amf -rc cqp -qp_i 22 -qp_p 22 -qp_b 22 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (AV1)"; }
+                    if (useGpu && _hasAmd) { vCodecArgs = "-c:v av1_amf -rc cqp -qp_i 22 -qp_p 22 -qp_b 22 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (AV1)"; }
+                    else if (useGpu && _hasNvidia) { vCodecArgs = "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (AV1)"; }
                     else if (useGpu && _hasIntel) { vCodecArgs = "-c:v av1_qsv -global_quality 22 -pix_fmt nv12"; gpuEngineName = "Intel QSV (AV1)"; }
                     else { vCodecArgs = "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p"; gpuEngineName = "CPU (libsvtav1)"; }
                 }
                 else
                 {
-                    if (useGpu && _hasNvidia) { vCodecArgs = "-c:v h264_nvenc -preset p4 -cq 20 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (H.264)"; }
-                    else if (useGpu && _hasAmd) { vCodecArgs = "-c:v h264_amf -rc cqp -qp_i 20 -qp_p 20 -qp_b 20 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (H.264)"; }
+                    if (useGpu && _hasAmd) { vCodecArgs = "-c:v h264_amf -rc cqp -qp_i 20 -qp_p 20 -qp_b 20 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (H.264)"; }
+                    else if (useGpu && _hasNvidia) { vCodecArgs = "-c:v h264_nvenc -preset p4 -cq 20 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (H.264)"; }
                     else if (useGpu && _hasIntel) { vCodecArgs = "-c:v h264_qsv -global_quality 20 -pix_fmt nv12"; gpuEngineName = "Intel QSV (H.264)"; }
                     else { vCodecArgs = "-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p"; gpuEngineName = "CPU (libx264)"; }
                 }
 
-                Log($"[ENCODER] Active Hardware Engine: {gpuEngineName}");
+                Log($"[ENCODER] Dispatched Engine: {gpuEngineName}");
                 string args = $"-y -i \"{_filePath}\" -filter_complex \"{filter}\" -map \"[outv]\" -map 0:a? {vCodecArgs} -c:a aac -b:a 192k \"{outputPath}\"";
 
                 Log($"[CMD] ffmpeg {args}");
@@ -626,7 +695,7 @@ namespace VideoFixPro
 
                 if (!success && !_cts.Token.IsCancellationRequested && useGpu)
                 {
-                    Log("[WARN] GPU encoding failed. Retrying on CPU (libx264)...");
+                    Log("[WARN] GPU encoding failed. Retrying on CPU fallback (libx264)...");
                     SetStatus("Retrying on CPU fallback...", "#D29922");
                     args = $"-y -i \"{_filePath}\" -filter_complex \"{filter}\" -map \"[outv]\" -map 0:a? -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -c:a aac -b:a 192k \"{outputPath}\"";
                     Log($"[CMD Fallback] ffmpeg {args}");
