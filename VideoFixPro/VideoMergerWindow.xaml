@@ -1,0 +1,267 @@
+<Window x:Class="VideoFixPro.VideoMergerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:local="clr-namespace:VideoFixPro"
+        Title="Lossless Video Merger &amp; Stitcher"
+        Width="1260" Height="800"
+        MinWidth="960" MinHeight="620"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="False"
+        Background="{StaticResource BgBrush}"
+        AllowDrop="True"
+        DragEnter="Window_DragEnter"
+        DragOver="Window_DragOver"
+        Drop="Window_Drop"
+        Icon="Assets/app_icon.png">
+
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="TaskbarProgress"/>
+    </Window.TaskbarItemInfo>
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6"
+                            GlassFrameThickness="0,0,0,1" CornerRadius="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>   <!-- Title bar -->
+            <RowDefinition Height="1"/>    <!-- Separator -->
+            <RowDefinition Height="*"/>    <!-- Main content -->
+            <RowDefinition Height="Auto"/> <!-- Output settings & actions -->
+            <RowDefinition Height="30"/>   <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ════════════════ TITLE BAR ════════════════ -->
+        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
+                <TextBlock Text="🎬" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Lossless Video Merger &amp; Stitcher" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleClipCount" Text="0 clips in playlist"
+                               FontSize="10" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                </Border>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="─" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MinBtn_Click" ToolTip="Minimize"/>
+                <Button x:Name="MaxBtn" Content="□" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MaxBtn_Click" ToolTip="Maximize/Restore"/>
+                <Button Content="✕" Style="{StaticResource TitleBarCloseButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="CloseBtn_Click" ToolTip="Close"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Separator -->
+        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+
+        <!-- ════════════════ MAIN CONTENT ════════════════ -->
+        <Grid Grid.Row="2" Margin="14,12,14,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="380"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="3.2*" MinWidth="400"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ─────── LEFT: PREVIEW PLAYER ─────── -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Selected Clip Header -->
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="PreviewClipTitle" Text="Select a clip from playlist to preview"
+                                       Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" FontSize="12.5"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="PreviewClipInfo" Text="No video selected"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Player Border -->
+                <Border Grid.Row="1" Background="Black" CornerRadius="8" ClipToBounds="True"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <Grid>
+                        <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                      ScrubbingEnabled="True" Volume="0.5" Stretch="Uniform"
+                                      MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"/>
+                        <Button x:Name="PlayPauseBtn" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Width="54" Height="54" Style="{StaticResource GhostButton}" FontSize="24"
+                                Content="▶" Opacity="0.75" Visibility="Collapsed" Click="TogglePlay_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Seek Panel -->
+                <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click"/>
+                    <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0" Minimum="0" Maximum="100" Value="0"
+                            VerticalAlignment="Center" PreviewMouseLeftButtonDown="SeekSlider_MouseDown"
+                            PreviewMouseLeftButtonUp="SeekSlider_MouseUp" ValueChanged="SeekSlider_ValueChanged"/>
+                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00 / 00:00" Foreground="{StaticResource Text2Brush}"
+                               FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
+                </Grid>
+            </Grid>
+
+            <!-- ─────── RIGHT: CLIP PLAYLIST & MERGE ORDER ─────── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Playlist Header & Action Buttons -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Clip Sequence Order" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="8,0,0,0">
+                            <TextBlock x:Name="TotalDurationBadge" Text="Total: 00:00:00" Foreground="{StaticResource Text2Brush}" FontSize="10.5"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="+ Add Files" Style="{StaticResource GhostButton}" Padding="10,4" FontSize="11" Click="AddFiles_Click"/>
+                        <Button Content="+ Folder" Style="{StaticResource GhostButton}" Padding="10,4" Margin="6,0,0,0" FontSize="11" Click="AddFolder_Click"/>
+                        <Button Content="Clear All" Style="{StaticResource GhostButton}" Padding="10,4" Margin="6,0,0,0" FontSize="11" Click="ClearClips_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Clip Playlist DataGrid -->
+                <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                    <DataGrid x:Name="PlaylistGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                              CanUserDeleteRows="False" CanUserResizeRows="False" SelectionMode="Single"
+                              SelectionChanged="PlaylistGrid_SelectionChanged"
+                              Background="Transparent" BorderThickness="0" RowHeaderWidth="0"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BorderBrush}"
+                              Foreground="{StaticResource TextBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Filename" Binding="{Binding FileName}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Duration" Binding="{Binding DurationText}" Width="75" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Resolution" Binding="{Binding ResolutionText}" Width="90" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Codec" Binding="{Binding CodecText}" Width="65" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Size" Binding="{Binding SizeText}" Width="65" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!-- Clip Control Bar (Move Up/Down, Remove) -->
+                <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="▲ Move Up" Style="{StaticResource GhostButton}" Padding="10,5" Click="MoveUp_Click" ToolTip="Move clip earlier in sequence"/>
+                        <Button Content="▼ Move Down" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="MoveDown_Click" ToolTip="Move clip later in sequence"/>
+                        <Button Content="✕ Remove" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="RemoveSelected_Click"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="💡 Drag files anywhere on the window to add" Foreground="{StaticResource MutedBrush}"
+                               FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                </Grid>
+
+                <!-- Merge Mode & Analysis Card -->
+                <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Merge Strategy:" Foreground="{StaticResource Text2Brush}" FontSize="11.5" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="MergeStrategyBadge" Text="⚡ Fast Lossless Concat (0 Re-encoding)"
+                                           Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="MergeStrategyHint" Text="All clips share compatible codecs. Merging takes 1-3 seconds with zero quality loss."
+                                       Foreground="{StaticResource MutedBrush}" FontSize="10.5" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <CheckBox x:Name="ForceReencodeCheck" Grid.Column="1" Content="Force Re-encode"
+                                  Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"
+                                  Checked="ForceReencode_Changed" Unchecked="ForceReencode_Changed"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ════════════════ OUTPUT & ACTIONS ════════════════ -->
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="14,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="60"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as first clip"
+                           Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
+                <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
+
+                <!-- Progress Column -->
+                <Grid x:Name="RenderProgressPanel" Grid.Column="5" VerticalAlignment="Center" Visibility="Collapsed">
+                    <ProgressBar x:Name="RenderProgressBar" Height="18" Minimum="0" Maximum="100"/>
+                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{StaticResource TextBrush}"
+                               FontFamily="Consolas" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Button x:Name="CancelBtn" Grid.Column="7" Content="Cancel" Style="{StaticResource DangerButton}"
+                        Padding="16,7" Visibility="Collapsed" Click="Cancel_Click"/>
+                <Button x:Name="OpenFolderBtn" Grid.Column="9" Content="Open Folder" Style="{StaticResource GhostButton}"
+                        Padding="12,7" IsEnabled="False" Click="OpenFolder_Click"/>
+                <Button x:Name="MergeBtn" Grid.Column="11" Content="🎬 Merge Video Clips" Style="{StaticResource PrimaryButton}"
+                        Padding="24,7" FontWeight="Bold" Click="Merge_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- ════════════════ STATUS BAR ════════════════ -->
+        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+            <Grid Margin="14,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}" Text="Video Merger &amp; Stitcher for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

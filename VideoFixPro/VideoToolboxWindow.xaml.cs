@@ -1667,6 +1667,7 @@ public partial class VideoToolboxWindow : Window
         var sb = new StringBuilder();
         sb.Append("-y ");
         sb.Append($"-i \"{input}\" ");
+        sb.Append("-map 0:v -map 0:a? ");
 
         var vf = _settings.BuildVideoFilterChain();
 

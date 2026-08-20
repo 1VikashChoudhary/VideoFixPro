@@ -1089,6 +1089,84 @@ public partial class MainWindow : Window
         extractor.Show();
     }
 
+    private void OpenCompressor_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var compressor = new CompressorWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        compressor.Show();
+    }
+
+    private void OpenVideoMerger_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var merger = new VideoMergerWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        merger.Show();
+    }
+
+    private void OpenGifMaker_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var gif = new GifMakerWindow(preloadPath)
+        {
+            Owner = this
+        };
+        gif.Show();
+    }
+
+    private void OpenSpeedStudio_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var speed = new SpeedStudioWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        speed.Show();
+    }
+
+    private void OpenWatermark_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var watermark = new WatermarkWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        watermark.Show();
+    }
+
+    private void OpenMetadataCleaner_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var cleaner = new MetadataCleanerWindow(preloadPath)
+        {
+            Owner = this
+        };
+        cleaner.Show();
+    }
+
         /// <summary>
     /// Called by TrimWindow when the user clicks "Add to Main Queue".
     /// Creates a VideoJob pre-configured with trim start/end times.
