@@ -161,6 +161,30 @@
                         </Grid>
                     </Button>
 
+                    
+                    <!-- Tool: Social Media Format -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenSocialFormat_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Resize and crop for TikTok, Reels, Shorts with blurred backgrounds">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="{DynamicResource CardBrush}" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="📱" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Social Resizer" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI"/>
+                                    <Border Background="{DynamicResource BadgeBgBrush}" CornerRadius="3" Padding="3,1" Margin="4,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="NEW" FontSize="7.5" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="Reels, TikTok, Shorts" FontSize="9" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
                     <!-- Tool 2: Video Trimmer -->
                     <Button Style="{StaticResource StudioToolCardButton}" Click="OpenTrimTool_Click" Margin="0,2,8,2" Width="158"
                             ToolTip="Lossless video trimming, split cutting &amp; export">

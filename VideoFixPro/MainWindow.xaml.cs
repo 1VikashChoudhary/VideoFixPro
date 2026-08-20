@@ -1100,6 +1100,14 @@ return (m, GpuCheck.IsChecked == true, (int)QualitySlider.Value, isAv1);
         w.Show();
     }
 
+
+    private void OpenSocialFormat_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new SocialFormatWindow(_hasNvidia, _hasAmd, _hasIntel);
+        w.Owner = this;
+        w.Show();
+    }
+
     private void OpenTrimTool_Click(object sender, RoutedEventArgs e)
     {
         // If a file is selected in the queue, pre-load it in the trim window

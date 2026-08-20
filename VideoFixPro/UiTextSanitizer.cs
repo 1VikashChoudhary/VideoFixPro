@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Linq;
 
 namespace VideoFixPro;
 
@@ -79,7 +80,7 @@ internal static class UiTextSanitizer
             case TextBlock textBlock:
                 if (textBlock.Inlines.Count > 0)
                 {
-                    foreach (var inline in textBlock.Inlines)
+                    foreach (var inline in textBlock.Inlines.ToList())
                     {
                         if (inline is Run inlineRun)
                         {
