@@ -1,6 +1,6 @@
 # VideoFixPro
 
-<img width="1532" height="908" alt="image" src="https://github.com/user-attachments/assets/eebf964b-9919-4d25-9af0-d7190b7b999f" />
+
 
 
 <p align="center">
@@ -17,7 +17,7 @@
 </p>
 
 ---
-
+<img width="1532" height="908" alt="image" src="https://github.com/user-attachments/assets/eebf964b-9919-4d25-9af0-d7190b7b999f" />
 ## Overview
 
 **VideoFixPro** is an all-in-one desktop utility engineered for video recovery, batch processing, lossless trimming, and creative studio enhancements. Designed with a sleek GitHub Dark Dimmed interface, robust process crash-guarding, and hardware-accelerated transcoding, it handles everything from unplayable or truncated videos to advanced color grading, watermarking, and metadata sanitization.
