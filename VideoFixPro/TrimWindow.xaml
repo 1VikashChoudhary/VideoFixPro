@@ -252,7 +252,8 @@
                                       Volume="0.5"
                                       Stretch="Uniform"
                                       MediaOpened="TrimPlayer_MediaOpened"
-                                      MediaEnded="TrimPlayer_MediaEnded"/>
+                                      MediaEnded="TrimPlayer_MediaEnded"
+                                      MediaFailed="TrimPlayer_MediaFailed"/>
 
                         <!-- Playback Overlay -->
                         <Button x:Name="PlayPauseBtn"

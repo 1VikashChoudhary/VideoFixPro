@@ -216,26 +216,34 @@ public partial class VideoMergerWindow : Window
             };
             using var proc = Process.Start(psi);
             if (proc == null) return;
-            string output = await proc.StandardOutput.ReadToEndAsync();
-            await proc.WaitForExitAsync();
-
-            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            ProcessGuard.Watch(proc);
+            try
             {
-                var parts = line.Trim().Split('=');
-                if (parts.Length != 2) continue;
-                string k = parts[0].Trim(), v = parts[1].Trim();
+                string output = await proc.StandardOutput.ReadToEndAsync();
+                await proc.WaitForExitAsync();
 
-                if (k == "duration" && double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
-                    item.Duration = d;
-                else if (k == "width" && int.TryParse(v, out int w))
-                    item.Width = w;
-                else if (k == "height" && int.TryParse(v, out int h))
-                    item.Height = h;
-                else if (k == "codec_name")
+                foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (item.VideoCodec == "-") item.VideoCodec = v.ToUpperInvariant();
-                    else if (item.AudioCodec == "-") item.AudioCodec = v.ToUpperInvariant();
+                    var parts = line.Trim().Split('=');
+                    if (parts.Length != 2) continue;
+                    string k = parts[0].Trim(), v = parts[1].Trim();
+
+                    if (k == "duration" && double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
+                        item.Duration = d;
+                    else if (k == "width" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out int w))
+                        item.Width = w;
+                    else if (k == "height" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out int h))
+                        item.Height = h;
+                    else if (k == "codec_name")
+                    {
+                        if (item.VideoCodec == "-") item.VideoCodec = v.ToUpperInvariant();
+                        else if (item.AudioCodec == "-") item.AudioCodec = v.ToUpperInvariant();
+                    }
                 }
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(proc);
             }
         }
         catch { }

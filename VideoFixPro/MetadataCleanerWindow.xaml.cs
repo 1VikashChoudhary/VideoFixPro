@@ -174,25 +174,28 @@ public partial class MetadataCleanerWindow : Window
             };
             using var proc = Process.Start(psi);
             if (proc == null) return;
-            string output = await proc.StandardOutput.ReadToEndAsync();
-            await proc.WaitForExitAsync();
-
-            var iso6709Regex = new Regex(@"([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)", RegexOptions.Compiled);
-
-            foreach (var rawLine in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            ProcessGuard.Watch(proc);
+            try
             {
-                var line = rawLine.Trim();
-                int eqIdx = line.IndexOf('=');
-                if (eqIdx <= 0) continue;
-                string k = line.Substring(0, eqIdx).Trim();
-                string v = line.Substring(eqIdx + 1).Trim();
+                string output = await proc.StandardOutput.ReadToEndAsync();
+                await proc.WaitForExitAsync();
 
-                if (k == "duration" && double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
-                    _durationSeconds = d;
-                else if (k == "width" && int.TryParse(v, out int w))
-                    _sourceWidth = w;
-                else if (k == "height" && int.TryParse(v, out int h))
-                    _sourceHeight = h;
+                var iso6709Regex = new Regex(@"([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)", RegexOptions.Compiled);
+
+                foreach (var rawLine in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var line = rawLine.Trim();
+                    int eqIdx = line.IndexOf('=');
+                    if (eqIdx <= 0) continue;
+                    string k = line.Substring(0, eqIdx).Trim();
+                    string v = line.Substring(eqIdx + 1).Trim();
+
+                    if (k == "duration" && double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
+                        _durationSeconds = d;
+                    else if (k == "width" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out int w))
+                        _sourceWidth = w;
+                    else if (k == "height" && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out int h))
+                        _sourceHeight = h;
                 else
                 {
                     // Clean tag prefix
@@ -219,6 +222,11 @@ public partial class MetadataCleanerWindow : Window
                         }
                     }
                 }
+            }
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(proc);
             }
 
             Dispatcher.Invoke(() =>

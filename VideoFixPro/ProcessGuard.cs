@@ -32,11 +32,20 @@ public static class ProcessGuard
     public static void Watch(Process? process)
     {
         if (process == null) return;
-        _activeProcesses.TryAdd(process.Id, process);
-        
-        // Remove from list when it exits naturally
-        process.Exited += (s, e) => _activeProcesses.TryRemove(process.Id, out _);
-        process.EnableRaisingEvents = true;
+        try
+        {
+            if (process.HasExited) return;
+            int pid = process.Id;
+            _activeProcesses.TryAdd(pid, process);
+            
+            // Remove from list when it exits naturally
+            process.Exited += (s, e) => _activeProcesses.TryRemove(pid, out _);
+            process.EnableRaisingEvents = true;
+        }
+        catch (Exception)
+        {
+            // Process may have already exited or cannot raise events
+        }
     }
 
     /// <summary>
@@ -45,7 +54,14 @@ public static class ProcessGuard
     public static void Unwatch(Process? process)
     {
         if (process == null) return;
-        _activeProcesses.TryRemove(process.Id, out _);
+        try
+        {
+            _activeProcesses.TryRemove(process.Id, out _);
+        }
+        catch (Exception)
+        {
+            // Process may already be disposed or exited
+        }
     }
 
     /// <summary>

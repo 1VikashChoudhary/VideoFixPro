@@ -1788,10 +1788,11 @@ public partial class VideoToolboxWindow : Window
             while ((line = await proc.StandardError.ReadLineAsync()) != null)
             {
                 if (Dispatcher.HasShutdownStarted) break;
-                Dispatcher.Invoke(() =>
+                string currentLine = line;
+                _ = Dispatcher.BeginInvoke(() =>
                 {
-                    Log($"  {line}");
-                    UpdateTelemetryFromStderr(line);
+                    Log($"  {currentLine}");
+                    UpdateTelemetryFromStderr(currentLine);
                 });
             }
         });
@@ -2003,6 +2004,7 @@ public partial class VideoToolboxWindow : Window
         };
         using var p = new Process { StartInfo = psi };
         p.Start();
+        ProcessGuard.Watch(p);
 
         using var registration = ct.Register(() => { try { p.Kill(); } catch { } });
 
@@ -2011,6 +2013,7 @@ public partial class VideoToolboxWindow : Window
 
         await Task.WhenAll(outTask, errTask);
         try { await p.WaitForExitAsync(ct); } catch (OperationCanceledException) { }
+        finally { ProcessGuard.Unwatch(p); }
 
         return await outTask;
     }

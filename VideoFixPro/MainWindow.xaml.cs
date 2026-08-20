@@ -636,8 +636,8 @@ public partial class MainWindow : Window
                 done++;
                 _lastOutputFolder = Path.GetDirectoryName(output) ?? "";
 
-                // Auto-delete source if enabled
-                if (AutoDeleteCheck.IsChecked == true)
+                // Auto-delete source if enabled (guarded by file existence & non-empty size check)
+                if (AutoDeleteCheck.IsChecked == true && File.Exists(output) && new FileInfo(output).Length >= 1024)
                 {
                     TryDeleteSource(job.FilePath);
                 }
@@ -657,9 +657,9 @@ public partial class MainWindow : Window
         if (_cts.IsCancellationRequested)
             SetStatus("Cancelled", "#D29922");
         else if (failed == 0)
-            SetStatus($"All {done} file(s) repaired âœ”", "#3FB950");
+            SetStatus($"All {done} file(s) repaired ✔", "#3FB950");
         else
-            SetStatus($"{done} done  Â·  {failed} failed", "#F85149");
+            SetStatus($"{done} done  ·  {failed} failed", "#F85149");
 
         if (!string.IsNullOrEmpty(_lastOutputFolder))
             OpenFolderBtn.IsEnabled = true;
@@ -681,22 +681,22 @@ public partial class MainWindow : Window
     private async Task<bool> RepairJobAsync(VideoJob job, string output, RepairMode mode, bool useGpu, int qualityPct, int jobIndex, int totalJobs, CancellationToken ct)
     {
         job.Status     = JobStatus.Running;
-        job.StatusText = "Runningâ€¦";
+        job.StatusText = "Running…";
         job.Progress   = 0;
         job.ETA        = "Calculating...";
         var startTime  = DateTime.Now;
 
-        Log($"\n[JOB]  {job.FileName}  â†’  {Path.GetFileName(output)}");
+        Log($"\n[JOB]  {job.FileName}  →  {Path.GetFileName(output)}");
 
         bool success;
 
         if (mode == RepairMode.Auto)
         {
-            Log("[AUTO] Trying Stream Copyâ€¦");
+            Log("[AUTO] Trying Stream Copy…");
             success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.StreamCopy, useGpu, qualityPct, jobIndex, totalJobs, ct);
             if (!success && !ct.IsCancellationRequested)
             {
-                Log("[AUTO] Stream Copy failed â†’ Deep Recoverâ€¦");
+                Log("[AUTO] Stream Copy failed → Deep Recover…");
                 job.Progress = 0;
                 success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.DeepRecover, useGpu, qualityPct, jobIndex, totalJobs, ct);
             }
@@ -720,7 +720,7 @@ public partial class MainWindow : Window
             job.StatusText = "Done";
             job.Progress   = 100;
             job.OutputPath = output;
-            Log($"[OK]   Saved â†’ {output}");
+            Log($"[OK]   Saved → {output}");
         }
         else
         {
@@ -1212,7 +1212,7 @@ public partial class MainWindow : Window
                 existing.StatusText = "Waiting";
                 existing.Progress   = 0;
                 Log($"[TRIM]  Updated existing queue item: {existing.FileName}  " +
-                    $"{TrimSegment.FormatTime(inPoint)} â†’ {TrimSegment.FormatTime(outPoint)}");
+                    $"{TrimSegment.FormatTime(inPoint)} → {TrimSegment.FormatTime(outPoint)}");
             }
             else
             {
@@ -1228,7 +1228,7 @@ public partial class MainWindow : Window
                 _queue.Add(job);
                 UpdateQueueCount();
                 Log($"[TRIM]  Added to queue: {job.FileName}  " +
-                    $"{TrimSegment.FormatTime(inPoint)} â†’ {TrimSegment.FormatTime(outPoint)}");
+                    $"{TrimSegment.FormatTime(inPoint)} → {TrimSegment.FormatTime(outPoint)}");
                 _ = LoadVideoInfoAsync(job);
             }
         });
@@ -1518,6 +1518,25 @@ public partial class MainWindow : Window
             return p.ExitCode == 0;
         }
         catch { return false; }
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  ABOUT MODAL
+    // ──────────────────────────────────────────────────────────
+    private void AboutBtn_Click(object sender, RoutedEventArgs e) => ShowAboutModal();
+    private void AboutFooter_Click(object sender, MouseButtonEventArgs e) => ShowAboutModal();
+    private void CloseAbout_Click(object sender, RoutedEventArgs e) => HideAboutModal();
+    private void AboutModalBackdrop_MouseDown(object sender, MouseButtonEventArgs e) => HideAboutModal();
+    private void AboutModalCard_MouseDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
+
+    private void ShowAboutModal()
+    {
+        AboutModal.Visibility = Visibility.Visible;
+    }
+
+    private void HideAboutModal()
+    {
+        AboutModal.Visibility = Visibility.Collapsed;
     }
 }
 

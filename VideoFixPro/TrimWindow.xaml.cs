@@ -122,9 +122,9 @@ public partial class TrimWindow : Window
         _playheadTimer.Tick += (s, e) => { if (!_isSeeking) UpdatePlayheadFromPlayer(); };
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     //  TITLE BAR
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     private void TitleBar_MouseDown(object s, MouseButtonEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed) return;
@@ -137,12 +137,18 @@ public partial class TrimWindow : Window
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
         CancelTrimOp();
-        _thumbCts?.Cancel();
-        _thumbCts?.Dispose();
-        _cts?.Dispose();
-        _playheadTimer?.Stop();
-        
-        try { TrimPlayer.Source = null; } catch { }
+        try { _thumbCts?.Cancel(); } catch { }
+        try { _thumbCts?.Dispose(); } catch { }
+        try { _cts?.Dispose(); } catch { }
+        try { _playheadTimer?.Stop(); } catch { }
+
+        try 
+        { 
+            TrimPlayer.Stop();
+            TrimPlayer.Close();
+            TrimPlayer.Source = null; 
+        } 
+        catch { }
 
         if (Owner is MainWindow main) main.CleanupTempThumbs();
 
@@ -154,13 +160,13 @@ public partial class TrimWindow : Window
         TrimMaxBtn.Content = WindowState == WindowState.Maximized ? "❐" : "□";
     }
 
-    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
+    // ══════════════════════════════════════════════════════════════
     //  DROP ZONE
-    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
+    // ══════════════════════════════════════════════════════════════
     private void TrimDrop_DragEnter(object s, DragEventArgs e)
     {
         e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
-        TrimDropZone.BorderBrush = (Brush)FindResource("AccentBrush");
+        TrimDropZone.BorderBrush = TryFindResource("AccentBrush") as Brush ?? Brushes.DodgerBlue;
         e.Handled = true;
     }
     private void TrimDrop_DragOver(object s, DragEventArgs e)
@@ -179,7 +185,7 @@ public partial class TrimWindow : Window
     }
     private void TrimDrop_Click(object s, MouseButtonEventArgs e) => BrowseForFile();
     private void ChangeFile_Click(object s, RoutedEventArgs e) => BrowseForFile();
-    private void ResetDropZone() => TrimDropZone.BorderBrush = (Brush)FindResource("MutedBrush");
+    private void ResetDropZone() => TrimDropZone.BorderBrush = TryFindResource("MutedBrush") as Brush ?? Brushes.Gray;
     private void BrowseForFile()
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
@@ -190,21 +196,23 @@ public partial class TrimWindow : Window
         if (dlg.ShowDialog() == true) _ = LoadFileAsync(dlg.FileName);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════════
     //  FILE LOADING
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════════
     private async Task LoadFileAsync(string path)
     {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+
         _filePath = path;
-        SetTrimStatus("Probing fileâ€¦", "#388BFD");
+        SetTrimStatus("Probing file…", "#388BFD");
         TrimBtn.IsEnabled = false;
         AddToQueueBtn.IsEnabled = false;
 
         // Cancel previous thumbnail generation if any
-        _thumbCts?.Cancel();
-        _thumbCts?.Dispose();
+        try { _thumbCts?.Cancel(); } catch { }
+        try { _thumbCts?.Dispose(); } catch { }
         _thumbCts = new CancellationTokenSource();
-        _playheadTimer.Start();
+        _playheadTimer.Stop();
 
         // Clear previous filmstrip
         for (int i = 0; i < FilmstripBuckets; i++) _filmImages[i] = null;
@@ -218,13 +226,13 @@ public partial class TrimWindow : Window
 
         // Probe
         var info = await ProbeFileAsync(path);
-        _durationSeconds = info.Duration;
+        _durationSeconds = Math.Max(0, info.Duration);
 
         // Update header badges
-        HeaderDuration.Text   = TrimSegment.FormatTime(info.Duration);
+        HeaderDuration.Text   = _durationSeconds > 0 ? TrimSegment.FormatTime(_durationSeconds) : "—";
         HeaderCodec.Text      = info.VideoCodec;
         HeaderResolution.Text = info.Resolution;
-        _videoCodec = info.VideoCodec;
+        _videoCodec           = info.VideoCodec;
 
         // Init trim points to full range
         _inPoint  = 0;
@@ -240,10 +248,17 @@ public partial class TrimWindow : Window
         PlayerBorder.Visibility       = Visibility.Visible;
         PlayPauseBtn.Visibility       = Visibility.Visible;
 
-        // Load into player
-        TrimPlayer.Source = new Uri(path);
-        TrimPlayer.Play(); // Start playing to get frame then pause
-        _isPlayerPlaying = true;
+        // Load into player safely
+        try
+        {
+            TrimPlayer.Source = new Uri(System.IO.Path.GetFullPath(path));
+            TrimPlayer.Play();
+            _isPlayerPlaying = true;
+        }
+        catch
+        {
+            _isPlayerPlaying = false;
+        }
         UpdatePlayPauseUI();
 
         UpdateTimeBoxes();
@@ -252,13 +267,18 @@ public partial class TrimWindow : Window
 
         TrimBtn.IsEnabled = true;
         AddToQueueBtn.IsEnabled = true;
-        SetTrimStatus($"Loaded â€” {TrimSegment.FormatTime(_durationSeconds)}  â€¢  Press I/O to set trim points", "#3FB950");
+        SetTrimStatus($"Loaded — {TrimSegment.FormatTime(_durationSeconds)}  •  Press I/O to set trim points", "#3FB950");
+
+        _playheadTimer.Start();
 
         // Generate filmstrip in background
-        _ = GenerateFilmstripAsync(path, info.Duration, _thumbCts.Token);
+        if (_durationSeconds > 0)
+        {
+            _ = GenerateFilmstripAsync(path, _durationSeconds, _thumbCts.Token);
+        }
     }
 
-    // â”€â”€ Probe result record â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Probe result record ───────────────────────────────────────
     private record ProbeInfo(double Duration, string VideoCodec, string AudioCodec, string Resolution, string Fps);
 
     private async Task<ProbeInfo> ProbeFileAsync(string path)
@@ -270,51 +290,104 @@ public partial class TrimWindow : Window
         {
             var json = await RunProcessAsync(FFprobe,
                 $"-v quiet -print_format json -show_streams -show_format \"{path}\"");
-            var root = JsonNode.Parse(json);
-            var streams = root?["streams"]?.AsArray();
-            var format = root?["format"];
-            if (double.TryParse(format?["duration"]?.GetValue<string>(),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
-                duration = d;
-            if (streams != null)
+            
+            // Safe JSON parse with fallbacks
+            try
             {
-                foreach (var stream in streams)
+                var root = JsonNode.Parse(json);
+                if (root != null)
                 {
-                    var type = stream?["codec_type"]?.GetValue<string>();
-                    if (type == "video" && vc == "-")
+                    // 1. Duration from format
+                    var formatNode = root["format"];
+                    if (formatNode != null)
                     {
-                        vc = (stream?["codec_name"]?.GetValue<string>() ?? "-").ToUpperInvariant();
-                        var width = stream?["width"]?.GetValue<int>() ?? 0;
-                        var height = stream?["height"]?.GetValue<int>() ?? 0;
-                        if (width > 0 && height > 0) res = $"{width}x{height}";
-                        var frameRate = stream?["r_frame_rate"]?.GetValue<string>() ?? string.Empty;
-                        if (frameRate.Contains('/'))
+                        var durStr = formatNode["duration"]?.ToString();
+                        if (double.TryParse(durStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double d) && d > 0)
+                            duration = d;
+                    }
+
+                    // 2. Streams info
+                    var streams = root["streams"]?.AsArray();
+                    if (streams != null)
+                    {
+                        foreach (var stream in streams)
                         {
-                            var parts = frameRate.Split('/');
-                            if (double.TryParse(parts[0], out double numerator) &&
-                                double.TryParse(parts[1], out double denominator) && denominator != 0)
+                            if (stream == null) continue;
+                            var type = stream["codec_type"]?.ToString()?.Trim().ToLowerInvariant();
+                            if (type == "video" && vc == "-")
                             {
-                                fps = $"{numerator / denominator:F2}";
+                                vc = (stream["codec_name"]?.ToString() ?? "-").ToUpperInvariant();
+                                
+                                if (int.TryParse(stream["width"]?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int w) &&
+                                    int.TryParse(stream["height"]?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int h) &&
+                                    w > 0 && h > 0)
+                                {
+                                    res = $"{w}x{h}";
+                                }
+
+                                var frameRate = stream["r_frame_rate"]?.ToString() ?? string.Empty;
+                                if (frameRate.Contains('/'))
+                                {
+                                    var parts = frameRate.Split('/');
+                                    if (double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double num) &&
+                                        double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double den) && den != 0)
+                                    {
+                                        fps = $"{num / den:F2}";
+                                    }
+                                }
+
+                                if (duration <= 0)
+                                {
+                                    var sDur = stream["duration"]?.ToString();
+                                    if (double.TryParse(sDur, NumberStyles.Any, CultureInfo.InvariantCulture, out double sd) && sd > 0)
+                                        duration = sd;
+                                }
+                            }
+                            else if (type == "audio" && ac == "-")
+                            {
+                                ac = (stream["codec_name"]?.ToString() ?? "-").ToUpperInvariant();
+                                if (duration <= 0)
+                                {
+                                    var sDur = stream["duration"]?.ToString();
+                                    if (double.TryParse(sDur, NumberStyles.Any, CultureInfo.InvariantCulture, out double sd) && sd > 0)
+                                        duration = sd;
+                                }
                             }
                         }
                     }
-                    else if (type == "audio" && ac == "-")
-                    {
-                        ac = (stream?["codec_name"]?.GetValue<string>() ?? "-").ToUpperInvariant();
-                    }
                 }
             }
+            catch { }
+
+            // Regex fallback if JSON fields were missing
+            if (duration <= 0)
+            {
+                var durMatch = System.Text.RegularExpressions.Regex.Match(json, @"""duration"":\s*""([0-9.]+)""");
+                if (durMatch.Success && double.TryParse(durMatch.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
+                    duration = d;
+            }
+            if (res == "-")
+            {
+                var wMatch = System.Text.RegularExpressions.Regex.Match(json, @"""width"":\s*(\d+)");
+                var hMatch = System.Text.RegularExpressions.Regex.Match(json, @"""height"":\s*(\d+)");
+                if (wMatch.Success && hMatch.Success)
+                    res = $"{wMatch.Groups[1].Value}x{hMatch.Groups[1].Value}";
+            }
+            if (vc == "-")
+            {
+                var codecMatch = System.Text.RegularExpressions.Regex.Match(json, @"""codec_name"":\s*""([^""]+)""");
+                if (codecMatch.Success)
+                    vc = codecMatch.Groups[1].Value.ToUpperInvariant();
+            }
         }
-        catch
-        {
-            // Probing is best-effort; the rest of the trim tool can still work.
-        }
+        catch { }
+
         return new(duration, vc, ac, res, fps);
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════════
     //  FILMSTRIP GENERATION  (ffmpeg thumbnail frames)
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══════════════════════════════════════════════════════════════
     private async Task GenerateFilmstripAsync(string path, double duration, CancellationToken ct)
     {
         if (!File.Exists(FFmpeg) || duration <= 0) return;
@@ -405,36 +478,38 @@ public partial class TrimWindow : Window
         TimelineCanvas.Children.Clear();
         double w = TimelineCanvas.ActualWidth;
         double h = TimelineH;
-        if (w <= 0 || _durationSeconds <= 0) return;
+        if (w <= 0 || _durationSeconds <= 0 || double.IsNaN(_durationSeconds) || double.IsInfinity(_durationSeconds)) return;
 
-        double ToX(double sec) => sec / _durationSeconds * w;
+        double ToX(double sec) => Math.Clamp(sec / _durationSeconds * w, 0, w);
         double inX  = ToX(_inPoint);
         double outX = ToX(_outPoint);
         double phX  = ToX(_playhead);
 
-        // â”€â”€ Background track â”€â”€
+        // Background track
         var bg = MakeRect(0, h * 0.35, w, h * 0.3,
             Color.FromRgb(0x21, 0x26, 0x2D), 0);
         TimelineCanvas.Children.Add(bg);
 
-        // â”€â”€ Selected region â”€â”€
-        var sel = MakeRect(inX, 0, outX - inX, h,
-            ColSelected, 0);
-        TimelineCanvas.Children.Add(sel);
+        // Selected region
+        if (outX > inX)
+        {
+            var sel = MakeRect(inX, 0, outX - inX, h, ColSelected, 0);
+            TimelineCanvas.Children.Add(sel);
+        }
 
-        // â”€â”€ Tick marks â”€â”€
+        // Tick marks
         DrawTicks(w, h);
 
-        // â”€â”€ Waveform hint bars (decorative; real waveform needs ffmpeg pipe) â”€â”€
+        // Waveform hint bars
         DrawWaveformHint(w, h, inX, outX);
 
-        // ── IN handle ──
+        // IN handle
         DrawHandle(inX, h, ColIn, "▶");
 
-        // ── OUT handle ──
+        // OUT handle
         DrawHandle(outX, h, ColOut, "◀");
 
-        // â”€â”€ Playhead â”€â”€
+        // Playhead line
         var phLine = new Line
         {
             X1 = phX, Y1 = 0, X2 = phX, Y2 = h,
@@ -463,7 +538,8 @@ public partial class TrimWindow : Window
             double fw = FilmstripCanvas.ActualWidth;
             if (fw > 0)
             {
-                Canvas.SetLeft(FilmstripPlayhead, (_playhead / _durationSeconds) * fw - 1);
+                double fsPx = Math.Clamp((_playhead / _durationSeconds) * fw - 1, 0, Math.Max(0, fw - 2));
+                Canvas.SetLeft(FilmstripPlayhead, fsPx);
                 FilmstripPlayhead.Height = FilmstripCanvas.ActualHeight;
             }
         }
@@ -472,19 +548,22 @@ public partial class TrimWindow : Window
         LabelTimeStart.Text   = TrimSegment.FormatTime(_inPoint);
         LabelTimeCurrent.Text = TrimSegment.FormatTime(_playhead);
         LabelTimeEnd.Text     = TrimSegment.FormatTime(_outPoint);
-        PlayheadTimeText.Text  = TrimSegment.FormatTime(_playhead);
+        PlayheadTimeText.Text = TrimSegment.FormatTime(_playhead);
     }
 
     private void DrawTicks(double w, double h)
     {
+        if (_durationSeconds <= 0 || w <= 0) return;
+
         // Choose tick interval: aim for ~10 ticks
         double rawInterval = _durationSeconds / 10.0;
         double[] niceIntervals = { 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600 };
         double interval = niceIntervals.FirstOrDefault(v => v >= rawInterval, niceIntervals[^1]);
+        if (interval <= 0) interval = 1.0;
 
         for (double t = 0; t <= _durationSeconds; t += interval)
         {
-            double x = t / _durationSeconds * w;
+            double x = Math.Clamp(t / _durationSeconds * w, 0, w);
             bool major = (t % (interval * 5) < 0.001);
 
             var tick = new Line
@@ -514,7 +593,7 @@ public partial class TrimWindow : Window
 
     private void DrawWaveformHint(double w, double h, double inX, double outX)
     {
-        // Draw simple pseudo-waveform bars (random-seeded by filename) inside selected region
+        if (string.IsNullOrEmpty(_filePath) || outX <= inX) return;
         var rng = new Random(_filePath.GetHashCode());
         int bars = (int)Math.Min(200, (outX - inX) / 3);
         if (bars < 2) return;
@@ -540,6 +619,8 @@ public partial class TrimWindow : Window
 
     private void DrawHandle(double x, double h, Color col, string arrow)
     {
+        if (double.IsNaN(x) || double.IsInfinity(x)) return;
+
         // Vertical line
         var line = new Line
         {
@@ -792,7 +873,7 @@ public partial class TrimWindow : Window
         };
         _segments.Add(seg);
         SegmentList.SelectedItem = seg;
-        SetTrimStatus($"Segment {seg.Index} added  ({seg.StartFormatted} â†’ {seg.EndFormatted})", "#3FB950");
+        SetTrimStatus($"Segment {seg.Index} added  ({seg.StartFormatted} → {seg.EndFormatted})", "#3FB950");
     }
 
     private void RemoveSegment_Click(object s, RoutedEventArgs e)
@@ -831,7 +912,7 @@ public partial class TrimWindow : Window
     {
         if (TrimModeHint == null) return;
         TrimModeHint.Text = TrimModeStreamCopy.IsChecked == true
-            ? "Fast lossless cut. Output starts/ends on the nearest keyframe (may be Â±0.5 s)."
+            ? "Fast lossless cut. Output starts/ends on the nearest keyframe (may be ±0.5 s)."
             : "Frame-accurate cut via full H.264 + AAC re-encode. Slower but precise to the frame.";
     }
 
@@ -847,14 +928,14 @@ public partial class TrimWindow : Window
         {
             _customOutputFolder           = dlg.SelectedPath;
             TrimOutputFolderText.Text     = _customOutputFolder;
-            TrimOutputFolderText.Foreground = (Brush)FindResource("TextBrush");
+            TrimOutputFolderText.Foreground = TryFindResource("TextBrush") as Brush ?? Brushes.White;
         }
     }
     private void ResetTrimOutput_Click(object s, RoutedEventArgs e)
     {
         _customOutputFolder             = string.Empty;
         TrimOutputFolderText.Text       = "Same as source";
-        TrimOutputFolderText.Foreground = (Brush)FindResource("MutedBrush");
+        TrimOutputFolderText.Foreground = TryFindResource("MutedBrush") as Brush ?? Brushes.Gray;
     }
 
     private string GetOutputDir()
@@ -942,7 +1023,7 @@ public partial class TrimWindow : Window
             var seg  = jobs[i];
             var outP = BuildOutputPath(jobs.Count > 1 ? seg.Index : 0);
 
-            SetTrimStatus($"Trimming segment {seg.Index} / {jobs.Count}â€¦", "#388BFD");
+            SetTrimStatus($"Trimming segment {seg.Index} / {jobs.Count}…", "#388BFD");
             SetTrimProgress(0);
 
             bool ok = await RunTrimAsync(_filePath, outP, seg.StartSeconds, seg.EndSeconds,
@@ -952,7 +1033,7 @@ public partial class TrimWindow : Window
             {
                 done++;
                 _lastOutputFolder = GetOutputDir();
-                SetTrimStatus($"âœ” Segment {seg.Index} saved â†’ {System.IO.Path.GetFileName(outP)}", "#3FB950");
+                SetTrimStatus($"✔ Segment {seg.Index} saved → {System.IO.Path.GetFileName(outP)}", "#3FB950");
             }
             else { failed++; }
 
@@ -961,8 +1042,8 @@ public partial class TrimWindow : Window
 
         if (!ct.IsCancellationRequested)
         {
-            if (failed == 0) SetTrimStatus($"All {done} segment(s) trimmed successfully âœ”", "#3FB950");
-            else SetTrimStatus($"{done} done Â· {failed} failed", "#F85149");
+            if (failed == 0) SetTrimStatus($"All {done} segment(s) trimmed successfully ✔", "#3FB950");
+            else SetTrimStatus($"{done} done · {failed} failed", "#F85149");
             OpenTrimFolderBtn.IsEnabled = done > 0;
         }
         else SetTrimStatus("Cancelled.", "#D29922");
@@ -970,7 +1051,7 @@ public partial class TrimWindow : Window
         return new TrimOperationResult(done, failed, ct.IsCancellationRequested, done > 0);
     }
 
-    // â”€â”€ Multi-segment concat  (trim each â†’ concat list â†’ final output) â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Multi-segment concat (trim each → concat list → final output) ─────────
     private async Task<TrimOperationResult> TrimAndConcatAsync(List<TrimSegment> jobs, bool reEncode, CancellationToken ct)
     {
         int done = 0;
@@ -986,8 +1067,8 @@ public partial class TrimWindow : Window
         Directory.CreateDirectory(tmpDir);
 
         var tmpFiles   = new List<string>();
-        string concatList = string.Empty;   // hoisted: CS0165 fix â€” goto can bypass later assignment
-        SetTrimStatus($"Trimming {jobs.Count} segmentsâ€¦", "#388BFD");
+        string concatList = string.Empty;
+        SetTrimStatus($"Trimming {jobs.Count} segments…", "#388BFD");
 
         for (int i = 0; i < jobs.Count; i++)
         {
@@ -1003,7 +1084,7 @@ public partial class TrimWindow : Window
             if (!ok)
             {
                 failed++;
-                SetTrimStatus($"Segment {i + 1} failed â€” aborting.", "#F85149");
+                SetTrimStatus($"Segment {i + 1} failed — aborting.", "#F85149");
                 goto cleanup;
             }
 
@@ -1014,7 +1095,7 @@ public partial class TrimWindow : Window
         if (ct.IsCancellationRequested) goto cleanup;
 
         // Step 2: write concat list file
-        SetTrimStatus("Concatenating segmentsâ€¦", "#388BFD");
+        SetTrimStatus("Concatenating segments…", "#388BFD");
         SetTrimProgress(jobs.Count * 100.0 / (jobs.Count + 1));
 
         concatList = System.IO.Path.Combine(tmpDir, $"concat_{GetHashCode()}.txt");
@@ -1041,7 +1122,7 @@ public partial class TrimWindow : Window
         {
             _lastOutputFolder = GetOutputDir();
             done = Math.Max(done, 1);
-            SetTrimStatus($"âœ” Merged â†’ {System.IO.Path.GetFileName(finalOut)}", "#3FB950");
+            SetTrimStatus($"✔ Merged → {System.IO.Path.GetFileName(finalOut)}", "#3FB950");
             OpenTrimFolderBtn.IsEnabled = true;
         }
         else
@@ -1205,41 +1286,47 @@ public partial class TrimWindow : Window
         ProcessGuard.Watch(proc);
         _ffmpegProcess = proc;
 
-        // Read stderr silently (errors go there)
-        _ = proc.StandardError.ReadToEndAsync();
-
-        // Parse progress from stdout
-        await Task.Run(async () =>
+        try
         {
-            string? line;
-            while ((line = await proc.StandardOutput.ReadLineAsync()) != null)
+            // Read stderr silently (errors go there)
+            _ = proc.StandardError.ReadToEndAsync();
+
+            // Parse progress from stdout
+            await Task.Run(async () =>
             {
-                if (ct.IsCancellationRequested) break;
-                if (line.StartsWith("out_time_ms=") &&
-                    long.TryParse(line[12..], out long ms) && totalDuration > 0)
+                string? line;
+                while ((line = await proc.StandardOutput.ReadLineAsync()) != null)
                 {
-                    double pct = Math.Min(ms / 1_000_000.0 / totalDuration * 100, 99.9);
-                    double scaled = progressOffset + pct * progressScale;
-                    Dispatcher.Invoke(() => SetTrimProgress(scaled));
+                    if (ct.IsCancellationRequested || Dispatcher.HasShutdownStarted) break;
+                    if (line.StartsWith("out_time_ms=") &&
+                        long.TryParse(line[12..], out long ms) && totalDuration > 0)
+                    {
+                        double pct = Math.Min(ms / 1_000_000.0 / totalDuration * 100, 99.9);
+                        double scaled = progressOffset + pct * progressScale;
+                        _ = Dispatcher.BeginInvoke(() => SetTrimProgress(scaled));
+                    }
                 }
+            }, ct);
+
+            if (ct.IsCancellationRequested)
+            {
+                try { proc.Kill(); } catch { }
+                return false;
             }
-        }, ct);
 
-        if (ct.IsCancellationRequested)
-        {
-            try { proc.Kill(); } catch { }
-            _ffmpegProcess = null;
-            return false;
+            try 
+            { 
+                await proc.WaitForExitAsync(ct); 
+            } 
+            catch (OperationCanceledException) { /* Canceled */ }
+
+            return proc.ExitCode == 0;
         }
-
-        try 
-        { 
-            await proc.WaitForExitAsync(ct); 
-        } 
-        catch (OperationCanceledException) { /* Canceled */ }
-
-        _ffmpegProcess = null;
-        return proc.ExitCode == 0;
+        finally
+        {
+            ProcessGuard.Unwatch(proc);
+            _ffmpegProcess = null;
+        }
     }
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1257,7 +1344,7 @@ public partial class TrimWindow : Window
         {
             var mode = TrimModeReEncode.IsChecked == true ? RepairMode.ReEncode : RepairMode.StreamCopy;
             main.AddTrimJobToQueue(_filePath, _inPoint, _outPoint, mode);
-            SetTrimStatus($"Added {mode} trim job to main queue  ({TrimSegment.FormatTime(_inPoint)} â†’ {TrimSegment.FormatTime(_outPoint)})", "#3FB950");
+            SetTrimStatus($"Added {mode} trim job to main queue  ({TrimSegment.FormatTime(_inPoint)} → {TrimSegment.FormatTime(_outPoint)})", "#3FB950");
         }
         else
             MessageBox.Show("Open the Trim Tool from the main window to use this feature.",
@@ -1285,18 +1372,25 @@ public partial class TrimWindow : Window
     {
         if (_isPlayerPlaying)
         {
-            TrimPlayer.Pause();
+            try { TrimPlayer.Pause(); } catch { }
             _isPlayerPlaying = false;
             _playheadTimer.Stop();
         }
         else
         {
-            if (TrimPlayer.Position.TotalSeconds >= _durationSeconds - 0.1)
-                TrimPlayer.Position = TimeSpan.FromSeconds(_inPoint);
+            try
+            {
+                if (TrimPlayer.Position.TotalSeconds >= _durationSeconds - 0.1)
+                    TrimPlayer.Position = TimeSpan.FromSeconds(_inPoint);
 
-            TrimPlayer.Play();
-            _isPlayerPlaying = true;
-            _playheadTimer.Start();
+                TrimPlayer.Play();
+                _isPlayerPlaying = true;
+                _playheadTimer.Start();
+            }
+            catch
+            {
+                _isPlayerPlaying = false;
+            }
         }
         UpdatePlayPauseUI();
     }
@@ -1306,16 +1400,17 @@ public partial class TrimWindow : Window
     private void UpdatePlayheadFromPlayer()
     {
         if (_isSeeking || _durationSeconds <= 0) return;
-        double pos = TrimPlayer.Position.TotalSeconds;
-        if (pos != _playhead)
+        try
         {
-            _playhead = Math.Clamp(pos, 0, _durationSeconds);
-            Dispatcher.Invoke(() =>
+            double pos = TrimPlayer.Position.TotalSeconds;
+            if (Math.Abs(pos - _playhead) >= 0.04)
             {
+                _playhead = Math.Clamp(pos, 0, _durationSeconds);
                 LabelTimeCurrent.Text = TrimSegment.FormatTime(_playhead);
                 DrawTimeline();
-            });
+            }
         }
+        catch { }
     }
 
     private void UpdatePlayPauseUI()
@@ -1326,18 +1421,28 @@ public partial class TrimWindow : Window
 
     private void TrimPlayer_MediaOpened(object sender, RoutedEventArgs e)
     {
-        if (TrimPlayer.NaturalDuration.HasTimeSpan)
+        try
         {
-            // Successfully opened
-            TrimPlayer.Pause();
-            _isPlayerPlaying = false;
-            UpdatePlayPauseUI();
+            if (TrimPlayer.NaturalDuration.HasTimeSpan)
+            {
+                TrimPlayer.Pause();
+                _isPlayerPlaying = false;
+                UpdatePlayPauseUI();
+            }
         }
+        catch { }
     }
 
     private void TrimPlayer_MediaEnded(object sender, RoutedEventArgs e)
     {
-        TrimPlayer.Pause();
+        try { TrimPlayer.Pause(); } catch { }
+        _isPlayerPlaying = false;
+        _playheadTimer.Stop();
+        UpdatePlayPauseUI();
+    }
+
+    private void TrimPlayer_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
+    {
         _isPlayerPlaying = false;
         _playheadTimer.Stop();
         UpdatePlayPauseUI();
@@ -1406,11 +1511,11 @@ public partial class TrimWindow : Window
         var text = OutTimeBox.Text.Trim();
         var isValid = string.IsNullOrEmpty(text) || TrimSegment.ParseTime(text) >= 0;
         OutTimeBox.BorderBrush = isValid
-            ? (Brush)FindResource("MutedBrush")
+            ? (TryFindResource("MutedBrush") as Brush ?? Brushes.Gray)
             : Brushes.IndianRed;
     }
 
-    // â”€â”€ Static ffmpeg runner (probe / filmstrip) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Static ffmpeg runner (probe / filmstrip) ──────────────────
     private static async Task<string> RunProcessAsync(string exe, string args, CancellationToken ct = default)
     {
         var psi = new ProcessStartInfo
@@ -1424,17 +1529,24 @@ public partial class TrimWindow : Window
         };
         using var p = new Process { StartInfo = psi };
         p.Start();
+        ProcessGuard.Watch(p);
         
         using var registration = ct.Register(() => { try { p.Kill(); } catch { } });
         
-        // Fix P5: Read both streams to prevent hang
-        var outTask = p.StandardOutput.ReadToEndAsync();
-        var errTask = p.StandardError.ReadToEndAsync();
-        
-        await Task.WhenAll(outTask, errTask);
-        try { await p.WaitForExitAsync(ct); } catch (OperationCanceledException) { }
+        try
+        {
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            var errTask = p.StandardError.ReadToEndAsync();
+            
+            await Task.WhenAll(outTask, errTask);
+            try { await p.WaitForExitAsync(ct); } catch (OperationCanceledException) { }
 
-        return await outTask;
+            return await outTask;
+        }
+        finally
+        {
+            ProcessGuard.Unwatch(p);
+        }
     }
 }
 

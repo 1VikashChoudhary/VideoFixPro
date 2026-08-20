@@ -109,6 +109,9 @@
 
             <!-- Window controls -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="AboutBtn" Content="ℹ" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="AboutBtn_Click" ToolTip="About Video Fix Pro"/>
                 <ToggleButton x:Name="TopmostBtn" Content="📌" Style="{StaticResource TitleBarToggleButton}"
                               shell:WindowChrome.IsHitTestVisibleInChrome="True"
                               Click="TopmostBtn_Click" ToolTip="Always on Top"/>
@@ -882,12 +885,16 @@
                          Margin="0,0,14,0"
                          Visibility="Hidden"/>
 
-            <!-- Version -->
-            <TextBlock Grid.Column="2"
-                       Text="Video Fix Pro v1.0  •  ffmpeg"
-                       Foreground="{StaticResource MutedBrush}"
-                       FontFamily="Segoe UI" FontSize="10"
-                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <!-- Version & Author Credit -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" Cursor="Hand" MouseLeftButtonDown="AboutFooter_Click" ToolTip="Click to view About Video Fix Pro">
+                <TextBlock Foreground="{StaticResource MutedBrush}"
+                           FontFamily="Segoe UI" FontSize="10.5"
+                           VerticalAlignment="Center">
+                    <Run Text="Video Fix Pro v1.0  •  Built with "/>
+                    <Run Text="❤️" Foreground="#F85149"/>
+                    <Run Text=" by Vikash Choudhary"/>
+                </TextBlock>
+            </StackPanel>
         </Grid>
         <!-- ══════════════════════ MODAL OVERLAYS ══════════════════════ -->
         <Grid x:Name="DownloadModal" Grid.RowSpan="7" Visibility="Collapsed" Panel.ZIndex="1000">
@@ -922,6 +929,70 @@
                         <Button x:Name="StartDownloadBtn" Content="Download &amp; Install" Style="{StaticResource PrimaryButton}"
                                 Padding="28,8" Click="StartDownload_Click"/>
                     </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ══════════════════════ ABOUT APP MODAL ══════════════════════ -->
+        <Grid x:Name="AboutModal" Grid.RowSpan="7" Visibility="Collapsed" Panel.ZIndex="1000" MouseLeftButtonDown="AboutModalBackdrop_MouseDown">
+            <Rectangle Fill="#CC000000"/>
+            <Border Width="480" Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="16" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Padding="28" MouseLeftButtonDown="AboutModalCard_MouseDown">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" Opacity="0.65" ShadowDepth="0" Color="Black"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Border Width="58" Height="58" CornerRadius="12" Background="#161B22" BorderBrush="#1F3152" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Image Source="Assets/app_icon.png" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Border>
+                        <TextBlock Text="Video Fix Pro" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" FontFamily="Segoe UI"/>
+                        <TextBlock Text="Commercial Edition  •  Version 1.0" FontSize="11.5" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- Description -->
+                    <TextBlock Grid.Row="1" TextWrapping="Wrap" Foreground="{StaticResource Text2Brush}" FontSize="12.5" LineHeight="19" TextAlignment="Center" Margin="8,0,8,16">
+                        Video Fix Pro is a high-performance, professional media repair and processing workstation. Engineered with multi-engine recovery algorithms, multi-vendor GPU acceleration (NVIDIA NVENC, AMD AMF, Intel QSV), and 11 creative studio tools for video repair, color grading, smart compression, lossless cutting, audio muxing, and privacy sanitization.
+                    </TextBlock>
+
+                    <!-- Highlight Badges -->
+                    <WrapPanel Grid.Row="2" HorizontalAlignment="Center" Margin="0,0,0,18">
+                        <Border Background="#161B22" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,4" Margin="3">
+                            <TextBlock Text="⚡ Hardware GPU Accelerated" FontSize="10.5" Foreground="{StaticResource TextBrush}"/>
+                        </Border>
+                        <Border Background="#161B22" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,4" Margin="3">
+                            <TextBlock Text="🎬 11 Studio Suites" FontSize="10.5" Foreground="{StaticResource TextBrush}"/>
+                        </Border>
+                        <Border Background="#161B22" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,4" Margin="3">
+                            <TextBlock Text="🔒 100% Offline &amp; Private" FontSize="10.5" Foreground="{StaticResource TextBrush}"/>
+                        </Border>
+                    </WrapPanel>
+
+                    <!-- Author & Credits Card -->
+                    <Border Grid.Row="3" Background="#161B22" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,20">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center">
+                                <Run Text="Built with "/>
+                                <Run Text="❤️" Foreground="#F85149"/>
+                                <Run Text=" by Vikash Choudhary"/>
+                            </TextBlock>
+                            <TextBlock Text="Powered by FFmpeg, .NET 8, and Modern WPF" FontSize="10.5" Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Close Button -->
+                    <Button Grid.Row="4" x:Name="CloseAboutBtn" Content="Close" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Center" Padding="32,8" Click="CloseAbout_Click"/>
                 </Grid>
             </Border>
         </Grid>

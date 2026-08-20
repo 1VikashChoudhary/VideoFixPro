@@ -1,209 +1,187 @@
 # VideoFixPro
-<img width="1178" height="881" alt="Screenshot 2026-08-03 102958" src="https://github.com/user-attachments/assets/45fb1a35-1e3e-4313-8206-a24f47c25b73" />
-<img width="1134" height="775" alt="Screenshot 2026-08-03 103005" src="https://github.com/user-attachments/assets/71023bdd-ba53-4beb-9253-837cfc594b29" />
-<img width="1366" height="893" alt="Screenshot 2026-08-03 103010" src="https://github.com/user-attachments/assets/dd1a9011-0bed-48d7-85e1-926338ab95b2" />
-<img width="1186" height="793" alt="Screenshot 2026-08-03 103015" src="https://github.com/user-attachments/assets/dc6f9fee-197e-448c-9b32-b68760afff09" />
 
-VideoFixPro is a Windows desktop app for repairing, trimming, and batch-processing video files with a clean WPF interface powered by `ffmpeg` and `ffprobe`.
+<p align="center">
+  <img width="1178" height="881" alt="VideoFixPro Main Window" src="https://github.com/user-attachments/assets/45fb1a35-1e3e-4313-8206-a24f47c25b73" />
+</p>
 
-It is designed for practical day-to-day recovery work:
-- repair damaged or hard-to-play videos
-- batch process multiple files
-- trim videos quickly with either stream copy or full re-encode
-- merge multiple trimmed segments
-- preview progress, metadata, thumbnails, and output status in one place
+<p align="center">
+  <img width="1134" height="775" alt="VideoFixPro Trim Window" src="https://github.com/user-attachments/assets/71023bdd-ba53-4beb-9253-837cfc594b29" />
+</p>
 
-## Features
+<p align="center">
+  <img width="1366" height="893" alt="VideoFixPro Video Toolbox" src="https://github.com/user-attachments/assets/dd1a9011-0bed-48d7-85e1-926338ab95b2" />
+</p>
 
-### Video repair
-- Batch queue for multiple video files
-- Drag and drop support for files and folders
-- Video metadata preview using `ffprobe`
-- Automatic thumbnail generation for queued items
-- Output filename collision protection
-- Progress tracking with per-job updates and overall progress
-- Optional output folder selection
-- Optional source auto-delete after successful repair
+<p align="center">
+  <img width="1186" height="793" alt="VideoFixPro Color Grade Studio" src="https://github.com/user-attachments/assets/dc6f9fee-197e-448c-9b32-b68760afff09" />
+</p>
 
-### Repair modes
-- `Auto`
-  Tries fast stream copy first, then falls back to deep recovery if needed.
-- `Stream Copy`
-  Fastest option. Re-muxes without re-encoding when possible.
-- `Re-encode`
-  Rebuilds video as H.264 + AAC for broad compatibility.
-- `Deep Recover`
-  Error-tolerant recovery path for more damaged files.
+<p align="center">
+  <strong>Professional Commercial-Grade Video Repair, Recovery & Studio Suite for Windows</strong><br>
+  <em>Powered by .NET 8, WPF, and high-performance FFmpeg / FFprobe media pipelines.</em>
+</p>
 
-### Trim tool
-- Dedicated trim window with timeline-based editing
-- In/Out point selection
-- Keyboard shortcuts for fast trimming
-- Single trim or multi-segment trim workflow
-- Merge multiple segments into one final output
-- Add trim jobs directly to the main repair queue
-- Stream copy trim mode for fast lossless cuts
-- Re-encode trim mode for frame-accurate output
-- Completion notifications for trim operations
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-blue?logo=windows" alt="Platform" />
+  <img src="https://img.shields.io/badge/.NET-8.0%20WPF-purple?logo=dotnet" alt=".NET 8" />
+  <img src="https://img.shields.io/badge/Engine-FFmpeg%20%26%20FFprobe-green?logo=ffmpeg" alt="FFmpeg" />
+  <img src="https://img.shields.io/badge/GPU%20Accel-NVENC%20%7C%20AMF%20%7C%20QSV-red" alt="GPU Acceleration" />
+  <img src="https://img.shields.io/badge/License-MIT-brightgreen" alt="License" />
+</p>
 
-### Usability
-- Built-in FFmpeg download flow if binaries are missing
-- GPU encoder detection for supported systems
-- Log panel with copy/save/clear actions
-- Output folder shortcuts
-- Desktop notifications on completion
-- Safe cancellation handling during long-running operations
+---
 
-## Tech Stack
+## Overview
 
-- `.NET 8`
-- `WPF`
-- `ffmpeg`
-- `ffprobe`
-- `Windows Forms` interop for folder dialogs and notifications
+**VideoFixPro** is an all-in-one desktop utility engineered for video recovery, batch processing, lossless trimming, and creative studio enhancements. Designed with a sleek GitHub Dark Dimmed interface, robust process crash-guarding, and hardware-accelerated transcoding, it handles everything from unplayable or truncated videos to advanced color grading, watermarking, and metadata sanitization.
+
+---
+
+## Key Feature Matrix
+
+### 1. Core Video Repair & Recovery Engine
+* **Intelligent Auto Repair**: Automatically tests ultra-fast stream copy re-muxing first, seamlessly falling back to error-tolerant deep recovery if container structures are damaged.
+* **Deep Container Reconstruction**: Fixes missing `moov` atoms, truncated headers, corrupted index tables, and non-monotonic timestamps (`+genpts`, `+discardcorrupt`).
+* **Batch Processing Queue**: Drag-and-drop individual files or entire folders. Supports multi-job queuing with real-time ETA, frame rate, progress percentage, and taskbar integration.
+* **Explorer-Friendly Output**: Automatically injects MP4 faststart (`+faststart+use_metadata_tags`), proper stream mapping (`-map 0:v:0 -map 0:a?`), and Apple/Windows-compatible codec tags (`hvc1` for HEVC, `avc1` for H.264).
+* **Data Safety Guards**: Verified non-empty output validation (`>= 1024` bytes) before any optional source file cleanup to prevent accidental data loss.
+
+### 2. Studio Toolset & Specialized Modules
+
+| Studio / Tool | Description | Capabilities |
+| :--- | :--- | :--- |
+| ✂ **Video Trimmer** | Timeline-based multi-segment video editor | Lossless stream-copy or frame-accurate re-encode cuts, live filmstrip thumbnails, In/Out cue markers, multi-segment concat merger, and direct queue export. |
+| ⚡ **Video Toolbox** | 8-in-1 quick media converter & processor | Format conversion, audio extraction (MP3/AAC/WAV/FLAC), quick compression, speed adjustments, audio removal, video looping, reverse video, and crop/resize. |
+| 🎨 **Color Grade & Visual FX** | Real-time color correction & filters | Brightness, contrast, gamma, saturation, sharpness, vignette, hue, warmth, color balance, invert, grayscale, and sepia with live preview rendering. |
+| 🗜 **Smart Compressor** | Target size & quality-based compressor | Target file size (MB) calculator, CRF & custom bitrate control, resolution downscaling, and multi-threaded GPU encoding. |
+| ⏱ **Speed Studio** | High-precision speed controller | 0.25x slow-motion up to 10x fast-motion with automatic audio pitch preservation (`atempo`). |
+| 🎞 **GIF & WebP Animator** | High-quality animated image generator | Two-pass `palettegen` & `paletteuse` color quantization, FPS & dimension scaling, bounce/reverse loops, and custom range selection. |
+| 💧 **Watermark & Logo Studio** | Visual branding & text/image overlay | Text & PNG/JPG watermark overlays, 9-point anchor alignment, margin offsets, opacity sliders, and real-time positioning preview. |
+| 🛡 **Metadata Cleaner & GPS Stripper** | Privacy & metadata sanitization | Full container/stream metadata inspection, automatic detection of sensitive ISO6709 GPS location coordinates, and one-click total metadata stripping. |
+| 🔗 **Video Merger & Joiner** | Multi-clip concatenation | Lossless stream copy re-muxing or uniform resolution/codec re-encoding with drag-and-drop order rearrangement. |
+
+---
+
+## Hardware GPU Acceleration
+
+VideoFixPro automatically detects available GPU hardware upon launch and leverages native vendor-specific hardware acceleration:
+
+| Vendor | Video Encoder | Pixel Format |
+| :--- | :--- | :--- |
+| **NVIDIA** | `h264_nvenc`, `hevc_nvenc` | `yuv420p` |
+| **AMD** | `h264_amf`, `hevc_amf` | `yuv420p` |
+| **Intel** | `h264_qsv`, `hevc_qsv` | `nv12` / `yuv420p` |
+| **CPU Fallback** | `libx264`, `libx265` | `yuv420p` |
+
+---
+
+## Supported Input & Output Formats
+
+Works seamlessly across all modern video and audio containers:
+* **Video**: `.mp4`, `.mkv`, `.avi`, `.mov`, `.wmv`, `.flv`, `.webm`, `.m4v`, `.ts`, `.m2ts`
+* **Audio**: `.mp3`, `.wav`, `.aac`, `.m4a`, `.flac`, `.ogg`, `.wma`
+* **Animated**: `.gif`, `.webp`
+
+---
+
+## Tech Stack & Architecture
+
+* **Framework**: `.NET 8.0` (C# 12)
+* **UI Technology**: Windows Presentation Foundation (`WPF`) with Custom WindowChrome
+* **Media Engine**: `FFmpeg` (Transcoding & Filtering) and `FFprobe` (Metadata & Stream Analysis)
+* **Process Lifetime Management**: Custom `ProcessGuard` with Win32 Job Object interop for zero orphaned background processes
+* **UI Threading**: Asynchronous worker pipelines (`Task.Run`) coupled with non-blocking `Dispatcher.BeginInvoke` telemetry streaming
+
+---
 
 ## Project Structure
 
 ```text
-VideoFixPro_v3/
-├─ VideoFixPro.sln
-├─ README.md
-└─ VideoFixPro/
-   ├─ MainWindow.xaml
-   ├─ MainWindow.xaml.cs
-   ├─ TrimWindow.xaml
-   ├─ TrimWindow.xaml.cs
-   ├─ Models/
-   ├─ Assets/
-   └─ VideoFixPro.csproj
+VideoFixPro/
+├── VideoFixPro.sln                      # Visual Studio Solution
+├── README.md                            # Documentation
+├── LICENSE.txt                          # MIT License
+└── VideoFixPro/
+    ├── App.xaml / App.xaml.cs           # Application lifecycle & global theme resources
+    ├── MainWindow.xaml (.cs)            # Main dashboard & batch repair queue
+    ├── TrimWindow.xaml (.cs)            # Video Trimmer & timeline editor
+    ├── VideoToolboxWindow.xaml (.cs)    # 8-in-1 Quick Tools utility suite
+    ├── ColorGradeWindow.xaml (.cs)      # Color Grading & Visual FX studio
+    ├── CompressorWindow.xaml (.cs)      # Smart Video Compressor
+    ├── SpeedStudioWindow.xaml (.cs)     # Speed & Tempo Studio
+    ├── GifMakerWindow.xaml (.cs)        # GIF & WebP Animation Maker
+    ├── WatermarkWindow.xaml (.cs)       # Watermark & Logo Studio
+    ├── MetadataCleanerWindow.xaml (.cs) # Metadata & GPS Stripper
+    ├── VideoMergerWindow.xaml (.cs)     # Multi-video merger & joiner
+    ├── ProcessGuard.cs                  # Child process supervisor & crash resilience
+    ├── UiTextSanitizer.cs               # UI text normalization & glyph safety
+    ├── StatusColorConverter.cs          # WPF UI status binding converters
+    ├── Models/                          # Data structures (VideoJob, TrimSegment, etc.)
+    ├── Assets/                          # App icons, vectors, and branding
+    └── ffmpeg/                          # FFmpeg & FFprobe portable binaries
 ```
 
-## Requirements
+---
 
-- Windows
-- .NET 8 SDK
-- `ffmpeg.exe`
-- `ffprobe.exe`
+## Getting Started
 
-## FFmpeg Setup
+### Prerequisites
+* Windows 10 (Build 19041+) or Windows 11
+* [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) or [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
 
-VideoFixPro expects these files:
+### FFmpeg Setup
+VideoFixPro looks for `ffmpeg.exe` and `ffprobe.exe` in:
+1. `VideoFixPro\ffmpeg\ffmpeg.exe` (Application directory)
+2. `%LOCALAPPDATA%\VideoFixPro\ffmpeg\ffmpeg.exe`
 
-```text
-VideoFixPro/ffmpeg/ffmpeg.exe
-VideoFixPro/ffmpeg/ffprobe.exe
+> **Note:** If the binaries are not found on initial launch, the application provides a one-click automated download flow to fetch and configure official static builds.
+
+---
+
+## Building from Source
+
+### 1. Clone the repository
+```powershell
+git clone https://github.com/1VikashChoudhary/VideoFixPro.git
+cd VideoFixPro
 ```
 
-If they are not present, the app can prompt to download FFmpeg automatically.
-
-## Build
-
-From the repository root:
-
+### 2. Build Debug Configuration
 ```powershell
 dotnet build .\VideoFixPro.sln -c Debug
 ```
 
-For a release build:
-
+### 3. Build Optimized Release
 ```powershell
 dotnet build .\VideoFixPro.sln -c Release
 ```
 
-## Run
-
-You can run the project from Visual Studio, or from the command line:
-
+### 4. Run the Application
 ```powershell
 dotnet run --project .\VideoFixPro\VideoFixPro.csproj
 ```
 
-## How To Use
+---
 
-### Repair videos
-1. Launch the app.
-2. Drag video files or folders into the queue, or use the file picker.
-3. Choose a repair mode.
-4. Select an output format and optional output folder.
-5. Click `Fix All Videos`.
-6. Open the output folder when processing completes.
+## Trimmer Keyboard Shortcuts
 
-### Trim videos
-1. Open the trim tool from the main window.
-2. Load a video.
-3. Set `In` and `Out` points on the timeline.
-4. Choose:
-   - `Stream Copy` for speed
-   - `Re-encode` for accuracy
-5. Click `Trim Video`.
-6. Optionally add multiple segments and merge them.
+| Key | Action |
+| :--- | :--- |
+| `I` | Set In point to current playhead |
+| `O` | Set Out point to current playhead |
+| `Space` | Play / Pause preview |
+| `←` / `→` | Seek backward / forward by 1 second |
+| `Shift + ←` / `Shift + →` | Seek backward / forward by 10 seconds |
+| `Home` / `End` | Jump to start / end of media |
 
-## Trim Keyboard Shortcuts
-
-- `I` set In point
-- `O` set Out point
-- `Space` preview in player
-- `Left / Right` move by 1 second
-- `Shift + Left / Right` move by 10 seconds
-- `Home / End` jump
-
-## Output Notes
-
-- Re-encode mode prioritizes compatibility.
-- Stream copy mode prioritizes speed and avoiding quality loss.
-- Trimmed and repaired files are saved with safe unique filenames to avoid silent overwrite.
-
-## Supported Input Formats
-
-The app is currently configured to work with common video formats including:
-
-- `mp4`
-- `mkv`
-- `avi`
-- `mov`
-- `wmv`
-- `flv`
-- `webm`
-- `m4v`
-- `ts`
-- `m2ts`
-
-## Why VideoFixPro
-
-VideoFixPro is focused on being practical rather than complicated:
-- fast repair flow for normal cases
-- deeper recovery for damaged files
-- simple trim workflow without needing a full editor
-- batch processing for real-world workloads
-
-## Known Limitations
-
-- Stream copy depends on the original source streams being mux-compatible.
-- Frame-accurate cuts are best done with re-encode mode.
-- Very heavily corrupted files may still require manual FFmpeg work outside the UI.
-
-## Development Notes
-
-- Target framework: `net8.0-windows`
-- UI framework: `WPF`
-- Main app entry point: `VideoFixPro.App`
-
-## Contributing
-
-Suggestions, issue reports, and UI/feature improvements are welcome.
-
-If you contribute:
-- keep the UI responsive during long operations
-- preserve safe cancellation behavior
-- avoid silent overwrite behavior
-- prefer compatibility-first defaults for end users
+---
 
 ## License
 
-This project is licensed under the `MIT` License.
+This project is licensed under the [MIT License](LICENSE.txt).
 
-See [LICENSE.txt](/C:/Users/vikas/Downloads/VideoFixPro_v5/VideoFixPro_v3/LICENSE.txt) for details.
+---
 
-## Author
+## Author & Attribution
 
-Built by Vikash Choudhary.
+**Video Fix Pro** is built with ❤️ by **[Vikash Choudhary](https://github.com/1VikashChoudhary)**.

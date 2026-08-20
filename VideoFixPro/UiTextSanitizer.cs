@@ -77,13 +77,23 @@ internal static class UiTextSanitizer
         switch (node)
         {
             case TextBlock textBlock:
-                if (!BindingOperations.IsDataBound(textBlock, TextBlock.TextProperty))
+                if (textBlock.Inlines.Count > 0)
                 {
-                    textBlock.Text = Normalize(textBlock.Text);
+                    foreach (var inline in textBlock.Inlines)
+                    {
+                        if (inline is Run inlineRun)
+                        {
+                            inlineRun.Text = Normalize(inlineRun.Text, trim: false);
+                        }
+                    }
+                }
+                else if (!BindingOperations.IsDataBound(textBlock, TextBlock.TextProperty) && !string.IsNullOrEmpty(textBlock.Text))
+                {
+                    textBlock.Text = Normalize(textBlock.Text, trim: false);
                 }
                 break;
             case Run run:
-                run.Text = Normalize(run.Text);
+                run.Text = Normalize(run.Text, trim: false);
                 break;
             case ContentControl contentControl when contentControl is not ComboBoxItem:
                 if (contentControl.Content is string text && !BindingOperations.IsDataBound(contentControl, ContentControl.ContentProperty))
@@ -106,7 +116,7 @@ internal static class UiTextSanitizer
         }
     }
 
-    public static string Normalize(string? input)
+    public static string Normalize(string? input, bool trim = true)
     {
         if (string.IsNullOrEmpty(input))
         {
@@ -119,11 +129,6 @@ internal static class UiTextSanitizer
             output = output.Replace(from, to, StringComparison.Ordinal);
         }
 
-        while (output.Contains("  ", StringComparison.Ordinal))
-        {
-            output = output.Replace("  ", " ", StringComparison.Ordinal);
-        }
-
-        return output.Trim();
+        return trim ? output.Trim() : output;
     }
 }
