@@ -160,6 +160,9 @@ namespace VideoFixPro
         }
 
         private async void Start_Click(object sender, RoutedEventArgs e)
+        
+    {
+        try
         {
             if (string.IsNullOrWhiteSpace(_videoPath) || string.IsNullOrWhiteSpace(_outputPath)) return;
 
@@ -251,6 +254,11 @@ namespace VideoFixPro
                 }
             }
         }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Stabilizer error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {

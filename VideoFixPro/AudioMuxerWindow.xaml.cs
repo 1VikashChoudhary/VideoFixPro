@@ -479,8 +479,11 @@ public partial class AudioMuxerWindow : Window
     private async void DetectHw_Click(object sender, RoutedEventArgs e) => await DetectHardwareEncodersAsync();
 
     private async void TestEncoder_Click(object sender, RoutedEventArgs e)
+    
     {
-        var encoder = HardwareEncoderBox.SelectedItem?.ToString();
+        try
+        {
+            var encoder = HardwareEncoderBox.SelectedItem?.ToString();
         if (string.IsNullOrWhiteSpace(encoder) || encoder == "None")
         {
             MessageBox.Show(this, "No hardware encoder selected.", "Test encoder", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -502,6 +505,11 @@ public partial class AudioMuxerWindow : Window
         catch (Exception ex)
         {
             MessageBox.Show(this, $"Failed to test encoder {encoder}.\n\n{ex.Message}", "Test encoder", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Encoder test error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -763,8 +771,11 @@ public partial class AudioMuxerWindow : Window
     }
 
     private async void StartQueue_Click(object sender, RoutedEventArgs e)
+    
     {
-        if (_queueCts != null)
+        try
+        {
+            if (_queueCts != null)
         {
             return;
         }
@@ -790,6 +801,11 @@ public partial class AudioMuxerWindow : Window
             _queueCts.Dispose();
             _queueCts = null;
             _activeProcess = null;
+        }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Muxer queue error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -952,8 +968,17 @@ public partial class AudioMuxerWindow : Window
         }
     }
 
-    private async void Sample10_Click(object sender, RoutedEventArgs e) => await RunSampleEncodeAsync(10);
-    private async void Sample5_Click(object sender, RoutedEventArgs e) => await RunSampleEncodeAsync(5);
+    private async void Sample10_Click(object sender, RoutedEventArgs e)
+    {
+        try { await RunSampleEncodeAsync(10); }
+        catch (Exception ex) { MessageBox.Show("Sample encode error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
+
+    private async void Sample5_Click(object sender, RoutedEventArgs e)
+    {
+        try { await RunSampleEncodeAsync(5); }
+        catch (Exception ex) { MessageBox.Show("Sample encode error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
 
     private async Task RunSampleEncodeAsync(int seconds)
     {

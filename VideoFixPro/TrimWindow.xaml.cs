@@ -969,8 +969,11 @@ public partial class TrimWindow : Window
     //  TRIM EXECUTION
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     private async void TrimBtn_Click(object s, RoutedEventArgs e)
+    
     {
-        if (_isTrimming || string.IsNullOrEmpty(_filePath)) return;
+        try
+        {
+            if (_isTrimming || string.IsNullOrEmpty(_filePath)) return;
         if (!File.Exists(FFmpeg))
         {
             MessageBox.Show("ffmpeg.exe not found.", "FFmpeg Missing",
@@ -1010,6 +1013,11 @@ public partial class TrimWindow : Window
         {
             _isTrimming = false;
             SetTrimRunningUI(false);
+        }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Trimming error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

@@ -631,6 +631,7 @@ namespace VideoFixPro
                     ? Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(_filePath)}{suffix}.mp4")
                     : OutputDirBox.Text;
 
+                try { if (!Directory.Exists(dir)) Directory.CreateDirectory(dir); } catch { }
                 outputPath = GetUniqueFilePath(outputPath);
 
                 SetRenderingUI(true);
@@ -800,6 +801,7 @@ namespace VideoFixPro
             try
             {
                 proc.Start();
+                ProcessGuard.Watch(proc);
                 proc.BeginErrorReadLine();
                 return await tcs.Task;
             }
@@ -807,6 +809,10 @@ namespace VideoFixPro
             {
                 Log($"[CRITICAL] FFmpeg process failed to start: {ex.Message}");
                 return false;
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(proc);
             }
         }
 

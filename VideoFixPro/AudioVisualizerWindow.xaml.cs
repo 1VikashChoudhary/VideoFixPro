@@ -182,6 +182,9 @@ namespace VideoFixPro
         }
 
         private async void Generate_Click(object sender, RoutedEventArgs e)
+        
+    {
+        try
         {
             if (string.IsNullOrWhiteSpace(_audioPath) || string.IsNullOrWhiteSpace(_outputPath)) return;
 
@@ -316,6 +319,11 @@ namespace VideoFixPro
                 }
             }
         }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Visualizer error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
