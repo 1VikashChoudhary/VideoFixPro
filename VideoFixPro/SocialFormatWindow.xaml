@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Social Media Format &amp; Resize"
-        Width="1180" Height="760"
-        MinWidth="880" MinHeight="580"
+        Width="1180" Height="780"
+        MinWidth="960" MinHeight="640"
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
@@ -13,17 +13,18 @@
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
         Drop="Window_Drop"
+        KeyDown="Window_KeyDown"
         Icon="Assets/app_icon.png">
-
-    <Window.TaskbarItemInfo>
-        <TaskbarItemInfo x:Name="TaskbarProgress"/>
-    </Window.TaskbarItemInfo>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6"
                             GlassFrameThickness="0,0,0,1" CornerRadius="0"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
+
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="TaskbarProgress"/>
+    </Window.TaskbarItemInfo>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -62,28 +63,124 @@
         <!-- ══════════════════════ MAIN CONTENT ══════════════════════ -->
         <Grid Grid.Row="2" Margin="14,12,14,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" MinWidth="380"/>
+                <ColumnDefinition Width="3*" MinWidth="420"/>
                 <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="2*" MinWidth="320"/>
+                <ColumnDefinition Width="2*" MinWidth="340"/>
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT: Preview / Drop Zone -->
+            <!-- LEFT: Live Interactive Preview & Playback Controls -->
             <Grid Grid.Column="0">
-                <Border x:Name="DropZone" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Drop Zone (shown when empty) -->
+                <Border x:Name="DropZone" Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="2" CornerRadius="8" Cursor="Hand" MouseLeftButtonDown="DropZone_Click">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock Text="📱" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                        <TextBlock Text="Social Media Resizer" Foreground="{DynamicResource TextBrush}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Drop a video here to convert it for TikTok, Reels, Shorts, or Instagram"
+                        <TextBlock Text="Social Media Resizer Pro" Foreground="{DynamicResource TextBrush}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Drop a video here for live interactive aspect ratio conversion"
                                    Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                        <TextBlock Text="TikTok · Instagram Reels · YouTube Shorts · 1:1 Square"
+                                   Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,6,0,0" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border x:Name="PlayerBorder" Visibility="Collapsed" Background="Black" CornerRadius="8" ClipToBounds="True">
-                    <MediaElement x:Name="Player" LoadedBehavior="Manual" MediaEnded="Player_MediaEnded" Stretch="Uniform"/>
+
+                <!-- Live Preview Viewport Host -->
+                <Border x:Name="PreviewHost" Grid.Row="0" Visibility="Collapsed" Background="#0D1117"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="8" ClipToBounds="True" SizeChanged="PreviewHost_SizeChanged">
+                    <Grid>
+                        <!-- Centered Aspect-Ratio Constrained Canvas Frame -->
+                        <Border x:Name="CanvasFrame" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                CornerRadius="6" ClipToBounds="True" Background="Black"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <Grid>
+                                <!-- Layer 1: Solid Background Color Layer -->
+                                <Border x:Name="BgSolidLayer" Background="Black" Visibility="Collapsed"/>
+
+                                <!-- Layer 2: Dynamic Blurred Video Background Layer -->
+                                <MediaElement x:Name="BgPlayer" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                              Stretch="UniformToFill" IsMuted="True" ScrubbingEnabled="True"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <MediaElement.Effect>
+                                        <BlurEffect x:Name="BgBlurEffect" Radius="25" KernelType="Gaussian"/>
+                                    </MediaElement.Effect>
+                                </MediaElement>
+
+                                <!-- Layer 3: Main Foreground Video Layer (Sharp & Scaled) -->
+                                <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                              Stretch="Uniform" ScrubbingEnabled="True"
+                                              MediaOpened="Player_MediaOpened"
+                                              MediaEnded="Player_MediaEnded"
+                                              MediaFailed="Player_MediaFailed"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                <!-- Layer 4: Live Format Overlay Badge (Top-Left) -->
+                                <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Margin="10" Background="#B0000000" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="PreviewBadgeText" Text="⚡ LIVE PREVIEW · 9:16 (1080×1920)"
+                                               Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="Bold"/>
+                                </Border>
+
+                                <!-- Layer 5: Large Center Play/Pause Overlay Button -->
+                                <Button x:Name="PlayOverlayBtn" Width="64" Height="64"
+                                        Style="{StaticResource GhostButton}" FontSize="28" Content="▶"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Opacity="0.8" Visibility="Collapsed" Click="TogglePlay_Click"
+                                        ToolTip="Play / Pause (Space)"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Playback & Scrubbing Control Bar -->
+                <Border x:Name="SeekPanel" Grid.Row="1" Visibility="Collapsed" Margin="0,8,0,0"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="10,6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/> <!-- Play/Pause button -->
+                            <ColumnDefinition Width="*"/>    <!-- Seek slider -->
+                            <ColumnDefinition Width="Auto"/> <!-- Time display -->
+                            <ColumnDefinition Width="Auto"/> <!-- Mute button -->
+                            <ColumnDefinition Width="70"/>   <!-- Volume slider -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Play/Pause Button -->
+                        <Button x:Name="SeekPlayBtn" Content="▶" Width="36" Height="28" Padding="0" FontSize="11"
+                                Style="{StaticResource GhostButton}" Click="TogglePlay_Click"
+                                VerticalAlignment="Center" ToolTip="Play / Pause (Space)"/>
+
+                        <!-- Seek Slider -->
+                        <Slider x:Name="SeekSlider" Grid.Column="1" Margin="10,0"
+                                Minimum="0" Maximum="100" Value="0"
+                                VerticalAlignment="Center"
+                                PreviewMouseLeftButtonDown="SeekSlider_MouseDown"
+                                PreviewMouseLeftButtonUp="SeekSlider_MouseUp"
+                                ValueChanged="SeekSlider_ValueChanged"/>
+
+                        <!-- Time display -->
+                        <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00:00 / 00:00:00"
+                                   Foreground="{DynamicResource Text2Brush}" FontFamily="Consolas"
+                                   FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                        <!-- Mute / Unmute Button -->
+                        <Button x:Name="MuteBtn" Grid.Column="3" Content="🔊" Width="30" Height="28" Padding="0" FontSize="11"
+                                Style="{StaticResource GhostButton}" Click="MuteToggle_Click"
+                                VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="Mute / Unmute"/>
+
+                        <!-- Volume Slider -->
+                        <Slider x:Name="VolumeSlider" Grid.Column="4" Minimum="0" Maximum="1" Value="0.5"
+                                SmallChange="0.05" LargeChange="0.1" VerticalAlignment="Center"
+                                ValueChanged="VolumeSlider_ValueChanged" ToolTip="Preview Volume"/>
+                    </Grid>
                 </Border>
             </Grid>
 
-            <!-- RIGHT: Settings -->
+            <!-- RIGHT: Interactive Settings Panel -->
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <!-- Format Parameters -->
@@ -94,7 +191,7 @@
                             
                             <!-- Target Aspect Ratio -->
                             <TextBlock Text="Target Aspect Ratio (Platform)" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
-                            <ComboBox x:Name="RatioBox" SelectedIndex="0" Margin="0,4,0,12">
+                            <ComboBox x:Name="RatioBox" SelectedIndex="0" Margin="0,4,0,12" SelectionChanged="RatioBox_SelectionChanged">
                                 <ComboBoxItem Content="9:16 Vertical (TikTok, Reels, Shorts)"/>
                                 <ComboBoxItem Content="1:1 Square (Instagram, Facebook Feed)"/>
                                 <ComboBoxItem Content="4:5 Portrait (Instagram Feed)"/>
@@ -112,14 +209,18 @@
                             <!-- Blur Intensity -->
                             <StackPanel x:Name="BlurIntensityPanel">
                                 <TextBlock Text="Background Blur Intensity" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
-                                <Grid Margin="0,4,0,12">
+                                <Grid Margin="0,4,0,6">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="35"/>
+                                        <ColumnDefinition Width="40"/>
                                     </Grid.ColumnDefinitions>
-                                    <Slider x:Name="BlurSlider" Minimum="5" Maximum="50" Value="25" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding ElementName=BlurSlider, Path=Value}" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <Slider x:Name="BlurSlider" Minimum="5" Maximum="50" Value="25" TickFrequency="1"
+                                            IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                            ValueChanged="BlurSlider_ValueChanged"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding ElementName=BlurSlider, Path=Value, StringFormat='{}{0}px'}"
+                                               Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                 </Grid>
+                                <TextBlock Text="Adjust blur intensity in real-time preview" Foreground="{DynamicResource MutedBrush}" FontSize="10.5"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>

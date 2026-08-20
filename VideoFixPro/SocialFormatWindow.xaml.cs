@@ -2,10 +2,12 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shell;
@@ -20,14 +22,33 @@ namespace VideoFixPro
 
         private string? _filePath;
         private double _durationSeconds;
+        private int _sourceWidth;
+        private int _sourceHeight;
         private string? _customOutputDir;
         private bool _isRendering;
         private CancellationTokenSource? _cts;
         private Process? _ffmpegProcess;
 
-        // Uses standard app directory logic for FFmpeg
-        private string FFmpeg => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
-        private string FFprobe => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffprobe.exe");
+        // Player & Live Preview
+        private readonly System.Windows.Threading.DispatcherTimer _playheadTimer = new();
+        private bool _isPlayerPlaying;
+        private bool _isSeeking;
+        private bool _isMuted;
+        
+
+        private static string AppDir => AppDomain.CurrentDomain.BaseDirectory;
+        private static string FFmpeg => GetBinPath("ffmpeg.exe");
+        private static string FFprobe => GetBinPath("ffprobe.exe");
+
+        private static string GetBinPath(string name)
+        {
+            var appBin = Path.Combine(AppDir, "ffmpeg", name);
+            if (File.Exists(appBin)) return appBin;
+            var localBin = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VideoFixPro", "ffmpeg", name);
+            return File.Exists(localBin) ? localBin : Path.Combine(AppDir, name);
+        }
 
         public SocialFormatWindow(bool hasNvidia, bool hasAmd, bool hasIntel)
         {
@@ -35,9 +56,16 @@ namespace VideoFixPro
             _hasNvidia = hasNvidia;
             _hasAmd = hasAmd;
             _hasIntel = hasIntel;
+
+            GpuCheck.IsChecked = _hasNvidia || _hasAmd || _hasIntel;
+
+            _playheadTimer.Interval = TimeSpan.FromMilliseconds(40);
+            _playheadTimer.Tick += PlayheadTimer_Tick;
         }
 
-        // --- Custom Title Bar Interactions ---
+        // ─────────────────────────────────────────────────────────────
+        //  TITLE BAR & WINDOW CONTROLS
+        // ─────────────────────────────────────────────────────────────
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
@@ -53,19 +81,30 @@ namespace VideoFixPro
                 _cts?.Cancel();
                 try { _ffmpegProcess?.Kill(); } catch { }
             }
+            _playheadTimer.Stop();
+            try { Player.Source = null; BgPlayer.Source = null; } catch { }
             Close();
         }
         private void MaxBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
-        // --- UI Events ---
-        private void BgModeBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (BlurIntensityPanel == null) return;
-            BlurIntensityPanel.Visibility = BgModeBox.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (e.Key == Key.Space && !IsKeyboardFocusedOnInput())
+            {
+                e.Handled = true;
+                TogglePlay_Click(sender, e);
+            }
         }
 
-        // --- Drag & Drop ---
+        private bool IsKeyboardFocusedOnInput()
+        {
+            return Keyboard.FocusedElement is TextBox or ComboBox;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  DRAG & DROP / FILE LOADING
+        // ─────────────────────────────────────────────────────────────
         private void Window_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effects = DragDropEffects.Copy;
@@ -92,9 +131,10 @@ namespace VideoFixPro
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error dropping file: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error loading dropped file: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private async void DropZone_Click(object sender, MouseButtonEventArgs e)
         {
             try
@@ -119,20 +159,26 @@ namespace VideoFixPro
             _filePath = path;
             TitleFileName.Text = Path.GetFileName(path);
             DropZone.Visibility = Visibility.Collapsed;
-            PlayerBorder.Visibility = Visibility.Visible;
-            Player.Source = new Uri(path);
-            Player.Volume = 0; // Mute the background preview loop
+            PreviewHost.Visibility = Visibility.Visible;
+            SeekPanel.Visibility = Visibility.Visible;
+
+            var uri = new Uri(path);
+            Player.Source = uri;
+            BgPlayer.Source = uri;
+            Player.Volume = VolumeSlider.Value;
+            BgPlayer.IsMuted = true;
+
+            // Start loading & decoding
             Player.Play();
+            BgPlayer.Play();
+            _isPlayerPlaying = true;
+
             StartBtn.IsEnabled = true;
 
             await ProbeVideoAsync(path);
+            UpdateCanvasLayout();
+            UpdateBackgroundMode();
             SetStatus($"Loaded: {Path.GetFileName(path)}", "#3FB950");
-        }
-
-        private void Player_MediaEnded(object sender, RoutedEventArgs e)
-        {
-            Player.Position = TimeSpan.Zero;
-            Player.Play();
         }
 
         private async Task ProbeVideoAsync(string path)
@@ -143,7 +189,7 @@ namespace VideoFixPro
                 var psi = new ProcessStartInfo
                 {
                     FileName = FFprobe,
-                    Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{path}\"",
+                    Arguments = $"-v quiet -print_format json -show_streams -show_format \"{path}\"",
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true
@@ -153,16 +199,297 @@ namespace VideoFixPro
                 string output = await proc.StandardOutput.ReadToEndAsync();
                 await proc.WaitForExitAsync();
 
-                if (double.TryParse(output.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double dur))
+                var root = JsonNode.Parse(output);
+                if (root?["format"]?["duration"]?.GetValue<string>() is string durStr &&
+                    double.TryParse(durStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double dur))
                 {
                     _durationSeconds = dur;
-                    Log($"[PROBE] Duration: {_durationSeconds:F2} seconds");
+                    SeekSlider.Maximum = dur;
+                }
+
+                var streams = root?["streams"]?.AsArray();
+                if (streams != null)
+                {
+                    foreach (var stream in streams)
+                    {
+                        if (stream?["codec_type"]?.GetValue<string>() == "video")
+                        {
+                            _sourceWidth = stream?["width"]?.GetValue<int>() ?? 0;
+                            _sourceHeight = stream?["height"]?.GetValue<int>() ?? 0;
+                            break;
+                        }
+                    }
+                }
+                Log($"[PROBE] Duration: {_durationSeconds:F2}s | Source: {_sourceWidth}x{_sourceHeight}");
+            }
+            catch (Exception ex)
+            {
+                Log($"[WARN] Probe info: {ex.Message}");
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  LIVE INTERACTIVE CANVAS & REAL-TIME PREVIEW
+        // ─────────────────────────────────────────────────────────────
+        private void PreviewHost_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateCanvasLayout();
+        }
+
+        private void RatioBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateCanvasLayout();
+        }
+
+        private void UpdateCanvasLayout()
+        {
+            if (PreviewHost == null || CanvasFrame == null || PreviewBadgeText == null) return;
+
+            double containerW = PreviewHost.ActualWidth;
+            double containerH = PreviewHost.ActualHeight;
+            if (containerW <= 20 || containerH <= 20) return;
+
+            double availW = containerW - 24;
+            double availH = containerH - 24;
+
+            // Target Ratios: 0: 9:16 (0.5625), 1: 1:1 (1.0), 2: 4:5 (0.8), 3: 16:9 (1.7778)
+            double targetRatio = 9.0 / 16.0;
+            string ratioLabel = "9:16 (1080×1920)";
+
+            switch (RatioBox?.SelectedIndex ?? 0)
+            {
+                case 0: targetRatio = 9.0 / 16.0; ratioLabel = "9:16 (1080×1920)"; break;
+                case 1: targetRatio = 1.0 / 1.0;  ratioLabel = "1:1 (1080×1080)"; break;
+                case 2: targetRatio = 4.0 / 5.0;  ratioLabel = "4:5 (1080×1350)"; break;
+                case 3: targetRatio = 16.0 / 9.0; ratioLabel = "16:9 (1920×1080)"; break;
+            }
+
+            PreviewBadgeText.Text = $"⚡ LIVE PREVIEW · {ratioLabel}";
+
+            double frameW, frameH;
+            if (availW / availH > targetRatio)
+            {
+                frameH = availH;
+                frameW = availH * targetRatio;
+            }
+            else
+            {
+                frameW = availW;
+                frameH = availW / targetRatio;
+            }
+
+            CanvasFrame.Width = Math.Max(40, frameW);
+            CanvasFrame.Height = Math.Max(40, frameH);
+        }
+
+        private void BgModeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateBackgroundMode();
+        }
+
+        private void UpdateBackgroundMode()
+        {
+            if (BgModeBox == null || BgSolidLayer == null || BgPlayer == null || BlurIntensityPanel == null) return;
+
+            if (BgModeBox.SelectedIndex == 0) // Dynamic Blurred Video
+            {
+                BgPlayer.Visibility = Visibility.Visible;
+                BgSolidLayer.Visibility = Visibility.Collapsed;
+                BlurIntensityPanel.Visibility = Visibility.Visible;
+                if (BgBlurEffect != null && BlurSlider != null)
+                    BgBlurEffect.Radius = BlurSlider.Value;
+            }
+            else if (BgModeBox.SelectedIndex == 1) // Solid Black
+            {
+                BgPlayer.Visibility = Visibility.Collapsed;
+                BgSolidLayer.Visibility = Visibility.Visible;
+                BgSolidLayer.Background = Brushes.Black;
+                BlurIntensityPanel.Visibility = Visibility.Collapsed;
+            }
+            else // Solid White
+            {
+                BgPlayer.Visibility = Visibility.Collapsed;
+                BgSolidLayer.Visibility = Visibility.Visible;
+                BgSolidLayer.Background = Brushes.White;
+                BlurIntensityPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void BlurSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (BgBlurEffect != null && BlurSlider != null)
+            {
+                BgBlurEffect.Radius = BlurSlider.Value;
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  PLAYBACK & SCRUBBING CONTROLS
+        // ─────────────────────────────────────────────────────────────
+        private void Player_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Pause upon loading first frame so user sees clean preview
+                Player.Pause();
+                BgPlayer.Pause();
+                _isPlayerPlaying = false;
+                _playheadTimer.Stop();
+                UpdatePlayPauseUI();
+            }
+            catch { }
+        }
+
+        private void Player_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Player.Position = TimeSpan.Zero;
+                BgPlayer.Position = TimeSpan.Zero;
+                Player.Pause();
+                BgPlayer.Pause();
+                _isPlayerPlaying = false;
+                _playheadTimer.Stop();
+                UpdatePlayPauseUI();
+            }
+            catch { }
+        }
+
+        private void Player_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
+        {
+            Log($"[WARN] Video preview rendering warning: {e.ErrorException.Message}");
+        }
+
+        private void TogglePlay_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_filePath)) return;
+
+            if (_isPlayerPlaying)
+            {
+                try
+                {
+                    Player.Pause();
+                    BgPlayer.Pause();
+                }
+                catch { }
+                _isPlayerPlaying = false;
+                _playheadTimer.Stop();
+            }
+            else
+            {
+                try
+                {
+                    if (_durationSeconds > 0 && Player.Position.TotalSeconds >= _durationSeconds - 0.1)
+                    {
+                        Player.Position = TimeSpan.Zero;
+                        BgPlayer.Position = TimeSpan.Zero;
+                    }
+                    Player.Play();
+                    if (BgPlayer.Visibility == Visibility.Visible)
+                        BgPlayer.Play();
+                }
+                catch { }
+                _isPlayerPlaying = true;
+                _playheadTimer.Start();
+            }
+            UpdatePlayPauseUI();
+        }
+
+        private void UpdatePlayPauseUI()
+        {
+            if (SeekPlayBtn != null)
+                SeekPlayBtn.Content = _isPlayerPlaying ? "❚❚" : "▶";
+
+            if (PlayOverlayBtn != null)
+                PlayOverlayBtn.Visibility = _isPlayerPlaying ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void PlayheadTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_isSeeking || Player == null) return;
+            try
+            {
+                double pos = Player.Position.TotalSeconds;
+                SeekSlider.Value = pos;
+                SeekTimeText.Text = $"{FormatTime(pos)} / {FormatTime(_durationSeconds)}";
+
+                // Keep background player tightly synced
+                if (BgPlayer != null && BgPlayer.Visibility == Visibility.Visible)
+                {
+                    double bgPos = BgPlayer.Position.TotalSeconds;
+                    if (Math.Abs(bgPos - pos) > 0.15)
+                    {
+                        BgPlayer.Position = Player.Position;
+                    }
                 }
             }
             catch { }
         }
 
-        // --- Output Selection ---
+        private void SeekSlider_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _isSeeking = true;
+        }
+
+        private void SeekSlider_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _isSeeking = false;
+            SeekTo(SeekSlider.Value);
+        }
+
+        private void SeekSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isSeeking)
+            {
+                SeekTo(SeekSlider.Value);
+                SeekTimeText.Text = $"{FormatTime(SeekSlider.Value)} / {FormatTime(_durationSeconds)}";
+            }
+        }
+
+        private void SeekTo(double seconds)
+        {
+            try
+            {
+                var ts = TimeSpan.FromSeconds(seconds);
+                Player.Position = ts;
+                BgPlayer.Position = ts;
+            }
+            catch { }
+        }
+
+        private void MuteToggle_Click(object sender, RoutedEventArgs e)
+        {
+            _isMuted = !_isMuted;
+            Player.IsMuted = _isMuted;
+            MuteBtn.Content = _isMuted ? "🔇" : "🔊";
+        }
+
+        private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (Player != null)
+            {
+                Player.Volume = VolumeSlider.Value;
+                if (Player.Volume > 0 && _isMuted)
+                {
+                    _isMuted = false;
+                    Player.IsMuted = false;
+                    if (MuteBtn != null) MuteBtn.Content = "🔊";
+                }
+            }
+        }
+
+        private static string FormatTime(double seconds)
+        {
+            if (double.IsNaN(seconds) || seconds < 0) seconds = 0;
+            var ts = TimeSpan.FromSeconds(seconds);
+            return ts.Hours > 0
+                ? $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}"
+                : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  OUTPUT DIRECTORY SELECTION
+        // ─────────────────────────────────────────────────────────────
         private void BrowseOutput_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.SaveFileDialog
@@ -176,6 +503,7 @@ namespace VideoFixPro
                 OutputDirBox.Text = dlg.FileName;
             }
         }
+
         private void ResetOutput_Click(object sender, RoutedEventArgs e)
         {
             _customOutputDir = null;
@@ -197,38 +525,42 @@ namespace VideoFixPro
             return filePath;
         }
 
-        // --- Processing Logic ---
+        // ─────────────────────────────────────────────────────────────
+        //  FFMPEG RENDERING ENGINE
+        // ─────────────────────────────────────────────────────────────
         private async void Start_Click(object sender, RoutedEventArgs e)
         {
             if (_isRendering || string.IsNullOrEmpty(_filePath)) return;
 
             try
             {
+                // Pause preview during rendering
+                try { Player.Pause(); BgPlayer.Pause(); _isPlayerPlaying = false; _playheadTimer.Stop(); UpdatePlayPauseUI(); } catch { }
+
                 _isRendering = true;
                 _cts?.Dispose();
                 _cts = new CancellationTokenSource();
 
                 string dir = _customOutputDir ?? Path.GetDirectoryName(_filePath) ?? ".";
-                string ext = Path.GetExtension(_filePath);
                 string suffix = RatioBox.SelectedIndex switch
                 {
-                    0 => "_9x16",
-                    1 => "_1x1",
-                    2 => "_4x5",
-                    3 => "_16x9",
+                    0 => "_9x16_reel",
+                    1 => "_1x1_square",
+                    2 => "_4x5_portrait",
+                    3 => "_16x9_landscape",
                     _ => "_social"
                 };
                 string outputPath = OutputDirBox.Text == "Same as source file"
                     ? Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(_filePath)}{suffix}.mp4")
                     : OutputDirBox.Text;
-                
+
                 outputPath = GetUniqueFilePath(outputPath);
 
                 SetRenderingUI(true);
                 SetStatus("Rendering video for social media...", "#388BFD");
                 Log($"\n[FORMATTER] Input: {Path.GetFileName(_filePath)}");
 
-                // Determine Target Size
+                // Determine Target Dimensions
                 int outW = 1080, outH = 1920;
                 switch (RatioBox.SelectedIndex)
                 {
@@ -248,10 +580,10 @@ namespace VideoFixPro
                 else // Solid Color Background
                 {
                     string color = BgModeBox.SelectedIndex == 1 ? "black" : "white";
-                    filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; color=c={color}:s={outW}x{outH}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2[outv]";
+                    filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; color=c={color}:s={outW}x{outH}:d={_durationSeconds.ToString(CultureInfo.InvariantCulture)}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]";
                 }
 
-                // Codec Args
+                // Codec Options
                 bool useGpu = GpuCheck.IsChecked == true;
                 bool isAv1 = Av1Check.IsChecked == true;
                 string vCodecArgs;
@@ -271,7 +603,7 @@ namespace VideoFixPro
                 }
 
                 string args = $"-y -i \"{_filePath}\" -filter_complex \"{filter}\" -map \"[outv]\" -map 0:a? {vCodecArgs} -c:a aac -b:a 192k \"{outputPath}\"";
-                
+
                 Log($"[CMD] ffmpeg {args}");
                 bool success = await RunFFmpegAsync(args, _durationSeconds, _cts.Token);
 
@@ -297,6 +629,7 @@ namespace VideoFixPro
                     var fi = new FileInfo(outputPath);
                     SetRenderProgress(100);
                     SetStatus($"Done! Output: {fi.Length / (1024.0 * 1024.0):F1} MB", "#3FB950");
+                    Log($"[SUCCESS] Saved to: {outputPath}");
                 }
                 else
                 {
@@ -308,7 +641,7 @@ namespace VideoFixPro
                 _isRendering = false;
                 SetRenderingUI(false);
                 SetStatus("Error occurred", "#F85149");
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("An error occurred during formatting: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -379,7 +712,9 @@ namespace VideoFixPro
             }
         }
 
-        // --- Helpers ---
+        // ─────────────────────────────────────────────────────────────
+        //  HELPERS
+        // ─────────────────────────────────────────────────────────────
         private void Log(string message)
         {
             LogBox.AppendText(message + Environment.NewLine);
@@ -425,6 +760,4 @@ namespace VideoFixPro
         }
     }
 }
-
-
 
