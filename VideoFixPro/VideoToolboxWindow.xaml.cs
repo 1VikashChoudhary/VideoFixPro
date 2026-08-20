@@ -127,8 +127,8 @@ public partial class VideoToolboxWindow : Window
             bool qsvCompiled   = encoders.Contains("h264_qsv");
 
             // Hardware functional tests
-            _hasAmd    = amfCompiled && await TestHardwareEncoderAsync("h264_amf");
             _hasNvidia = nvencCompiled && await TestHardwareEncoderAsync("h264_nvenc");
+            _hasAmd    = amfCompiled && await TestHardwareEncoderAsync("h264_amf");
             _hasIntel  = qsvCompiled && await TestHardwareEncoderAsync("h264_qsv");
 
             if (!Dispatcher.HasShutdownStarted)
@@ -137,15 +137,15 @@ public partial class VideoToolboxWindow : Window
                 {
                     if (GpuCheck != null)
                     {
-                        if (_hasAmd)
+                        if (_hasNvidia)
                         {
-                            GpuCheck.Content = "GPU (AMD AMF)";
+                            GpuCheck.Content = "GPU (Nvidia NVENC)";
                             GpuCheck.IsEnabled = true;
                             GpuCheck.IsChecked = true;
                         }
-                        else if (_hasNvidia)
+                        else if (_hasAmd)
                         {
-                            GpuCheck.Content = "GPU (Nvidia NVENC)";
+                            GpuCheck.Content = "GPU (AMD AMF)";
                             GpuCheck.IsEnabled = true;
                             GpuCheck.IsChecked = true;
                         }
@@ -172,17 +172,26 @@ public partial class VideoToolboxWindow : Window
     {
         try
         {
+            string pixFmt = encoder == "h264_qsv" ? "-pix_fmt nv12" : "-pix_fmt yuv420p";
             var psi = new ProcessStartInfo
             {
                 FileName = FFmpeg,
-                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 -c:v {encoder} -f null -",
+                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 {pixFmt} -c:v {encoder} -f null -",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
             using var p = Process.Start(psi);
             if (p == null) return false;
-            await p.WaitForExitAsync();
-            return p.ExitCode == 0;
+            ProcessGuard.Watch(p);
+            try
+            {
+                await p.WaitForExitAsync();
+                return p.ExitCode == 0;
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(p);
+            }
         }
         catch { return false; }
     }

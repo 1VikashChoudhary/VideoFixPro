@@ -882,12 +882,10 @@ public partial class MainWindow : Window
                 AppendExplorerFriendlyContainerFlags(sb, output, videoCodec);
                 break;
             case RepairMode.ReEncode:
-                if (useGpu && hasAmd)
-                {
-                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
-                }
-                else if (useGpu && hasNvidia)
+                if (useGpu && hasNvidia)
                     sb.Append($"-c:v h264_nvenc -preset fast -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                else if (useGpu && hasAmd)
+                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasIntel)
                     sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
@@ -895,12 +893,10 @@ public partial class MainWindow : Window
                 break;
             case RepairMode.DeepRecover:
                 sb.Append("-fflags +discardcorrupt ");
-                if (useGpu && hasAmd)
-                {
-                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
-                }
-                else if (useGpu && hasNvidia)
+                if (useGpu && hasNvidia)
                     sb.Append($"-c:v h264_nvenc -preset slow -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                else if (useGpu && hasAmd)
+                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasIntel)
                     sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
@@ -1487,7 +1483,7 @@ public partial class MainWindow : Window
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    var gpuType = _hasAmd ? "AMD AMF" : (_hasNvidia ? "Nvidia NVENC" : "Intel QuickSync");
+                    var gpuType = _hasNvidia ? "Nvidia NVENC" : (_hasAmd ? "AMD AMF" : "Intel QuickSync");
                     Log($"[INFO] GPU Acceleration active: {gpuType}");
                 }
                 else
@@ -1505,17 +1501,26 @@ public partial class MainWindow : Window
     {
         try
         {
+            string pixFmt = encoder == "h264_qsv" ? "-pix_fmt nv12" : "-pix_fmt yuv420p";
             var psi = new ProcessStartInfo
             {
                 FileName = FFmpeg,
-                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 -c:v {encoder} -f null -",
+                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 {pixFmt} -c:v {encoder} -f null -",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
             using var p = Process.Start(psi);
             if (p == null) return false;
-            await p.WaitForExitAsync();
-            return p.ExitCode == 0;
+            ProcessGuard.Watch(p);
+            try
+            {
+                await p.WaitForExitAsync();
+                return p.ExitCode == 0;
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(p);
+            }
         }
         catch { return false; }
     }

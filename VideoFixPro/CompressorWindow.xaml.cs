@@ -89,8 +89,8 @@ public partial class CompressorWindow : Window
         {
             if (File.Exists(FFmpeg))
             {
-                if (await TestHardwareEncoderAsync("h264_amf")) _hasAmd = true;
                 if (await TestHardwareEncoderAsync("h264_nvenc")) _hasNvidia = true;
+                if (await TestHardwareEncoderAsync("h264_amf")) _hasAmd = true;
                 if (await TestHardwareEncoderAsync("h264_qsv")) _hasIntel = true;
             }
         }
@@ -114,18 +114,27 @@ public partial class CompressorWindow : Window
     {
         try
         {
+            string pixFmt = encoder == "h264_qsv" ? "-pix_fmt nv12" : "-pix_fmt yuv420p";
             var psi = new ProcessStartInfo
             {
                 FileName = FFmpeg,
-                Arguments = $"-f lavfi -i nullsrc=s=320x240:d=0.04 -c:v {encoder} -f null -",
+                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 {pixFmt} -c:v {encoder} -f null -",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardError = true
             };
             using var proc = Process.Start(psi);
             if (proc == null) return false;
-            await proc.WaitForExitAsync();
-            return proc.ExitCode == 0;
+            ProcessGuard.Watch(proc);
+            try
+            {
+                await proc.WaitForExitAsync();
+                return proc.ExitCode == 0;
+            }
+            finally
+            {
+                ProcessGuard.Unwatch(proc);
+            }
         }
         catch { return false; }
     }
