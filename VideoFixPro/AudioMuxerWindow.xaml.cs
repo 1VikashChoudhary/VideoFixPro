@@ -958,7 +958,6 @@ public partial class AudioMuxerWindow : Window
                 RedirectStandardError = true,
                 CreateNoWindow = true
             };
-        InjectNvCudaPath(psi);
             foreach (var arg in command.Skip(1))
             {
                 psi.ArgumentList.Add(arg);
@@ -1218,6 +1217,11 @@ public partial class AudioMuxerWindow : Window
             RedirectStandardError = true,
             CreateNoWindow = true
         };
+        if (command.Contains("nvenc") || command.Contains("h264_nvenc") || command.Contains("hevc_nvenc"))
+        {
+            InjectNvCudaPath(psi);
+        }
+        
         foreach (var arg in command.Skip(1))
         {
             psi.ArgumentList.Add(arg);
@@ -1485,17 +1489,17 @@ public partial class AudioMuxerWindow : Window
     {
         try
         {
-            using var proc = new Process
+            var psi = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = FfmpegPath,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
+                FileName = FfmpegPath,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
             };
+            if (encoder.Contains("nvenc")) InjectNvCudaPath(psi);
+
+            using var proc = new Process { StartInfo = psi };
             foreach (var arg in new[]
             {
                 "-hide_banner", "-f", "lavfi", "-i", "color=c=black:s=128x128:r=1", "-frames:v", "1", "-an", "-c:v", encoder, "-f", "null", "-"
