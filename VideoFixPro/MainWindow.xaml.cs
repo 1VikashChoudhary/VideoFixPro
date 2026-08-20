@@ -1526,8 +1526,21 @@ public partial class MainWindow : Window
                     if (gpuHardware.HasNvidia && !nvTest.Success)
                     {
                         Log($"[INFO] GPU Acceleration active: Intel QuickSync");
-                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable (nvcuda.dll missing).");
-                        Log("[WARN] → Install full NVIDIA GeForce driver from nvidia.com/drivers (Custom → select CUDA). Current NVIDIA driver lacks CUDA/NVENC runtime.");
+                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable.");
+                        
+                        if (nvTest.Error.Contains("minimum required Nvidia driver"))
+                        {
+                            Log($"[WARN] FFmpeg says: {nvTest.Error}");
+                            Log("[WARN] → Your NVIDIA driver is too old for this FFmpeg version. Please update your NVIDIA driver if a newer version is available.");
+                        }
+                        else if (nvTest.Error.Contains("nvcuda"))
+                        {
+                            Log("[WARN] → nvcuda.dll is missing. Install the full NVIDIA GeForce driver (Custom → select CUDA).");
+                        }
+                        else
+                        {
+                            Log($"[WARN] FFmpeg Error: {nvTest.Error}");
+                        }
                     }
                     else
                     {
@@ -1542,8 +1555,13 @@ public partial class MainWindow : Window
                     // Check if hardware exists but all encoders failed
                     if (gpuHardware.HasNvidia)
                     {
-                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable (nvcuda.dll missing).");
-                        Log("[WARN] → Install full NVIDIA GeForce driver from nvidia.com/drivers (Custom → select CUDA).");
+                        Log($"[WARN] NVIDIA GPU ({gpuHardware.NvidiaName}) detected but NVENC unavailable.");
+                        if (nvTest.Error.Contains("minimum required Nvidia driver"))
+                            Log($"[WARN] → Your driver is too old for this FFmpeg version. FFmpeg says: {nvTest.Error}");
+                        else if (nvTest.Error.Contains("nvcuda"))
+                            Log("[WARN] → nvcuda.dll is missing. Install full NVIDIA driver (Custom → select CUDA).");
+                        else
+                            Log($"[WARN] FFmpeg Error: {nvTest.Error}");
                     }
                     if (gpuHardware.HasAmd)
                     {
