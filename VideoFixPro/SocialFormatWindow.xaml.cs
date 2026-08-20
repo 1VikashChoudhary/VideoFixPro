@@ -121,8 +121,8 @@ namespace VideoFixPro
             DropZone.Visibility = Visibility.Collapsed;
             PlayerBorder.Visibility = Visibility.Visible;
             Player.Source = new Uri(path);
+            Player.Volume = 0; // Mute the background preview loop
             Player.Play();
-            Player.Pause();
             StartBtn.IsEnabled = true;
 
             await ProbeVideoAsync(path);
@@ -425,4 +425,6 @@ namespace VideoFixPro
         }
     }
 }
+
+
 
