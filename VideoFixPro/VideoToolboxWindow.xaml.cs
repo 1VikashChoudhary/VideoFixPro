@@ -1688,13 +1688,13 @@ public partial class VideoToolboxWindow : Window
             {
                 sb.Append($"-c:v libvpx-vp9 -b:v 0 -crf {crf} -pix_fmt yuv420p ");
             }
-            else if (useGpu && _hasAmd)
-            {
-                sb.Append($"-c:v h264_amf -rc cqp -qp_i {crf} -qp_p {crf} -pix_fmt yuv420p ");
-            }
             else if (useGpu && _hasNvidia)
             {
                 sb.Append($"-c:v h264_nvenc -preset fast -rc vbr -cq {crf} -b:v 0 -pix_fmt yuv420p ");
+            }
+            else if (useGpu && _hasAmd)
+            {
+                sb.Append($"-c:v h264_amf -rc cqp -qp_i {crf} -qp_p {crf} -pix_fmt yuv420p ");
             }
             else if (useGpu && _hasIntel)
             {

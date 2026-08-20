@@ -629,8 +629,8 @@ public partial class CompressorWindow : Window
         else
         {
             // 1-Pass Mode (with GPU acceleration if enabled)
-            string vCodecArgs = useGpu && _hasAmd ? $"-c:v h264_amf -b:v {videoKbps}k -pix_fmt yuv420p" :
-                                useGpu && _hasNvidia ? $"-c:v h264_nvenc -b:v {videoKbps}k -pix_fmt yuv420p" :
+            string vCodecArgs = useGpu && _hasNvidia ? $"-c:v h264_nvenc -b:v {videoKbps}k -pix_fmt yuv420p" :
+                                useGpu && _hasAmd ? $"-c:v h264_amf -b:v {videoKbps}k -pix_fmt yuv420p" :
                                 useGpu && _hasIntel ? $"-c:v h264_qsv -b:v {videoKbps}k -pix_fmt nv12" :
                                 $"-c:v libx264 -preset fast -b:v {videoKbps}k -pix_fmt yuv420p";
 
