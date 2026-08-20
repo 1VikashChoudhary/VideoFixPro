@@ -796,8 +796,8 @@ public partial class WatermarkWindow : Window
         string filterComplex = $"[1:v]format=rgba,colorchannelmixer=aa={alphaStr},scale={targetLogoWidth}:-2{rotFilter}[wm];[0:v][wm]overlay={overlayPos}:format=auto[outv]";
 
         bool useGpu = (GpuCheck.IsChecked == true) && (_hasNvidia || _hasAmd || _hasIntel);
-        string vCodecArgs = useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
-                            useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
+        string vCodecArgs =                             useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
+useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
                             useGpu && _hasIntel ? "-c:v h264_qsv -pix_fmt nv12" :
                             "-c:v libx264 -preset fast -crf 19 -pix_fmt yuv420p";
 
@@ -839,6 +839,59 @@ public partial class WatermarkWindow : Window
         }
     }
 
+    private static string? _nvCudaDir;
+    private static bool _nvCudaDirSearched;
+
+    private static string? FindNvCudaDir()
+    {
+        if (_nvCudaDirSearched) return _nvCudaDir;
+        _nvCudaDirSearched = true;
+        try
+        {
+            var sys32 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
+            if (System.IO.File.Exists(sys32)) { _nvCudaDir = System.IO.Path.GetDirectoryName(sys32); return _nvCudaDir; }
+
+            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
+            if (!string.IsNullOrEmpty(cudaPath))
+            {
+                var cudaBin = System.IO.Path.Combine(cudaPath, "bin", "nvcuda.dll");
+                if (System.IO.File.Exists(cudaBin)) { _nvCudaDir = System.IO.Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
+            }
+
+            var driverStore = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                                           "System32", "DriverStore", "FileRepository");
+            if (System.IO.Directory.Exists(driverStore))
+            {
+                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
+                    foreach (var dir in System.IO.Directory.GetDirectories(driverStore, pattern, System.IO.SearchOption.TopDirectoryOnly))
+                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
+                            if (System.IO.File.Exists(System.IO.Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
+            }
+
+            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
+            {
+                var nvDir = System.IO.Path.Combine(pf, "NVIDIA Corporation");
+                if (System.IO.Directory.Exists(nvDir))
+                    try { foreach (var f in System.IO.Directory.GetFiles(nvDir, "nvcuda*.dll", System.IO.SearchOption.AllDirectories))
+                        { _nvCudaDir = System.IO.Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static void InjectNvCudaPath(System.Diagnostics.ProcessStartInfo psi)
+    {
+        var nvDir = FindNvCudaDir();
+        if (nvDir != null)
+        {
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+            psi.Environment["PATH"] = nvDir + ";" + currentPath;
+        }
+    }
+
+
     private async Task<bool> RunFFmpegAsync(string args, double totalDuration, CancellationToken token)
     {
         var psi = new ProcessStartInfo
@@ -850,6 +903,7 @@ public partial class WatermarkWindow : Window
             RedirectStandardError = true,
             RedirectStandardOutput = false
         };
+        if (_hasNvidia) InjectNvCudaPath(psi);
 
         var tcs = new TaskCompletionSource<bool>();
         var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
