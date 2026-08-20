@@ -757,6 +757,17 @@ public partial class MainWindow : Window
             CreateNoWindow         = true
         };
 
+        // Inject NVIDIA CUDA path so FFmpeg can find nvcuda.dll for NVENC
+        if (_hasNvidia)
+        {
+            var nvDir = FindNvCudaDir();
+            if (nvDir != null)
+            {
+                var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+                psi.Environment["PATH"] = nvDir + ";" + currentPath;
+            }
+        }
+
         _ffmpegProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
         var stderrBuffer = new StringBuilder();
@@ -1599,6 +1610,81 @@ public partial class MainWindow : Window
 
     private record EncoderTestResult(bool Success, string Error);
 
+    private static string? _nvCudaDir; // cached NVIDIA CUDA directory
+    private static bool _nvCudaDirSearched;
+
+    /// <summary>
+    /// Searches for nvcuda.dll (or nvcuda64.dll) in all known NVIDIA locations.
+    /// Returns the directory containing the DLL, or null if not found.
+    /// </summary>
+    private static string? FindNvCudaDir()
+    {
+        if (_nvCudaDirSearched) return _nvCudaDir;
+        _nvCudaDirSearched = true;
+
+        try
+        {
+            // 1. Check System32 (standard location)
+            var sys32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
+            if (File.Exists(sys32)) { _nvCudaDir = Path.GetDirectoryName(sys32); return _nvCudaDir; }
+
+            // 2. Check CUDA Toolkit installation
+            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
+            if (!string.IsNullOrEmpty(cudaPath))
+            {
+                var cudaBin = Path.Combine(cudaPath, "bin", "nvcuda.dll");
+                if (File.Exists(cudaBin)) { _nvCudaDir = Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
+            }
+
+            // 3. Search DriverStore for nvcuda64.dll / nvcuda.dll (newer NVIDIA App installations)
+            var driverStore = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                                           "System32", "DriverStore", "FileRepository");
+            if (Directory.Exists(driverStore))
+            {
+                foreach (var dir in Directory.GetDirectories(driverStore, "nv_disp*", SearchOption.TopDirectoryOnly))
+                {
+                    var candidate = Path.Combine(dir, "nvcuda64.dll");
+                    if (File.Exists(candidate)) { _nvCudaDir = dir; return _nvCudaDir; }
+                    candidate = Path.Combine(dir, "nvcuda.dll");
+                    if (File.Exists(candidate)) { _nvCudaDir = dir; return _nvCudaDir; }
+                }
+                // Also search nvdsp.inf* and nvlt*.inf* folders
+                foreach (var pattern in new[] { "nvdsp*", "nvlt*", "nvmi*" })
+                {
+                    foreach (var dir in Directory.GetDirectories(driverStore, pattern, SearchOption.TopDirectoryOnly))
+                    {
+                        var candidate = Path.Combine(dir, "nvcuda64.dll");
+                        if (File.Exists(candidate)) { _nvCudaDir = dir; return _nvCudaDir; }
+                        candidate = Path.Combine(dir, "nvcuda.dll");
+                        if (File.Exists(candidate)) { _nvCudaDir = dir; return _nvCudaDir; }
+                    }
+                }
+            }
+
+            // 4. Search Program Files NVIDIA directories
+            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
+            {
+                var nvDir = Path.Combine(pf, "NVIDIA Corporation");
+                if (Directory.Exists(nvDir))
+                {
+                    try
+                    {
+                        foreach (var f in Directory.GetFiles(nvDir, "nvcuda*.dll", SearchOption.AllDirectories))
+                        {
+                            _nvCudaDir = Path.GetDirectoryName(f);
+                            return _nvCudaDir;
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
     private static async Task<EncoderTestResult> TestHardwareEncoderAsync(string encoder)
     {
         try
@@ -1612,6 +1698,18 @@ public partial class MainWindow : Window
                 CreateNoWindow = true,
                 RedirectStandardError = true
             };
+
+            // For NVENC, inject NVIDIA CUDA directory into PATH so FFmpeg can find nvcuda.dll
+            if (encoder.Contains("nvenc"))
+            {
+                var nvDir = FindNvCudaDir();
+                if (nvDir != null)
+                {
+                    var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+                    psi.Environment["PATH"] = nvDir + ";" + currentPath;
+                }
+            }
+
             using var p = Process.Start(psi);
             if (p == null) return new EncoderTestResult(false, "Could not start process");
             ProcessGuard.Watch(p);
