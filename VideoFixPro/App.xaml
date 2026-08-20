@@ -429,15 +429,47 @@
                 </Setter>
             </Style>
 
-            <!-- ══════════════════════ TOOLTIP ══════════════════════ -->
-            <Style TargetType="ToolTip">
-                <Setter Property="Background"       Value="{StaticResource CardHoverBrush}"/>
+            <!-- ══════════════════════ STUDIO TOOL CARD BUTTON ══════════════════════ -->
+            <Style x:Key="StudioToolCardButton" TargetType="Button">
+                <Setter Property="Background"       Value="{StaticResource CardBrush}"/>
                 <Setter Property="Foreground"       Value="{StaticResource TextBrush}"/>
                 <Setter Property="BorderBrush"      Value="{StaticResource BorderBrush}"/>
                 <Setter Property="BorderThickness"  Value="1"/>
-                <Setter Property="FontFamily"       Value="Segoe UI"/>
-                <Setter Property="FontSize"         Value="12"/>
-                <Setter Property="Padding"          Value="8,4"/>
+                <Setter Property="Padding"          Value="10,6"/>
+                <Setter Property="Height"           Value="46"/>
+                <Setter Property="Cursor"           Value="Hand"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="VerticalContentAlignment"   Value="Center"/>
+                <Setter Property="SnapsToDevicePixels"        Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CardBd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="7"
+                                    Padding="{TemplateBinding Padding}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CardBd" Property="Background" Value="#2D333B"/>
+                                    <Setter TargetName="CardBd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="CardBd" Property="Background" Value="#1C2128"/>
+                                    <Setter TargetName="CardBd" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="CardBd" Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
         </ResourceDictionary>

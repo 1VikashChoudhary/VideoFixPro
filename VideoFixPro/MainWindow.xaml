@@ -84,16 +84,13 @@
     <!-- ══════════════════════ ROOT LAYOUT ══════════════════════ -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
-            <!-- 0: Title bar -->
-            <RowDefinition Height="1"/>
-            <!-- 1: Separator line -->
-            <RowDefinition Height="*"/>
-            <!-- 2: Main content -->
-            <RowDefinition Height="Auto"/>
-            <!-- 3: Log panel -->
-            <RowDefinition Height="30"/>
-            <!-- 4: Status bar -->
+            <RowDefinition Height="32"/>   <!-- 0: Title bar -->
+            <RowDefinition Height="1"/>    <!-- 1: Separator line -->
+            <RowDefinition Height="Auto"/> <!-- 2: Studio Tools Bar -->
+            <RowDefinition Height="1"/>    <!-- 3: Separator line -->
+            <RowDefinition Height="*"/>    <!-- 4: Main content -->
+            <RowDefinition Height="Auto"/> <!-- 5: Log panel -->
+            <RowDefinition Height="30"/>   <!-- 6: Status bar -->
         </Grid.RowDefinitions>
 
         <!-- ══════════════════════ TITLE BAR ══════════════════════ -->
@@ -130,8 +127,114 @@
         <!-- Separator -->
         <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
 
+        <!-- ══════════════════════ STUDIO TOOLS COMMAND BAR ══════════════════════ -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="14,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Studio Brand Badge -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚡" FontSize="12" Foreground="{StaticResource AccentBrush}" Margin="0,0,4,0"/>
+                        <TextBlock Text="STUDIO TOOLS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                    </StackPanel>
+                    <TextBlock Text="Quick Media Suites" FontSize="9.5" Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" Margin="0,1,0,0"/>
+                </StackPanel>
+
+                <!-- Tool 1: Video Toolbox -->
+                <Button Grid.Column="2" Style="{StaticResource StudioToolCardButton}" Click="OpenVideoToolbox_Click"
+                        ToolTip="Live interactive crop, rotation, volume, aspect ratio &amp; GPU render">
+                    <Grid Margin="2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="30" Height="30" CornerRadius="6" Background="#1B2A40" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock Text="🧰" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Video Toolbox" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <Border Background="#1F3152" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="GPU" FontSize="8" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Crop, Rotate &amp; Edit" FontSize="9.5" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <!-- Tool 2: Video Trimmer -->
+                <Button Grid.Column="4" Style="{StaticResource StudioToolCardButton}" Click="OpenTrimTool_Click"
+                        ToolTip="Lossless video trimming, split cutting &amp; export">
+                    <Grid Margin="2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="30" Height="30" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock Text="✂️" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <TextBlock Text="Video Trimmer" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Cut &amp; split segments" FontSize="9.5" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <!-- Tool 3: Audio Muxer -->
+                <Button Grid.Column="6" Style="{StaticResource StudioToolCardButton}" Click="OpenAudioMuxer_Click"
+                        ToolTip="Add, replace, or merge external audio tracks with video">
+                    <Grid Margin="2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="30" Height="30" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock Text="🎵" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <TextBlock Text="Audio Muxer" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Add / replace tracks" FontSize="9.5" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <!-- Tool 4: Extract Audio -->
+                <Button Grid.Column="8" Style="{StaticResource StudioToolCardButton}" Click="OpenAudioExtractor_Click"
+                        ToolTip="Extract audio streams into MP3, AAC, WAV or FLAC">
+                    <Grid Margin="2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="30" Height="30" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock Text="🔊" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <TextBlock Text="Extract Audio" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Export MP3 / AAC / WAV" FontSize="9.5" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Separator -->
+        <Rectangle Grid.Row="3" Fill="{StaticResource BorderBrush}"/>
+
         <!-- ══════════════════════ MAIN CONTENT ══════════════════════ -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" MinWidth="320"/>
                 <ColumnDefinition Width="1"/>
@@ -454,6 +557,7 @@
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Folder" Foreground="{StaticResource Text2Brush}"
                                        FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
@@ -471,9 +575,17 @@
                             </Border>
                             <Button Grid.Column="2" Content="Browse"
                                     Style="{StaticResource GhostButton}"
-                                    Margin="6,0,0,0" Height="32"
+                                    Margin="6,0,0,0" Height="32" Padding="12,0"
                                     Click="BrowseOutput_Click"
                                     ToolTip="Choose output folder"/>
+                            <Button x:Name="OpenFolderBtn"
+                                    Grid.Column="3"
+                                    Content="📂 Open"
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="6,0,0,0" Height="32" Padding="10,0"
+                                    IsEnabled="False"
+                                    Click="OpenFolder_Click"
+                                    ToolTip="Open the output folder in Explorer"/>
                         </Grid>
 
                         <!-- Reset output path -->
@@ -533,88 +645,38 @@
                 <Grid Grid.Row="2" Margin="0,5,0,0"/>
 
                 <!-- ── ACTION BUTTONS ── -->
-                <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0"
-                                Content="Trim Tool"
-                                Style="{StaticResource GhostButton}"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Click="OpenTrimTool_Click"
-                                ToolTip="Open the Video Trim Tool to cut, crop and export segments"/>
-                        <Button Grid.Column="2"
-                                Content="Video Toolbox"
-                                Style="{StaticResource GhostButton}"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Click="OpenVideoToolbox_Click"
-                                ToolTip="Open the Video Toolbox for quick editing (rotate, flip, volume, mute, crop, aspect ratio)"/>
-                        <Button Grid.Column="4"
-                                Content="Audio Muxer"
-                                Style="{StaticResource GhostButton}"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Click="OpenAudioMuxer_Click"
-                                ToolTip="Open the Audio Muxer to add one or more external audio tracks to a video"/>
-                        <Button Grid.Column="6"
-                                Content="Extract Audio"
-                                Style="{StaticResource GhostButton}"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Click="OpenAudioExtractor_Click"
-                                ToolTip="Extract audio tracks from video files into separate files"/>
-                        <Button x:Name="OpenFolderBtn"
-                                Grid.Column="8"
-                                Content="Open Folder"
-                                Style="{StaticResource GhostButton}"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="False"
-                                Click="OpenFolder_Click"
-                                ToolTip="Open the output folder in Explorer"/>
-                    </Grid>
-
-                    <Grid Margin="0,20,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1.05*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="1.45*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="FixAllBtn"
-                                Grid.Column="0"
-                                Content="Start"
-                                Style="{StaticResource PrimaryButton}"
-                                Height="40"
-                                FontSize="14"
-                                HorizontalAlignment="Stretch"
-                                Click="FixAll_Click"/>
-                        <Button x:Name="CancelBtn"
-                                Grid.Column="2"
-                                Content="Cancel"
-                                Style="{StaticResource DangerButton}"
-                                IsEnabled="False"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Click="Cancel_Click"
-                                ToolTip="Stop the current repair operation"/>
-                    </Grid>
-                </StackPanel>
+                <Grid Grid.Row="3" Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="FixAllBtn"
+                            Grid.Column="0"
+                            Content="⚡ Start Repair"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="44"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Stretch"
+                            Click="FixAll_Click"
+                            ToolTip="Start processing all video files in the queue"/>
+                    <Button x:Name="CancelBtn"
+                            Grid.Column="2"
+                            Content="Cancel"
+                            Style="{StaticResource DangerButton}"
+                            IsEnabled="False"
+                            Height="44"
+                            FontSize="13"
+                            HorizontalAlignment="Stretch"
+                            Click="Cancel_Click"
+                            ToolTip="Stop the current repair operation"/>
+                </Grid>
             </Grid>
         </Grid>
 
         <!-- ══════════════════════ LOG PANEL ══════════════════════ -->
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="1"/>
                 <!-- separator -->
@@ -669,7 +731,7 @@
         </Grid>
 
         <!-- ══════════════════════ STATUS BAR ══════════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="6" Background="{StaticResource TitleBarBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -705,7 +767,7 @@
                        VerticalAlignment="Center" Margin="0,0,12,0"/>
         </Grid>
         <!-- ══════════════════════ MODAL OVERLAYS ══════════════════════ -->
-        <Grid x:Name="DownloadModal" Grid.RowSpan="5" Visibility="Collapsed" Panel.ZIndex="1000">
+        <Grid x:Name="DownloadModal" Grid.RowSpan="7" Visibility="Collapsed" Panel.ZIndex="1000">
             <Rectangle Fill="#B2000000"/>
             <Border Width="420" Height="250" Background="{StaticResource SurfaceBrush}"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
