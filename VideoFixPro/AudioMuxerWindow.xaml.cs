@@ -1275,14 +1275,17 @@ public partial class AudioMuxerWindow : Window
             }
         };
         proc.Start();
+        ProcessGuard.Watch(proc);
         var outTask = proc.StandardOutput.ReadToEndAsync();
         var errTask = proc.StandardError.ReadToEndAsync();
         if (!proc.WaitForExit(timeoutMs))
         {
             try { proc.Kill(); } catch { }
+            ProcessGuard.Unwatch(proc);
             throw new TimeoutException("The process timed out.");
         }
 
+        ProcessGuard.Unwatch(proc);
         return (await outTask) + "\n" + (await errTask);
     }
 

@@ -564,6 +564,12 @@ public partial class CompressorWindow : Window
         outputPath = GetUniqueFilePath(outputPath);
         _lastOutputFolder = dir;
 
+        if (_durationSeconds <= 0)
+        {
+            await ProbeVideoAsync(_filePath);
+            if (_durationSeconds <= 0) _durationSeconds = 1.0;
+        }
+
         SetRenderingUI(true);
         SetStatus($"Compressing to {_targetSizeMb:F1} MB...", "#388BFD");
         Log($"\n[COMPRESS] Source: {Path.GetFileName(_filePath)} ({_originalSizeBytes / (1024.0 * 1024.0):F1} MB)");
@@ -688,7 +694,7 @@ public partial class CompressorWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -722,6 +728,7 @@ public partial class CompressorWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -729,6 +736,7 @@ public partial class CompressorWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {

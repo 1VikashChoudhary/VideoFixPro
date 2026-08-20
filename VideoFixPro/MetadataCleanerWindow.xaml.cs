@@ -333,6 +333,12 @@ public partial class MetadataCleanerWindow : Window
         outputPath = GetUniqueFilePath(outputPath);
         _lastOutputFolder = dir;
 
+        if (_durationSeconds <= 0)
+        {
+            await ProbeMetadataAsync(_filePath);
+            if (_durationSeconds <= 0) _durationSeconds = 1.0;
+        }
+
         SetRenderingUI(true);
         SetStatus("Sanitizing metadata & privacy tags...", "#388BFD");
         Log($"\n[PRIVACY SHIELD] Source: {Path.GetFileName(_filePath)}");
@@ -379,7 +385,7 @@ public partial class MetadataCleanerWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -394,6 +400,7 @@ public partial class MetadataCleanerWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -401,6 +408,7 @@ public partial class MetadataCleanerWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {

@@ -22,9 +22,9 @@ public class StatusToVisibilityConverter : IValueConverter
 
 public class StatusMatchConverter : IMultiValueConverter
 {
-    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object[]? values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values[0] is JobStatus status && parameter is string target)
+        if (values != null && values.Length > 0 && values[0] is JobStatus status && parameter is string target)
         {
             return status.ToString() == target;
         }

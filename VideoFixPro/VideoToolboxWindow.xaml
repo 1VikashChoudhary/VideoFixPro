@@ -85,8 +85,7 @@
         <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}"
               MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
-                <TextBlock Text="⚙" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"
-                           Foreground="{StaticResource AccentBrush}"/>
+                <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Video Toolbox" FontSize="12" FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}"
                            FontFamily="Segoe UI" VerticalAlignment="Center"/>
@@ -98,12 +97,12 @@
                 </Border>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="_" Style="{StaticResource TitleBarButton}"
-                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MinBtn_Click"/>
-                <Button x:Name="MaxBtn" Content="[ ]" Style="{StaticResource TitleBarButton}"
-                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MaxBtn_Click"/>
-                <Button Content="X" Style="{StaticResource TitleBarCloseButton}"
-                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="CloseBtn_Click"/>
+                <Button Content="─" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MinBtn_Click" ToolTip="Minimize"/>
+                <Button x:Name="MaxBtn" Content="□" Style="{StaticResource TitleBarButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="MaxBtn_Click" ToolTip="Maximize/Restore"/>
+                <Button Content="✕" Style="{StaticResource TitleBarCloseButton}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="CloseBtn_Click" ToolTip="Close"/>
             </StackPanel>
         </Grid>
 

@@ -454,6 +454,12 @@ public partial class SpeedStudioWindow : Window
         outputPath = GetUniqueFilePath(outputPath);
         _lastOutputFolder = dir;
 
+        if (_durationSeconds <= 0)
+        {
+            await ProbeVideoAsync(_filePath);
+            if (_durationSeconds <= 0) _durationSeconds = 1.0;
+        }
+
         SetRenderingUI(true);
         SetStatus($"Processing speed {_speedMultiplier:F2}x...", "#388BFD");
         Log($"\n[SPEED] Source: {Path.GetFileName(_filePath)}");
@@ -466,14 +472,14 @@ public partial class SpeedStudioWindow : Window
         double setptsFactor = 1.0 / _speedMultiplier;
         string vf = $"setpts={setptsFactor.ToString("F6", CultureInfo.InvariantCulture)}*PTS";
 
-        // Audio Filter: chain of atempo filters (each between 0.5 and 2.0)
+        // Audio Filter: chain of atempo filters (each between 0.5 and 2.0) or asetrate/aresample for non-pitch-preserved
         bool muteAudio = MuteAudioCheck?.IsChecked == true;
         bool preservePitch = PreservePitchCheck?.IsChecked == true;
         string? af = null;
 
         if (!muteAudio)
         {
-            af = BuildAtempoFilter(_speedMultiplier, preservePitch);
+            af = BuildAudioSpeedFilter(_speedMultiplier, preservePitch);
         }
 
         bool useGpu = (GpuCheck.IsChecked == true) && (_hasNvidia || _hasAmd || _hasIntel);
@@ -522,10 +528,17 @@ public partial class SpeedStudioWindow : Window
         }
     }
 
-    private static string? BuildAtempoFilter(double speed, bool preservePitch)
+    private static string? BuildAudioSpeedFilter(double speed, bool preservePitch)
     {
         if (Math.Abs(speed - 1.0) < 0.001) return null;
-        if (!preservePitch) return null; // Let FFmpeg resample directly
+
+        if (!preservePitch)
+        {
+            // Resample method: alters playback speed and shifts pitch naturally (like classic tape/vinyl)
+            int sampleRate = 44100;
+            int newRate = (int)Math.Round(sampleRate * speed);
+            return $"asetrate={newRate},aresample={sampleRate}";
+        }
 
         var filters = new List<string>();
         double current = speed;
@@ -563,7 +576,7 @@ public partial class SpeedStudioWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -594,6 +607,7 @@ public partial class SpeedStudioWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -601,6 +615,7 @@ public partial class SpeedStudioWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {

@@ -434,9 +434,12 @@ public partial class AudioExtractorWindow : Window
     private static async Task<string> RunProcessAsync(string exe, string args)
     {
         var psi = new ProcessStartInfo { FileName = exe, Arguments = args, UseShellExecute = false, RedirectStandardOutput = true, CreateNoWindow = true };
-        using var p = Process.Start(psi)!;
+        using var p = Process.Start(psi);
+        if (p == null) return string.Empty;
+        ProcessGuard.Watch(p);
         var output = await p.StandardOutput.ReadToEndAsync();
         await p.WaitForExitAsync();
+        ProcessGuard.Unwatch(p);
         return output;
     }
 }

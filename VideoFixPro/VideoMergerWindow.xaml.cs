@@ -643,7 +643,7 @@ public partial class VideoMergerWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -673,6 +673,7 @@ public partial class VideoMergerWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -680,6 +681,7 @@ public partial class VideoMergerWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {

@@ -742,9 +742,10 @@ public partial class WatermarkWindow : Window
         Log($"[WATERMARK] Anchor: {_currentPosition}, Scale: {_scalePercent}%, Opacity: {_opacityPercent}%");
         Log($"[WATERMARK] Output: {outputPath}");
 
-        if (_sourceWidth <= 0)
+        if (_sourceWidth <= 0 || _durationSeconds <= 0)
         {
             await ProbeVideoAsync(_filePath);
+            if (_durationSeconds <= 0) _durationSeconds = 1.0;
         }
 
         double scaleFactor = _scalePercent / 100.0;
@@ -847,7 +848,7 @@ public partial class WatermarkWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -878,6 +879,7 @@ public partial class WatermarkWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -885,6 +887,7 @@ public partial class WatermarkWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {

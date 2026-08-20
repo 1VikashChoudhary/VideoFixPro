@@ -24,7 +24,14 @@ namespace VideoFixPro;
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 public partial class MainWindow : Window
 {
-    private static readonly HttpClient _httpClient = new();
+    private static readonly HttpClient _httpClient = CreateHttpClient();
+
+    private static HttpClient CreateHttpClient()
+    {
+        var client = new HttpClient();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("VideoFixPro/1.0 (Windows NT 10.0; Win64; x64)");
+        return client;
+    }
     private readonly ObservableCollection<VideoJob> _queue = new();
     private CancellationTokenSource? _cts;
     private Process? _ffmpegProcess;
@@ -500,9 +507,9 @@ public partial class MainWindow : Window
         (ModeDeepRecover.IsChecked== true) ? "Error-tolerant deep recovery. Ignores decode errors and re-encodes everything. Slowest but handles severely damaged files." :
         "Automatically selects the best strategy. Starts with a fast lossless copy; if that fails, escalates to a deep error-tolerant re-encode.";
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ──────────────────────────────────────────────────────────
     //  OUTPUT SETTINGS
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ──────────────────────────────────────────────────────────
     private void BrowseOutput_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new System.Windows.Forms.FolderBrowserDialog
@@ -554,9 +561,9 @@ public partial class MainWindow : Window
         return path;
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    //  FIX ALL  â€“  main pipeline
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ──────────────────────────────────────────────────────────
+    //  FIX ALL  –  main pipeline
+    // ──────────────────────────────────────────────────────────
     private async void FixAll_Click(object sender, RoutedEventArgs e)
     {
         if (_isRunning) return;
@@ -582,7 +589,7 @@ public partial class MainWindow : Window
         int done = 0, failed = 0;
         var pendingJobs = _queue.Where(j => j.Status == JobStatus.Waiting).ToList();
 
-        Log($"[START] Processing {pendingJobs.Count} file(s)â€¦");
+        Log($"[START] Processing {pendingJobs.Count} file(s)...");
         SetStatus($"Processing 0 / {pendingJobs.Count}", "#388BFD");
 
         foreach (var job in pendingJobs)
@@ -608,7 +615,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                // Global settings from UI â€” read ALL radio buttons including Auto
+                // Global settings from UI — read ALL radio buttons including Auto
                 (jobMode, useGpu, qualityPct) = Dispatcher.Invoke(() => {
                     // Fix A: ModeAuto must be checked first; without it the ternary
                     // chain fell through to StreamCopy when Auto was selected.
@@ -733,11 +740,11 @@ public partial class MainWindow : Window
                                                    RepairMode mode, bool useGpu, int qualityPct, 
                                                    int jobIndex, int totalJobs, CancellationToken ct)
     {
-        var args = BuildArgs(job.FilePath, output, mode, useGpu, _hasNvidia, _hasAmd, qualityPct, job.VideoCodec,
+        var args = BuildArgs(job.FilePath, output, mode, useGpu, _hasNvidia, _hasAmd, _hasIntel, qualityPct, job.VideoCodec,
                               job.HasTrim ? job.TrimStart : (double?)null,
                               job.HasTrim ? job.TrimEnd   : (double?)null);
         if (job.HasTrim)
-            Log($"[TRIM] Applied trim: {TrimSegment.FormatTime(job.TrimStart)} â†’ {TrimSegment.FormatTime(job.TrimEnd)}");
+            Log($"[TRIM] Applied trim: {TrimSegment.FormatTime(job.TrimStart)} → {TrimSegment.FormatTime(job.TrimEnd)}");
         Log($"[CMD]  ffmpeg {args}");
 
         var psi = new ProcessStartInfo
@@ -829,7 +836,7 @@ public partial class MainWindow : Window
     }
 
     private static string BuildArgs(string input, string output, RepairMode mode,
-        bool useGpu, bool hasNvidia, bool hasAmd, int qualityPercent, string? videoCodec,
+        bool useGpu, bool hasNvidia, bool hasAmd, bool hasIntel, int qualityPercent, string? videoCodec,
         double? trimStart = null, double? trimEnd = null)
     {
         var ic = System.Globalization.CultureInfo.InvariantCulture;
@@ -881,6 +888,8 @@ public partial class MainWindow : Window
                 }
                 else if (useGpu && hasNvidia)
                     sb.Append($"-c:v h264_nvenc -preset fast -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                else if (useGpu && hasIntel)
+                    sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
                     sb.Append($"-c:v libx264 -preset fast -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 break;
@@ -892,6 +901,8 @@ public partial class MainWindow : Window
                 }
                 else if (useGpu && hasNvidia)
                     sb.Append($"-c:v h264_nvenc -preset slow -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                else if (useGpu && hasIntel)
+                    sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
                     sb.Append($"-c:v libx264 -preset slow -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 break;
@@ -1049,7 +1060,7 @@ public partial class MainWindow : Window
         if (QueueList.SelectedItem is VideoJob selectedJob)
             preloadPath = selectedJob.FilePath;
 
-        var trim = new TrimWindow(preloadPath, _hasNvidia, _hasAmd, (int)QualitySlider.Value);
+        var trim = new TrimWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel, (int)QualitySlider.Value);
         trim.Owner = this;
         trim.Show();
     }
@@ -1065,6 +1076,19 @@ public partial class MainWindow : Window
             Owner = this
         };
         toolbox.Show();
+    }
+
+    private void OpenColorGrade_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var colorGrade = new ColorGradeWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        colorGrade.Show();
     }
 
     private void OpenAudioMuxer_Click(object sender, RoutedEventArgs e)

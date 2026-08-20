@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -60,6 +60,7 @@ public partial class TrimWindow : Window
     // GPU support (passed from main)
     private bool _hasNvidia;
     private bool _hasAmd;
+    private bool _hasIntel;
     private int  _qualityPercent = 70;
 
     // filmstrip thumbnails (one per bucket)
@@ -100,12 +101,13 @@ public partial class TrimWindow : Window
         { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".ts", ".m2ts" };
 
     // â”€â”€ Constructor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    public TrimWindow(string? preloadPath = null, bool hasNvidia = false, bool hasAmd = false, int quality = 70)
+    public TrimWindow(string? preloadPath = null, bool hasNvidia = false, bool hasAmd = false, bool hasIntel = false, int quality = 70)
     {
         InitializeComponent();
         Loaded += (_, _) => UiTextSanitizer.Apply(this);
         _hasNvidia = hasNvidia;
         _hasAmd    = hasAmd;
+        _hasIntel  = hasIntel;
         _qualityPercent = quality;
 
         SegmentList.ItemsSource = _segments;
@@ -149,12 +151,12 @@ public partial class TrimWindow : Window
     private void MaximizeRestore()
     {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        TrimMaxBtn.Content = WindowState == WindowState.Maximized ? "â" : "â–¡";
+        TrimMaxBtn.Content = WindowState == WindowState.Maximized ? "❐" : "□";
     }
 
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     //  DROP ZONE
-    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
     private void TrimDrop_DragEnter(object s, DragEventArgs e)
     {
         e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
@@ -426,11 +428,11 @@ public partial class TrimWindow : Window
         // â”€â”€ Waveform hint bars (decorative; real waveform needs ffmpeg pipe) â”€â”€
         DrawWaveformHint(w, h, inX, outX);
 
-        // â”€â”€ IN handle â”€â”€
-        DrawHandle(inX, h, ColIn, "â–¶");
+        // ── IN handle ──
+        DrawHandle(inX, h, ColIn, "▶");
 
-        // â”€â”€ OUT handle â”€â”€
-        DrawHandle(outX, h, ColOut, "â—€");
+        // ── OUT handle ──
+        DrawHandle(outX, h, ColOut, "◀");
 
         // â”€â”€ Playhead â”€â”€
         var phLine = new Line
@@ -1127,6 +1129,8 @@ public partial class TrimWindow : Window
                 sb.Append($"-c:v h264_nvenc -preset fast -rc vbr -cq {crf} -b:v 0 -pix_fmt yuv420p ");
             else if (_hasAmd)
                 sb.Append($"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -pix_fmt yuv420p ");
+            else if (_hasIntel)
+                sb.Append($"-c:v h264_qsv -global_quality {crf} -pix_fmt nv12 ");
             else
                 sb.Append($"-c:v libx264 -preset fast -crf {crf} -pix_fmt yuv420p ");
 

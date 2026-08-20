@@ -6,7 +6,7 @@
         xmlns:models="clr-namespace:VideoFixPro.Models"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Video Fix Pro"
-        Width="1532" Height="883"
+        Width="1532" Height="908"
         MinWidth="820" MinHeight="560"
         WindowStyle="None"
         ResizeMode="CanResize"
@@ -98,7 +98,7 @@
               MouseLeftButtonDown="TitleBar_MouseDown">
             <!-- App identity -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
-                <Image Source="Assets/app_icon.png" Width="25" Height="25" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Video Fix Pro" FontSize="12" FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}"
                            FontFamily="Segoe UI" VerticalAlignment="Center"/>
@@ -142,199 +142,214 @@
                         <TextBlock Text="⚡" FontSize="12" Foreground="{StaticResource AccentBrush}" Margin="0,0,4,0"/>
                         <TextBlock Text="PRO STUDIO" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
                     </StackPanel>
-                    <TextBlock Text="10 Media Tool Suites" FontSize="9.5" Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" Margin="0,1,0,0"/>
+                    <TextBlock Text="11 Media Tool Suites" FontSize="9.5" Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" Margin="0,1,0,0"/>
                 </StackPanel>
 
-                <!-- Horizontal Scrollable Shelf of Tool Micro-Cards -->
-                <ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                              Focusable="False" PanningMode="HorizontalOnly">
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Tool 1: Video Toolbox -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenVideoToolbox_Click" Margin="0,0,8,0" Width="175"
-                                ToolTip="Live interactive crop, rotation, volume, aspect ratio &amp; GPU render">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#1B2A40" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🧰" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Video Toolbox" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                        <Border Background="#1F3152" CornerRadius="3" Padding="3,1" Margin="4,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="GPU" FontSize="7.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                                        </Border>
-                                    </StackPanel>
-                                    <TextBlock Text="Crop, Rotate &amp; Edit" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                <!-- Responsive Auto-Adjusting Tool Shelf (1 row on wide screens, 2 rows on standard/compact) -->
+                <WrapPanel Grid.Column="2" VerticalAlignment="Center">
+                    <!-- Tool 1: Video Toolbox -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenVideoToolbox_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Live interactive crop, rotation, volume, aspect ratio &amp; GPU render">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#1B2A40" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🧰" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Video Toolbox" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                    <Border Background="#1F3152" CornerRadius="3" Padding="3,1" Margin="4,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="GPU" FontSize="7.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                                    </Border>
                                 </StackPanel>
-                            </Grid>
-                        </Button>
+                                <TextBlock Text="Crop, Rotate &amp; Edit" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 2: Video Trimmer -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenTrimTool_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="Lossless video trimming, split cutting &amp; export">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="✂️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Video Trimmer" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Cut &amp; split segments" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 2: Video Trimmer -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenTrimTool_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Lossless video trimming, split cutting &amp; export">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="✂️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Video Trimmer" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Cut &amp; split segments" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 3: Video Compressor -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenCompressor_Click" Margin="0,0,8,0" Width="170"
-                                ToolTip="Smart video compressor with Discord, WhatsApp &amp; custom MB presets">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#1B2A40" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🗜️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Compressor" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Target size &amp; Discord" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 3: Color Grade & Visual FX -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenColorGrade_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Color grading, cinematic presets, temperature &amp; visual FX">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#281A3C" BorderBrush="#BC8CFF" BorderThickness="0.5" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🎨" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Color Grade" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Cinematic looks &amp; FX" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 4: Video Merger -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenVideoMerger_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="Lossless multi-clip video merger and sequence stitcher">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🎬" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Video Merger" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Stitch multiple clips" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 4: Video Compressor -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenCompressor_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Smart video compressor with Discord, WhatsApp &amp; custom MB presets">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#1B2A40" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🗜️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Compressor" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Target size &amp; Discord" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 5: GIF & WebP Maker -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenGifMaker_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="High-quality 2-pass GIF and animated WebP studio">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🎞️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="GIF &amp; WebP" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="2-pass palette engine" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 5: Video Merger -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenVideoMerger_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Lossless multi-clip video merger and sequence stitcher">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🎬" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Video Merger" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Stitch multiple clips" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 6: Speed Studio -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenSpeedStudio_Click" Margin="0,0,8,0" Width="170"
-                                ToolTip="0.25x Slow-motion to 16x timelapse with voice pitch correction">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="⚡" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Speed Studio" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Slow-mo &amp; timelapse" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 6: GIF & WebP Maker -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenGifMaker_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="High-quality 2-pass GIF and animated WebP studio">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🎞️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="GIF &amp; WebP" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="2-pass palette engine" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 7: Watermark Studio -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenWatermark_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="Add transparent logo watermarks with visual anchor positioning">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🏷️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Watermark" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Logo &amp; brand overlay" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 7: Speed Studio -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenSpeedStudio_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="0.25x Slow-motion to 16x timelapse with voice pitch correction">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="⚡" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Speed Studio" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Slow-mo &amp; timelapse" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 8: Audio Muxer -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenAudioMuxer_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="Add, replace, or merge external audio tracks with video">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🎵" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Audio Muxer" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Add / replace tracks" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 8: Watermark Studio -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenWatermark_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Add transparent logo watermarks with free drag and rotation transform">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🏷️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Watermark" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Logo &amp; brand overlay" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 9: Extract Audio -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenAudioExtractor_Click" Margin="0,0,8,0" Width="165"
-                                ToolTip="Extract audio streams into MP3, AAC, WAV or FLAC">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🔊" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Extract Audio" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Export MP3 / AAC" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
+                    <!-- Tool 9: Audio Muxer -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenAudioMuxer_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Add, replace, or merge external audio tracks with video">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🎵" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Audio Muxer" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Add / replace tracks" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
 
-                        <!-- Tool 10: Privacy Shield -->
-                        <Button Style="{StaticResource StudioToolCardButton}" Click="OpenMetadataCleaner_Click" Width="165"
-                                ToolTip="Sanitize and purge GPS, camera serials &amp; EXIF metadata in milliseconds">
-                            <Grid Margin="2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Width="28" Height="28" CornerRadius="6" Background="#2A1B1B" BorderBrush="#F85149" BorderThickness="0.5" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="🛡️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
-                                    <TextBlock Text="Privacy Shield" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
-                                    <TextBlock Text="Strip GPS &amp; EXIF tags" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Grid>
-                        </Button>
-                    </StackPanel>
-                </ScrollViewer>
+                    <!-- Tool 10: Extract Audio -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenAudioExtractor_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Extract audio streams into MP3, AAC, WAV or FLAC">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#21262D" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🔊" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Extract Audio" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Export MP3 / AAC" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <!-- Tool 11: Privacy Shield -->
+                    <Button Style="{StaticResource StudioToolCardButton}" Click="OpenMetadataCleaner_Click" Margin="0,2,8,2" Width="158"
+                            ToolTip="Sanitize and purge GPS, camera serials &amp; EXIF metadata in milliseconds">
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="6" Background="#2A1B1B" BorderBrush="#F85149" BorderThickness="0.5" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <TextBlock Text="Privacy Shield" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Strip GPS &amp; EXIF tags" FontSize="9" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </WrapPanel>
             </Grid>
         </Border>
 

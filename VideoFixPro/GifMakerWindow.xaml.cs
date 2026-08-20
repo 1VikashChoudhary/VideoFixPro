@@ -435,6 +435,13 @@ public partial class GifMakerWindow : Window
         outputPath = GetUniqueFilePath(outputPath);
         _lastOutputFolder = dir;
 
+        if (_durationSeconds <= 0)
+        {
+            await ProbeVideoAsync(_filePath);
+            if (_durationSeconds <= 0) _durationSeconds = 1.0;
+            if (_endTimeSeconds <= 0) _endTimeSeconds = Math.Min(10.0, _durationSeconds);
+        }
+
         SetRenderingUI(true);
         SetStatus($"Generating {(isWebP ? "WebP" : "GIF")} animation...", "#388BFD");
 
@@ -527,7 +534,7 @@ public partial class GifMakerWindow : Window
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = false
         };
 
         var tcs = new TaskCompletionSource<bool>();
@@ -561,6 +568,7 @@ public partial class GifMakerWindow : Window
 
         proc.Exited += (_, _) =>
         {
+            ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
             proc.Dispose();
         };
@@ -568,6 +576,7 @@ public partial class GifMakerWindow : Window
         try
         {
             proc.Start();
+            ProcessGuard.Watch(proc);
             proc.BeginErrorReadLine();
             using (token.Register(() => { try { proc.Kill(); } catch { } }))
             {
