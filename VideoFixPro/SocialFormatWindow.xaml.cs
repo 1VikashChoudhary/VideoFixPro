@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -34,7 +35,6 @@ namespace VideoFixPro
         private bool _isPlayerPlaying;
         private bool _isSeeking;
         private bool _isMuted;
-        
 
         private static string AppDir => AppDomain.CurrentDomain.BaseDirectory;
         private static string FFmpeg => GetBinPath("ffmpeg.exe");
@@ -61,6 +61,14 @@ namespace VideoFixPro
 
             _playheadTimer.Interval = TimeSpan.FromMilliseconds(40);
             _playheadTimer.Tick += PlayheadTimer_Tick;
+
+            Loaded += (_, _) =>
+            {
+                string gpuInfo = _hasAmd ? "AMD AMF (Radeon RX Hardware Encoder)" :
+                                 _hasNvidia ? "NVIDIA NVENC Hardware Encoder" :
+                                 _hasIntel ? "Intel QSV Hardware Encoder" : "CPU (Software)";
+                Log($"[INIT] GPU Acceleration: {gpuInfo}");
+            };
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -220,7 +228,7 @@ namespace VideoFixPro
                         }
                     }
                 }
-                Log($"[PROBE] Duration: {_durationSeconds:F2}s | Source: {_sourceWidth}x{_sourceHeight}");
+                Log($"[PROBE] Duration: {_durationSeconds:F2}s | Resolution: {_sourceWidth}x{_sourceHeight}");
             }
             catch (Exception ex)
             {
@@ -526,7 +534,7 @@ namespace VideoFixPro
         }
 
         // ─────────────────────────────────────────────────────────────
-        //  FFMPEG RENDERING ENGINE
+        //  FFMPEG RENDERING ENGINE (GPU ACCELERATED & OPTIMIZED)
         // ─────────────────────────────────────────────────────────────
         private async void Start_Click(object sender, RoutedEventArgs e)
         {
@@ -570,12 +578,18 @@ namespace VideoFixPro
                     case 3: outW = 1920; outH = 1080; break;
                 }
 
-                // Construct Filter Complex
+                // Construct Ultra-Fast High Performance Filter Complex
                 string filter = "";
-                if (BgModeBox.SelectedIndex == 0) // Blurred Video Background
+                if (BgModeBox.SelectedIndex == 0) // Dynamic Blurred Video
                 {
-                    int blur = (int)BlurSlider.Value;
-                    filter = $"[0:v]split=2[bg][fg]; [bg]scale={outW}:{outH}:force_original_aspect_ratio=increase,crop={outW}:{outH},boxblur={blur}:5[bg_blurred]; [fg]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; [bg_blurred][fg_scaled]overlay=(W-w)/2:(H-h)/2[outv]";
+                    int blurVal = (int)BlurSlider.Value;
+                    int bgDownW = outW / 3;
+                    int bgDownH = outH / 3;
+                    if (bgDownW % 2 != 0) bgDownW++;
+                    if (bgDownH % 2 != 0) bgDownH++;
+
+                    int blurRadius = Math.Clamp(blurVal / 3, 2, 16);
+                    filter = $"[0:v]split=2[bg_in][fg_in]; [bg_in]scale={bgDownW}:{bgDownH}:force_original_aspect_ratio=increase,crop={bgDownW}:{bgDownH},boxblur={blurRadius}:1,scale={outW}:{outH}:flags=bicubic[bg_blurred]; [fg_in]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; [bg_blurred][fg_scaled]overlay=(W-w)/2:(H-h)/2[outv]";
                 }
                 else // Solid Color Background
                 {
@@ -583,37 +597,40 @@ namespace VideoFixPro
                     filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; color=c={color}:s={outW}x{outH}:d={_durationSeconds.ToString(CultureInfo.InvariantCulture)}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]";
                 }
 
-                // Codec Options
+                // Codec Options & GPU Acceleration Selection
                 bool useGpu = GpuCheck.IsChecked == true;
                 bool isAv1 = Av1Check.IsChecked == true;
                 string vCodecArgs;
+                string gpuEngineName;
+
                 if (isAv1)
                 {
-                    vCodecArgs = useGpu && _hasNvidia ? "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p" :
-                                 useGpu && _hasAmd ? "-c:v av1_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
-                                 useGpu && _hasIntel ? "-c:v av1_qsv -global_quality 22 -pix_fmt nv12" :
-                                 "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p";
+                    if (useGpu && _hasNvidia) { vCodecArgs = "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (AV1)"; }
+                    else if (useGpu && _hasAmd) { vCodecArgs = "-c:v av1_amf -rc cqp -qp_i 22 -qp_p 22 -qp_b 22 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (AV1)"; }
+                    else if (useGpu && _hasIntel) { vCodecArgs = "-c:v av1_qsv -global_quality 22 -pix_fmt nv12"; gpuEngineName = "Intel QSV (AV1)"; }
+                    else { vCodecArgs = "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p"; gpuEngineName = "CPU (libsvtav1)"; }
                 }
                 else
                 {
-                    vCodecArgs = useGpu && _hasNvidia ? "-c:v h264_nvenc -preset p4 -cq 22 -pix_fmt yuv420p" :
-                                 useGpu && _hasAmd ? "-c:v h264_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
-                                 useGpu && _hasIntel ? "-c:v h264_qsv -global_quality 22 -pix_fmt nv12" :
-                                 "-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p";
+                    if (useGpu && _hasNvidia) { vCodecArgs = "-c:v h264_nvenc -preset p4 -cq 20 -pix_fmt yuv420p"; gpuEngineName = "NVIDIA NVENC (H.264)"; }
+                    else if (useGpu && _hasAmd) { vCodecArgs = "-c:v h264_amf -rc cqp -qp_i 20 -qp_p 20 -qp_b 20 -quality speed -pix_fmt yuv420p"; gpuEngineName = "AMD AMF (H.264)"; }
+                    else if (useGpu && _hasIntel) { vCodecArgs = "-c:v h264_qsv -global_quality 20 -pix_fmt nv12"; gpuEngineName = "Intel QSV (H.264)"; }
+                    else { vCodecArgs = "-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p"; gpuEngineName = "CPU (libx264)"; }
                 }
 
+                Log($"[ENCODER] Active Hardware Engine: {gpuEngineName}");
                 string args = $"-y -i \"{_filePath}\" -filter_complex \"{filter}\" -map \"[outv]\" -map 0:a? {vCodecArgs} -c:a aac -b:a 192k \"{outputPath}\"";
 
                 Log($"[CMD] ffmpeg {args}");
-                bool success = await RunFFmpegAsync(args, _durationSeconds, _cts.Token);
+                bool success = await RunFFmpegAsync(args, _durationSeconds, gpuEngineName, _cts.Token);
 
                 if (!success && !_cts.Token.IsCancellationRequested && useGpu)
                 {
                     Log("[WARN] GPU encoding failed. Retrying on CPU (libx264)...");
-                    SetStatus("Retrying on CPU...", "#D29922");
+                    SetStatus("Retrying on CPU fallback...", "#D29922");
                     args = $"-y -i \"{_filePath}\" -filter_complex \"{filter}\" -map \"[outv]\" -map 0:a? -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -c:a aac -b:a 192k \"{outputPath}\"";
                     Log($"[CMD Fallback] ffmpeg {args}");
-                    success = await RunFFmpegAsync(args, _durationSeconds, _cts.Token);
+                    success = await RunFFmpegAsync(args, _durationSeconds, "CPU Fallback", _cts.Token);
                 }
 
                 _isRendering = false;
@@ -629,7 +646,7 @@ namespace VideoFixPro
                     var fi = new FileInfo(outputPath);
                     SetRenderProgress(100);
                     SetStatus($"Done! Output: {fi.Length / (1024.0 * 1024.0):F1} MB", "#3FB950");
-                    Log($"[SUCCESS] Saved to: {outputPath}");
+                    Log($"[SUCCESS] Saved to: {outputPath} ({fi.Length / (1024.0 * 1024.0):F1} MB)");
                 }
                 else
                 {
@@ -651,7 +668,7 @@ namespace VideoFixPro
             try { _ffmpegProcess?.Kill(); } catch { }
         }
 
-        private async Task<bool> RunFFmpegAsync(string args, double totalDuration, CancellationToken token)
+        private async Task<bool> RunFFmpegAsync(string args, double totalDuration, string engineName, CancellationToken token)
         {
             var psi = new ProcessStartInfo
             {
@@ -668,6 +685,8 @@ namespace VideoFixPro
             _ffmpegProcess = proc;
 
             var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);
+            var fpsRegex = new Regex(@"fps=\s*([\d\.]+)", RegexOptions.Compiled);
+            var speedRegex = new Regex(@"speed=\s*([\d\.]+)x", RegexOptions.Compiled);
 
             proc.ErrorDataReceived += (s, e) =>
             {
@@ -680,13 +699,23 @@ namespace VideoFixPro
                     double sec = double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
                     double currentSeconds = (h * 3600) + (m * 60) + sec;
                     double percent = Math.Clamp((currentSeconds / totalDuration) * 100, 0, 100);
-                    Dispatcher.InvokeAsync(() => SetRenderProgress(percent));
+
+                    var fpsMatch = fpsRegex.Match(e.Data);
+                    var speedMatch = speedRegex.Match(e.Data);
+                    string speedInfo = speedMatch.Success ? $" · {speedMatch.Groups[1].Value}x" : "";
+                    string fpsInfo = fpsMatch.Success ? $" ({fpsMatch.Groups[1].Value} fps)" : "";
+
+                    Dispatcher.InvokeAsync(() =>
+                    {
+                        SetRenderProgress(percent);
+                        SetStatus($"Encoding [{engineName}] — {percent:F0}%{fpsInfo}{speedInfo}", "#388BFD");
+                    });
                 }
                 else if (e.Data.Contains("error", StringComparison.OrdinalIgnoreCase) ||
                          e.Data.Contains("invalid", StringComparison.OrdinalIgnoreCase) ||
                          e.Data.Contains("fatal", StringComparison.OrdinalIgnoreCase))
                 {
-                    Dispatcher.InvokeAsync(() => Log($"[FFMPEG ERR] {e.Data}"));
+                    Dispatcher.InvokeAsync(() => Log($"[FFMPEG] {e.Data}"));
                 }
             };
 
@@ -760,4 +789,3 @@ namespace VideoFixPro
         }
     }
 }
-
