@@ -526,11 +526,11 @@ public partial class AudioMuxerWindow : Window
         };
     }
 
-    private bool PrepareJobForMux(AudioMuxJob job, bool interactive, out string message)
+    private async Task<(bool Success, string Message)> PrepareJobForMuxAsync(AudioMuxJob job, bool interactive)
     {
-        message = string.Empty;
+        string message = string.Empty;
         var notes = new List<string>();
-        var originalAudioCount = ProbeAudioStreamCount(job.InputPath);
+        var originalAudioCount = await Task.Run(() => ProbeAudioStreamCount(job.InputPath));
 
         if (job.Options.KeepOriginalAudio && originalAudioCount == null)
         {
@@ -544,13 +544,13 @@ public partial class AudioMuxerWindow : Window
         {
             if (job.Options.KeepOriginalAudio && originalAudioCount.GetValueOrDefault() > 0)
             {
-                var sourceAudioCodecs = ProbeAudioCodecNames(job.InputPath, null);
+                var sourceAudioCodecs = await Task.Run(() => ProbeAudioCodecNames(job.InputPath, null));
                 incompatibleAudioCodecs.AddRange(sourceAudioCodecs.Where(IsIncompatibleMp4AudioCodec));
             }
 
             foreach (var track in job.AudioTracks)
             {
-                var codec = ProbeAudioCodecName(track.Path);
+                var codec = await Task.Run(() => ProbeAudioCodecName(track.Path));
                 if (IsIncompatibleMp4AudioCodec(codec))
                 {
                     incompatibleAudioCodecs.Add(codec!);
@@ -573,7 +573,7 @@ public partial class AudioMuxerWindow : Window
                     if (result != MessageBoxResult.Yes)
                     {
                         message = "Job was not added because MP4 fast-copy audio was incompatible.";
-                        return false;
+                        return (false, message);
                     }
                 }
 
@@ -592,10 +592,10 @@ public partial class AudioMuxerWindow : Window
         }
 
         message = string.Join("\n", notes);
-        return true;
+        return (true, message);
     }
 
-    private void AddCurrentJob_Click(object sender, RoutedEventArgs e)
+    private async void AddCurrentJob_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(_videoPath))
         {
@@ -619,26 +619,28 @@ public partial class AudioMuxerWindow : Window
         }
 
         var job = BuildJob(_videoPath!, _outputPath!, CaptureCurrentOptions());
-        if (!PrepareJobForMux(job, interactive: true, out var prepMessage))
+        var prepResult = await PrepareJobForMuxAsync(job, interactive: true);
+
+        if (!prepResult.Success)
         {
-            if (!string.IsNullOrWhiteSpace(prepMessage))
+            if (!string.IsNullOrWhiteSpace(prepResult.Message))
             {
-                MessageBox.Show(this, prepMessage, "Job not added", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(this, prepResult.Message, "Job not added", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             return;
         }
 
         JobQueue.Add(job);
         OpenFolderBtn.IsEnabled = true;
-        if (!string.IsNullOrWhiteSpace(prepMessage))
+        if (!string.IsNullOrWhiteSpace(prepResult.Message))
         {
-            AppendLog(prepMessage + "\n");
-            MessageBox.Show(this, prepMessage, "Job updated", MessageBoxButton.OK, MessageBoxImage.Information);
+            AppendLog(prepResult.Message + "\n");
+            MessageBox.Show(this, prepResult.Message, "Job updated", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         SetStatus("Job added to queue", "#388BFD");
     }
 
-    private void AddFilesToQueue_Click(object sender, RoutedEventArgs e)
+    private async void AddFilesToQueue_Click(object sender, RoutedEventArgs e)
     {
         var currentOptions = CaptureCurrentOptions();
         var wizard = new BatchMuxWizardWindow(currentOptions.Container == "mkv" ? ".mkv" : ".mp4")
@@ -680,14 +682,15 @@ public partial class AudioMuxerWindow : Window
                 }
             };
 
-            if (!PrepareJobForMux(job, interactive: false, out var prepMessage))
+            var prep = await PrepareJobForMuxAsync(job, interactive: false);
+            if (!prep.Success)
             {
                 continue;
             }
 
-            if (prepMessage.Contains("Safe", StringComparison.OrdinalIgnoreCase)) adjustedCount++;
-            if (prepMessage.Contains("original audio streams", StringComparison.OrdinalIgnoreCase)) warnedOriginalCount++;
-            if (!string.IsNullOrWhiteSpace(prepMessage)) AppendLog($"{Path.GetFileName(row.VideoPath)}: {prepMessage}\n");
+            if (prep.Message.Contains("Safe", StringComparison.OrdinalIgnoreCase)) adjustedCount++;
+            if (prep.Message.Contains("original audio streams", StringComparison.OrdinalIgnoreCase)) warnedOriginalCount++;
+            if (!string.IsNullOrWhiteSpace(prep.Message)) AppendLog($"{Path.GetFileName(row.VideoPath)}: {prep.Message}\n");
             JobQueue.Add(job);
         }
         OpenFolderBtn.IsEnabled = JobQueue.Count > 0;
@@ -937,9 +940,17 @@ public partial class AudioMuxerWindow : Window
         try
         {
             var tempOut = Path.Combine(tempDir.FullName, Path.GetFileNameWithoutExtension(_videoPath) + $"_sample_{seconds}s.mp4");
-            var duration = ProbeDuration(_videoPath) ?? seconds;
-            var originalAudioCount = ProbeAudioStreamCount(_videoPath) ?? 0;
-            var bitrateInfo = ProbeOverallBitrateAndResolution(_videoPath);
+            var probeResults = await Task.Run(() => 
+            {
+                return (
+                    dur: ProbeDuration(_videoPath),
+                    cnt: ProbeAudioStreamCount(_videoPath),
+                    bit: ProbeOverallBitrateAndResolution(_videoPath)
+                );
+            });
+            var duration = probeResults.dur ?? seconds;
+            var originalAudioCount = probeResults.cnt ?? 0;
+            var bitrateInfo = probeResults.bit;
             var suggested = bitrateInfo.BitrateKbps.HasValue ? Math.Max(500, (int)(bitrateInfo.BitrateKbps.Value * 0.6)) : 2500;
 
             var options = CaptureCurrentOptions();

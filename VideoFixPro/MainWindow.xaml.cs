@@ -680,6 +680,11 @@ public partial class MainWindow : Window
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     private async Task<bool> RepairJobAsync(VideoJob job, string output, RepairMode mode, bool useGpu, int qualityPct, int jobIndex, int totalJobs, CancellationToken ct)
     {
+        if (job.DurationSeconds <= 0)
+        {
+            await LoadInfoViaFFmpegAsync(job);
+        }
+
         job.Status     = JobStatus.Running;
         job.StatusText = "Running…";
         job.Progress   = 0;
