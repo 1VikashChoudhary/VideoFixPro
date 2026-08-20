@@ -6,7 +6,7 @@
         Height="190"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         Icon="Assets/app_icon.png">
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock x:Name="PromptTitle"
-                   Foreground="{StaticResource TextBrush}"
+                   Foreground="{DynamicResource TextBrush}"
                    FontFamily="Segoe UI"
                    FontSize="16"
                    FontWeight="SemiBold"/>
@@ -25,7 +25,7 @@
         <TextBlock x:Name="PromptMessage"
                    Grid.Row="1"
                    Margin="0,8,0,0"
-                   Foreground="{StaticResource Text2Brush}"
+                   Foreground="{DynamicResource Text2Brush}"
                    TextWrapping="Wrap"/>
 
         <TextBox x:Name="InputBox"

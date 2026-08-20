@@ -9,7 +9,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -32,16 +32,16 @@
         <!-- Active button accent style -->
         <Style x:Key="ActiveToolButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
             <Setter Property="Background" Value="#1F3152"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
         <!-- Ghost ToggleButton style -->
         <Style x:Key="GhostToggleButton" TargetType="ToggleButton">
-            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource Text2Brush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -57,12 +57,12 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#21262D"/>
-                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#1F3152"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -82,16 +82,16 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}"
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}"
               MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Video Toolbox" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleFileName" Text="No file loaded"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}"
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Segoe UI" MaxWidth="450"
                                TextTrimming="CharacterEllipsis"/>
                 </Border>
@@ -107,7 +107,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN CONTENT ════════════════ -->
         <Grid Grid.Row="2" Margin="14,10,14,10">
@@ -129,9 +129,9 @@
 
                 <!-- Drop zone (visible until file loaded) -->
                 <Border x:Name="DropZone" Grid.Row="0" Grid.RowSpan="5"
-                        BorderBrush="{StaticResource MutedBrush}"
+                        BorderBrush="{DynamicResource MutedBrush}"
                         BorderThickness="2" CornerRadius="8"
-                        Background="{StaticResource SurfaceBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
                         Cursor="Hand"
                         MouseLeftButtonDown="DropZone_Click">
                     <Border.Style>
@@ -145,14 +145,14 @@
                     </Border.Style>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🎬 Video Toolbox" FontSize="26" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource AccentBrush}" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentBrush}" FontWeight="Bold"
                                    Margin="0,0,0,6"/>
                         <TextBlock Text="Drop a video file here for live interactive editing"
-                                   Foreground="{StaticResource Text2Brush}"
+                                   Foreground="{DynamicResource Text2Brush}"
                                    FontFamily="Segoe UI" FontSize="13"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="or click to browse  ·  MP4, MKV, AVI, MOV, WMV, FLV, WebM"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    FontFamily="Segoe UI" FontSize="11"
                                    HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
@@ -160,8 +160,8 @@
 
                 <!-- File header (replaces drop zone after load) -->
                 <Border x:Name="FileHeader" Grid.Row="0" Visibility="Collapsed"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="12,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -170,26 +170,26 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock x:Name="HeaderFileName"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" MaxWidth="440"
                                        VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
                                     <TextBlock x:Name="HeaderDuration" Text="-"
-                                               Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                               Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
                                     <TextBlock x:Name="HeaderCodec" Text="-"
-                                               Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                               Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
                                     <TextBlock x:Name="HeaderResolution" Text="-"
-                                               Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                               Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2">
                                     <TextBlock x:Name="HeaderAudioInfo" Text="-"
-                                               Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                               Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
@@ -204,7 +204,7 @@
                 <Border x:Name="PlayerBorder" Grid.Row="1" Margin="0,8,0,0"
                         Background="Black" CornerRadius="8" ClipToBounds="True"
                         Visibility="Collapsed"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                         SizeChanged="PlayerBorder_SizeChanged">
                     <Grid>
                         <!-- Video Host with RenderTransformOrigin and TransformGroup -->
@@ -244,7 +244,7 @@
 
                             <!-- Main Crop Box with Rule of Thirds -->
                             <Border x:Name="CropBoxBorder"
-                                    BorderBrush="{StaticResource AccentBrush}"
+                                    BorderBrush="{DynamicResource AccentBrush}"
                                     BorderThickness="2"
                                     Background="#15388BFD"
                                     Cursor="SizeAll"
@@ -266,26 +266,26 @@
                                     <Rectangle Grid.Column="2" Grid.RowSpan="3" Fill="#33FFFFFF" Width="1" HorizontalAlignment="Left" IsHitTestVisible="False"/>
 
                                     <!-- Dimension Badge -->
-                                    <Border Background="#CC161B22" BorderBrush="{StaticResource AccentBrush}"
+                                    <Border Background="#CC161B22" BorderBrush="{DynamicResource AccentBrush}"
                                             BorderThickness="1" CornerRadius="3" Padding="6,2"
                                             HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0"
                                             IsHitTestVisible="False">
                                         <TextBlock x:Name="CropDimensionText" Text="1280 × 720 px"
-                                                   Foreground="{StaticResource TextBrush}" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}" FontSize="10" FontWeight="SemiBold"
                                                    FontFamily="Consolas"/>
                                     </Border>
                                 </Grid>
                             </Border>
 
                             <!-- 8 Interactive Resize Handles -->
-                            <Border x:Name="HandleNW" Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNWSE" MouseDown="Handle_MouseDown" Tag="NW"/>
-                            <Border x:Name="HandleN"  Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNS"   MouseDown="Handle_MouseDown" Tag="N"/>
-                            <Border x:Name="HandleNE" Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNESW" MouseDown="Handle_MouseDown" Tag="NE"/>
-                            <Border x:Name="HandleE"  Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeWE"   MouseDown="Handle_MouseDown" Tag="E"/>
-                            <Border x:Name="HandleSE" Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNWSE" MouseDown="Handle_MouseDown" Tag="SE"/>
-                            <Border x:Name="HandleS"  Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNS"   MouseDown="Handle_MouseDown" Tag="S"/>
-                            <Border x:Name="HandleSW" Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNESW" MouseDown="Handle_MouseDown" Tag="SW"/>
-                            <Border x:Name="HandleW"  Width="10" Height="10" Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeWE"   MouseDown="Handle_MouseDown" Tag="W"/>
+                            <Border x:Name="HandleNW" Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNWSE" MouseDown="Handle_MouseDown" Tag="NW"/>
+                            <Border x:Name="HandleN"  Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNS"   MouseDown="Handle_MouseDown" Tag="N"/>
+                            <Border x:Name="HandleNE" Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNESW" MouseDown="Handle_MouseDown" Tag="NE"/>
+                            <Border x:Name="HandleE"  Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeWE"   MouseDown="Handle_MouseDown" Tag="E"/>
+                            <Border x:Name="HandleSE" Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNWSE" MouseDown="Handle_MouseDown" Tag="SE"/>
+                            <Border x:Name="HandleS"  Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNS"   MouseDown="Handle_MouseDown" Tag="S"/>
+                            <Border x:Name="HandleSW" Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeNESW" MouseDown="Handle_MouseDown" Tag="SW"/>
+                            <Border x:Name="HandleW"  Width="10" Height="10" Background="White" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="2" Cursor="SizeWE"   MouseDown="Handle_MouseDown" Tag="W"/>
                         </Canvas>
 
                         <!-- Playback Overlay Button -->
@@ -304,7 +304,7 @@
                                 Margin="10" Background="#99000000" CornerRadius="4" Padding="6,3"
                                 Visibility="Collapsed">
                             <TextBlock x:Name="LiveTransformBadgeText" Text="LIVE PREVIEW"
-                                       Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold"/>
+                                       Foreground="{DynamicResource AccentBrush}" FontSize="10" FontWeight="Bold"/>
                         </Border>
                     </Grid>
                 </Border>
@@ -316,9 +316,9 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="SeekPlayBtn" Content="▶" Width="32" Height="28"
+                    <Button x:Name="SeekPlayBtn" Content="▶" Width="34" Height="28" Padding="0" FontSize="11"
                             Style="{StaticResource GhostButton}" Click="TogglePlay_Click"
-                            VerticalAlignment="Center"/>
+                            VerticalAlignment="Center" ToolTip="Play / Pause (Space)"/>
                     <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0"
                             Minimum="0" Maximum="100" Value="0"
                             VerticalAlignment="Center"
@@ -326,14 +326,14 @@
                             PreviewMouseLeftButtonUp="SeekSlider_MouseUp"
                             ValueChanged="SeekSlider_ValueChanged"/>
                     <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00:00 / 00:00:00"
-                               Foreground="{StaticResource Text2Brush}" FontFamily="Consolas"
+                               Foreground="{DynamicResource Text2Brush}" FontFamily="Consolas"
                                FontSize="11" VerticalAlignment="Center"/>
                 </Grid>
 
                 <!-- ── Filmstrip & Waveform Interactive Timeline ── -->
                 <Border x:Name="TimelineTrackBorder" Grid.Row="3" Margin="0,6,0,0"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="6"
                         Visibility="Collapsed" Padding="8,6">
                     <StackPanel>
@@ -344,14 +344,14 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🎬 Video" FontSize="11" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="🎬 Video" FontSize="11" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"/>
                             </StackPanel>
-                            <Border Grid.Column="1" Height="38" Background="#090C10" CornerRadius="4" ClipToBounds="True"
+                            <Border Grid.Column="1" Height="38" Background="{DynamicResource BgBrush}" CornerRadius="4" ClipToBounds="True"
                                     Cursor="Hand" MouseLeftButtonDown="Timeline_Click">
                                 <Grid>
                                     <Canvas x:Name="FilmstripCanvas" SizeChanged="FilmstripCanvas_SizeChanged"/>
                                     <Rectangle x:Name="FilmstripPlayhead" Width="2" HorizontalAlignment="Left"
-                                               Fill="{StaticResource AccentBrush}" Opacity="0.9"/>
+                                               Fill="{DynamicResource AccentBrush}" Opacity="0.9"/>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -363,14 +363,14 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🔊 Audio" FontSize="11" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                                <TextBlock Text="🔊 Audio" FontSize="11" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"/>
                             </StackPanel>
-                            <Border Grid.Column="1" Height="24" Background="#090C10" CornerRadius="4" ClipToBounds="True"
+                            <Border Grid.Column="1" Height="24" Background="{DynamicResource BgBrush}" CornerRadius="4" ClipToBounds="True"
                                     Cursor="Hand" MouseLeftButtonDown="Timeline_Click">
                                 <Grid>
                                     <Canvas x:Name="WaveformCanvas" SizeChanged="WaveformCanvas_SizeChanged"/>
                                     <Rectangle x:Name="WaveformPlayhead" Width="2" HorizontalAlignment="Left"
-                                               Fill="{StaticResource AccentBrush}" Opacity="0.9"/>
+                                               Fill="{DynamicResource AccentBrush}" Opacity="0.9"/>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -379,17 +379,17 @@
 
                 <!-- Edit summary badge -->
                 <Border x:Name="EditSummaryBorder" Grid.Row="4" Margin="0,6,0,0" Visibility="Collapsed"
-                        Background="{StaticResource CardBrush}" CornerRadius="5" Padding="10,5">
+                        Background="{DynamicResource CardBrush}" CornerRadius="5" Padding="10,5">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Active Edits:" Foreground="{StaticResource Text2Brush}" FontSize="11"
+                        <TextBlock Text="Active Edits:" Foreground="{DynamicResource Text2Brush}" FontSize="11"
                                    FontFamily="Segoe UI" VerticalAlignment="Center"/>
                         <TextBlock x:Name="EditSummaryText" Grid.Column="1" Text="No edits"
-                                   Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentBrush}" FontSize="11" FontWeight="SemiBold"
                                    FontFamily="Segoe UI" Margin="6,0" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
                         <Button Grid.Column="2" Content="Reset All" Style="{StaticResource GhostButton}"
@@ -403,11 +403,11 @@
                 <StackPanel>
 
                     <!-- ── Rotation & Flip ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🔄 Rotation &amp; Flip (Live)" Foreground="{StaticResource TextBrush}"
+                            <TextBlock Text="🔄 Rotation &amp; Flip (Live)" Foreground="{DynamicResource TextBrush}"
                                        FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                             <WrapPanel Margin="0,10,0,0">
                                 <Button x:Name="Rotate90CWBtn" Content="90° CW" Style="{StaticResource GhostButton}" Margin="0,0,6,6" Padding="13,7" Click="Rotate90CW_Click"/>
@@ -420,18 +420,18 @@
                                 <Button x:Name="FlipVBtn" Content="↕ Flip Vertical" Style="{StaticResource GhostButton}" Margin="0,0,6,6" Padding="14,7" Click="FlipV_Click"/>
                             </WrapPanel>
                             <TextBlock x:Name="RotationStatusText" Text="Current: 0° · No flip"
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- ── Audio Adjustments ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🔊 Audio Adjustments (Live)" Foreground="{StaticResource TextBrush}"
+                            <TextBlock Text="🔊 Audio Adjustments (Live)" Foreground="{DynamicResource TextBrush}"
                                        FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
-                            <TextBlock Text="Volume Boost / Attenuation" Foreground="{StaticResource Text2Brush}" FontSize="11" Margin="0,8,0,4"/>
+                            <TextBlock Text="Volume Boost / Attenuation" Foreground="{DynamicResource Text2Brush}" FontSize="11" Margin="0,8,0,4"/>
                             <WrapPanel>
                                 <Button x:Name="VolDown6Btn" Content="-6 dB" Style="{StaticResource GhostButton}" Margin="0,0,5,6" Padding="11,6" Click="VolDown6_Click"/>
                                 <Button x:Name="VolDown3Btn" Content="-3 dB" Style="{StaticResource GhostButton}" Margin="0,0,5,6" Padding="11,6" Click="VolDown3_Click"/>
@@ -444,16 +444,16 @@
                                 <Button x:Name="MonoBtn" Content="🎧 Stereo to Mono" Style="{StaticResource GhostButton}" Margin="0,0,6,6" Padding="14,7" Click="StereoToMono_Click"/>
                             </WrapPanel>
                             <TextBlock x:Name="AudioStatusText" Text="Volume: 0 dB · Stereo"
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- ── Aspect Ratio ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="📐 Aspect Ratio Preset" Foreground="{StaticResource TextBrush}"
+                            <TextBlock Text="📐 Aspect Ratio Preset" Foreground="{DynamicResource TextBrush}"
                                        FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                             <WrapPanel Margin="0,10,0,0">
                                 <Button x:Name="AR16_9Btn" Content="16:9" Style="{StaticResource GhostButton}" Margin="0,0,6,6" Padding="14,7" Click="AR_16_9_Click"/>
@@ -464,17 +464,17 @@
                                 <Button x:Name="AROrigBtn" Content="Original" Style="{StaticResource GhostButton}" Margin="0,0,6,6" Padding="14,7" Click="AR_Original_Click"/>
                             </WrapPanel>
                             <TextBlock x:Name="AspectStatusText" Text="Current: Original"
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- ── Crop ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="✂️ Crop Tool" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="✂️ Crop Tool" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI" VerticalAlignment="Center"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <ToggleButton x:Name="CropModeBoxBtn" Content="🎯 Edit Box"
@@ -489,7 +489,7 @@
                             </Grid>
 
                             <!-- Crop Aspect Ratio Presets -->
-                            <TextBlock Text="Crop Presets" Foreground="{StaticResource Text2Brush}" FontSize="11" Margin="0,10,0,4"/>
+                            <TextBlock Text="Crop Presets" Foreground="{DynamicResource Text2Brush}" FontSize="11" Margin="0,10,0,4"/>
                             <WrapPanel>
                                 <Button x:Name="CropPresetFreeBtn" Content="Freeform" Style="{StaticResource GhostButton}" Margin="0,0,5,5" Padding="10,5" Click="CropPresetFree_Click"/>
                                 <Button x:Name="CropPreset16_9Btn" Content="16:9" Style="{StaticResource GhostButton}" Margin="0,0,5,5" Padding="10,5" Click="CropPreset16_9_Click" ToolTip="Widescreen Crop"/>
@@ -512,28 +512,28 @@
                                     <RowDefinition Height="6"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="Top" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Text="Top" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
                                 <TextBox x:Name="CropTopBox" Grid.Column="1" Text="0"
-                                         Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                         Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                          Padding="5,3" FontSize="11" FontFamily="Consolas"
                                          LostFocus="CropBox_LostFocus" KeyDown="CropBox_KeyDown"/>
-                                <TextBlock Grid.Column="3" Text="Bottom" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Grid.Column="3" Text="Bottom" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
                                 <TextBox x:Name="CropBottomBox" Grid.Column="4" Text="0"
-                                         Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                         Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                          Padding="5,3" FontSize="11" FontFamily="Consolas"
                                          LostFocus="CropBox_LostFocus" KeyDown="CropBox_KeyDown"/>
-                                <TextBlock Grid.Row="2" Text="Left" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Grid.Row="2" Text="Left" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
                                 <TextBox x:Name="CropLeftBox" Grid.Row="2" Grid.Column="1" Text="0"
-                                         Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                         Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                          Padding="5,3" FontSize="11" FontFamily="Consolas"
                                          LostFocus="CropBox_LostFocus" KeyDown="CropBox_KeyDown"/>
-                                <TextBlock Grid.Row="2" Grid.Column="3" Text="Right" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Grid.Row="2" Grid.Column="3" Text="Right" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11"/>
                                 <TextBox x:Name="CropRightBox" Grid.Row="2" Grid.Column="4" Text="0"
-                                         Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                         Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                          Padding="5,3" FontSize="11" FontFamily="Consolas"
                                          LostFocus="CropBox_LostFocus" KeyDown="CropBox_KeyDown"/>
                             </Grid>
@@ -542,17 +542,17 @@
                                 <Button Content="Reset Crop" Style="{StaticResource GhostButton}" Padding="14,6" Click="ResetCrop_Click"/>
                             </WrapPanel>
                             <TextBlock x:Name="CropStatusText" Text="No crop applied · Full Frame"
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- ── FFmpeg Log (collapsible) ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="FFmpeg Log" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="FFmpeg Log" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                                 <Button x:Name="ToggleLogBtn" Content="Show" HorizontalAlignment="Right"
                                         Style="{StaticResource GhostButton}" Padding="10,3" FontSize="10"
@@ -560,8 +560,8 @@
                             </Grid>
                             <TextBox x:Name="LogBox" Margin="0,8,0,0" Height="120"
                                      Visibility="Collapsed"
-                                     Background="{StaticResource LogBgBrush}"
-                                     Foreground="{StaticResource LogTextBrush}"
+                                     Background="{DynamicResource LogBgBrush}"
+                                     Foreground="{DynamicResource LogTextBrush}"
                                      BorderThickness="0" FontFamily="Consolas" FontSize="11"
                                      AcceptsReturn="True" IsReadOnly="True"
                                      TextWrapping="NoWrap"
@@ -574,8 +574,8 @@
         </Grid>
 
         <!-- ════════════════ OUTPUT PANEL ════════════════ -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                 Padding="14,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -596,15 +596,15 @@
                         <ColumnDefinition Width="20"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Format" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Text="Format" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <ComboBox x:Name="OutputFormatBox" Grid.Column="1" SelectedIndex="0"/>
-                    <TextBlock Grid.Column="3" Text="Quality" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Grid.Column="3" Text="Quality" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <Slider x:Name="QualitySlider" Grid.Column="4" Minimum="10" Maximum="100" Value="70"
                             VerticalAlignment="Center" Margin="8,0"/>
-                    <TextBlock x:Name="QualityText" Grid.Column="5" Text="70%" Foreground="{StaticResource TextBrush}"
+                    <TextBlock x:Name="QualityText" Grid.Column="5" Text="70%" Foreground="{DynamicResource TextBrush}"
                                FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" MinWidth="35"/>
                     <CheckBox x:Name="GpuCheck" Grid.Column="7" Content="GPU Acceleration"
-                              Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"
+                              Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
                               IsChecked="True"/>
                 </Grid>
 
@@ -624,24 +624,24 @@
                         <ColumnDefinition Width="6"/>
                         <ColumnDefinition Width="Auto"/> <!-- Render button -->
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file"
-                               Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"
                                FontSize="12" TextTrimming="CharacterEllipsis"/>
                     <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                     <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
 
                     <!-- Render Progress & Telemetry (Column 5) -->
                     <Border x:Name="RenderProgressPanel" Grid.Column="5" Visibility="Collapsed"
-                            Background="{StaticResource CardBrush}" CornerRadius="5" Padding="10,4" Margin="0,0,8,0">
+                            Background="{DynamicResource CardBrush}" CornerRadius="5" Padding="10,4" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <ProgressBar x:Name="RenderProgressBar" Width="140" Height="16"
                                          Minimum="0" Maximum="100" Margin="0,0,8,0"/>
                             <TextBlock x:Name="RenderProgressText" Text="0%"
-                                       Foreground="{StaticResource TextBrush}" FontFamily="Consolas" FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextBrush}" FontFamily="Consolas" FontSize="11" FontWeight="Bold"
                                        VerticalAlignment="Center" Margin="0,0,10,0" MinWidth="35"/>
                             <TextBlock x:Name="RenderTelemetryText" Text=""
-                                       Foreground="{StaticResource AccentBrush}" FontFamily="Consolas" FontSize="11"
+                                       Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas" FontSize="11"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -668,19 +668,19 @@
         </Border>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}" Margin="0">
+        <Grid Grid.Row="4" Background="{DynamicResource TitleBarBrush}" Margin="0">
             <Grid Margin="14,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}"
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}"
                              VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}"
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}"
                                VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}"
+                <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedBrush}"
                            Text="Video Toolbox for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
         </Grid>

@@ -8,6 +8,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         ProcessGuard.Initialize();
+        ThemeManager.Initialize();
     }
 
     protected override void OnExit(ExitEventArgs e)

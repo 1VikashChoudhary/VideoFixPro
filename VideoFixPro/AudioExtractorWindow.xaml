@@ -7,7 +7,7 @@
         Height="800"
         MinWidth="900"
         MinHeight="600"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -27,8 +27,8 @@
         </Grid.ColumnDefinitions>
 
         <Border Grid.Row="0" Grid.ColumnSpan="3"
-                Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12"
@@ -58,7 +58,7 @@
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Right"
                            VerticalAlignment="Center"
-                           Foreground="{StaticResource Text2Brush}"
+                           Foreground="{DynamicResource Text2Brush}"
                            FontSize="12"
                            Text="Drop video files here to extract their audio tracks."/>
             </DockPanel>
@@ -66,15 +66,15 @@
 
         <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <Border Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="14"
                         Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="1. Extraction Settings"
-                                   Foreground="{StaticResource TextBrush}"
+                                   Foreground="{DynamicResource TextBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="14"/>
 
@@ -83,10 +83,10 @@
                                 <ColumnDefinition Width="130"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Track Selection" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Track Selection" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <RadioButton x:Name="ExtractAllRadio" Content="Extract ALL audio tracks" IsChecked="True" Margin="0,0,16,0" Foreground="{StaticResource TextBrush}"/>
-                                <RadioButton x:Name="ExtractFirstRadio" Content="Extract FIRST audio track only" Foreground="{StaticResource TextBrush}"/>
+                                <RadioButton x:Name="ExtractAllRadio" Content="Extract ALL audio tracks" IsChecked="True" Margin="0,0,16,0" Foreground="{DynamicResource TextBrush}"/>
+                                <RadioButton x:Name="ExtractFirstRadio" Content="Extract FIRST audio track only" Foreground="{DynamicResource TextBrush}"/>
                             </StackPanel>
                         </Grid>
 
@@ -95,7 +95,7 @@
                                 <ColumnDefinition Width="130"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Output Format" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Output Format" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center"/>
                             <ComboBox x:Name="FormatBox" Grid.Column="1" Width="200" HorizontalAlignment="Left" SelectedIndex="0">
                             </ComboBox>
                         </Grid>
@@ -106,8 +106,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Output Folder" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <TextBlock Text="Output Folder" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
                                 <Button Content="Browse..." Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="BrowseOutput_Click"/>
                                 <Button Content="Reset" Style="{StaticResource GhostButton}" Margin="5,0,0,0" Click="ResetOutput_Click"/>
@@ -116,14 +116,14 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="14">
                     <StackPanel>
                         <TextBlock Text="2. Job Queue"
-                                   Foreground="{StaticResource TextBrush}"
+                                   Foreground="{DynamicResource TextBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="14"/>
                         <WrapPanel Margin="0,12,0,0">
@@ -150,8 +150,8 @@
         </ScrollViewer>
 
         <Border Grid.Row="1" Grid.Column="2"
-                Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="14">
@@ -163,15 +163,15 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Text="FFmpeg Log"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            FontWeight="SemiBold"
                            FontSize="14"/>
 
                 <TextBox x:Name="LogBox"
                          Grid.Row="1"
                          Margin="0,12,0,0"
-                         Background="{StaticResource LogBgBrush}"
-                         Foreground="{StaticResource LogTextBrush}"
+                         Background="{DynamicResource LogBgBrush}"
+                         Foreground="{DynamicResource LogTextBrush}"
                          BorderThickness="0"
                          FontFamily="Consolas"
                          FontSize="12"
@@ -188,9 +188,9 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Total Progress" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="Total Progress" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center"/>
                     <ProgressBar x:Name="MuxProgressBar" Grid.Column="1" Margin="10,0" Height="18" Minimum="0" Maximum="100"/>
-                    <TextBlock x:Name="MuxProgressText" Grid.Column="2" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" Text="0%"/>
+                    <TextBlock x:Name="MuxProgressText" Grid.Column="2" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" Text="0%"/>
                 </Grid>
             </Grid>
         </Border>
@@ -201,12 +201,12 @@
                 <ColumnDefinition Width="220"/>
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal">
-                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" Text="Ready"/>
+                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" Text="Ready"/>
             </StackPanel>
             <TextBlock Grid.Column="1"
                        HorizontalAlignment="Right"
-                       Foreground="{StaticResource MutedBrush}"
+                       Foreground="{DynamicResource MutedBrush}"
                        Text="Audio Extractor for VideoFixPro"/>
         </Grid>
     </Grid>

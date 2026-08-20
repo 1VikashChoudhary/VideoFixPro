@@ -6,7 +6,7 @@
         Height="760"
         MinWidth="1020"
         MinHeight="620"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         Icon="Assets/app_icon.png">
     <Grid Margin="14">
         <Grid.RowDefinitions>
@@ -16,18 +16,18 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="14">
             <StackPanel>
                 <TextBlock Text="Batch Video + Audio Wizard"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            FontSize="18"
                            FontWeight="SemiBold"/>
                 <TextBlock Margin="0,6,0,0"
-                           Foreground="{StaticResource Text2Brush}"
+                           Foreground="{DynamicResource Text2Brush}"
                            TextWrapping="Wrap"
                            Text="Add the videos you want to process, then choose the matching external audio file for each row. The current output settings from the main muxer will be used when these jobs are queued."/>
             </StackPanel>
@@ -61,8 +61,8 @@
         </WrapPanel>
 
         <Border Grid.Row="2"
-                Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12">
@@ -92,7 +92,7 @@
                 <TextBlock x:Name="SummaryText"
                            Grid.Row="1"
                            Margin="0,12,0,0"
-                           Foreground="{StaticResource Text2Brush}"
+                           Foreground="{DynamicResource Text2Brush}"
                            Text="No videos added yet."/>
             </Grid>
         </Border>
@@ -107,7 +107,7 @@
 
             <TextBlock x:Name="HintText"
                        VerticalAlignment="Center"
-                       Foreground="{StaticResource AccentBrush}"
+                       Foreground="{DynamicResource AccentBrush}"
                        Text="Tip: double-click a row to choose its audio file quickly."/>
 
             <Button Grid.Column="1"

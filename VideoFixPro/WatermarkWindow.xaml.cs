@@ -796,10 +796,22 @@ public partial class WatermarkWindow : Window
         string filterComplex = $"[1:v]format=rgba,colorchannelmixer=aa={alphaStr},scale={targetLogoWidth}:-2{rotFilter}[wm];[0:v][wm]overlay={overlayPos}:format=auto[outv]";
 
         bool useGpu = (GpuCheck.IsChecked == true) && (_hasNvidia || _hasAmd || _hasIntel);
-        string vCodecArgs =                             useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
-useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
-                            useGpu && _hasIntel ? "-c:v h264_qsv -pix_fmt nv12" :
-                            "-c:v libx264 -preset fast -crf 19 -pix_fmt yuv420p";
+        bool isAv1 = Av1Check.IsChecked == true;
+        string vCodecArgs;
+        if (isAv1)
+        {
+            vCodecArgs = useGpu && _hasNvidia ? "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p" :
+                         useGpu && _hasAmd ? "-c:v av1_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
+                         useGpu && _hasIntel ? "-c:v av1_qsv -global_quality 22 -pix_fmt nv12" :
+                         "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p";
+        }
+        else
+        {
+            vCodecArgs = useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
+                         useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
+                         useGpu && _hasIntel ? "-c:v h264_qsv -pix_fmt nv12" :
+                         "-c:v libx264 -preset fast -crf 19 -pix_fmt yuv420p";
+        }
 
         string args = $"-y -i \"{_filePath}\" -i \"{_logoPath}\" -filter_complex \"{filterComplex}\" -map \"[outv]\" -map 0:a? {vCodecArgs} -c:a aac -b:a 192k \"{outputPath}\"";
         Log($"[CMD] ffmpeg {args}");

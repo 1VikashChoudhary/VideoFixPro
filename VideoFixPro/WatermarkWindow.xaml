@@ -9,7 +9,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -36,14 +36,14 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Watermark &amp; Brand Studio" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                           Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleFileName" Text="No file loaded"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"
                                MaxWidth="400" TextTrimming="CharacterEllipsis"/>
                 </Border>
             </StackPanel>
@@ -58,7 +58,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN CONTENT ════════════════ -->
         <Grid Grid.Row="2" Margin="14,12,14,10">
@@ -78,8 +78,8 @@
 
                 <!-- Drop Zone (before load) -->
                 <Border x:Name="DropZone" Grid.Row="0" Grid.RowSpan="3"
-                        BorderBrush="{StaticResource MutedBrush}" BorderThickness="2" CornerRadius="8"
-                        Background="{StaticResource SurfaceBrush}" Cursor="Hand" MouseLeftButtonDown="DropZone_Click">
+                        BorderBrush="{DynamicResource MutedBrush}" BorderThickness="2" CornerRadius="8"
+                        Background="{DynamicResource SurfaceBrush}" Cursor="Hand" MouseLeftButtonDown="DropZone_Click">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
@@ -92,18 +92,18 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🏷️" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                         <TextBlock Text="Watermark &amp; Brand Studio" FontSize="18" FontWeight="Bold"
-                                   Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                   Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                         <TextBlock Text="Drop a video file here to add logo watermarks"
-                                   Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="13" HorizontalAlignment="Center"/>
+                                   Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="13" HorizontalAlignment="Center"/>
                         <TextBlock Text="or click to browse  •  Live WYSIWYG overlay positioning &amp; transparency"
-                                   Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
+                                   Foreground="{DynamicResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
                                    HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 
                 <!-- File Header (after load) -->
                 <Border x:Name="FileHeader" Grid.Row="0" Visibility="Collapsed"
-                        Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -111,15 +111,15 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock x:Name="HeaderFileName" Foreground="{StaticResource AccentBrush}"
+                            <TextBlock x:Name="HeaderFileName" Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="Segoe UI" FontSize="13" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" MaxWidth="450"/>
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
-                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{StaticResource Text2Brush}" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{DynamicResource Text2Brush}" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2">
-                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{StaticResource Text2Brush}" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2">
+                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{DynamicResource Text2Brush}" FontSize="11"/>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
@@ -132,7 +132,7 @@
 
                 <!-- Video Player Preview with Live Overlay -->
                 <Border x:Name="PlayerBorder" Grid.Row="1" Background="Black" CornerRadius="8"
-                        ClipToBounds="True" Visibility="Collapsed" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        ClipToBounds="True" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                         SizeChanged="PlayerBorder_SizeChanged">
                     <Grid x:Name="PlayerContainer">
                         <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
@@ -156,7 +156,7 @@
                                 </Grid.RenderTransform>
 
                                 <!-- Visual Selection Border when hovering or dragging -->
-                                <Border x:Name="WatermarkSelectionBox" BorderBrush="{StaticResource AccentBrush}"
+                                <Border x:Name="WatermarkSelectionBox" BorderBrush="{DynamicResource AccentBrush}"
                                         BorderThickness="1.5" CornerRadius="4" Margin="-4"
                                         Background="#12388BFD" Visibility="Visible"/>
 
@@ -179,11 +179,11 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click"/>
+                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click" Padding="0" FontSize="11"/>
                     <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0" Minimum="0" Maximum="100" Value="0"
                             VerticalAlignment="Center" PreviewMouseLeftButtonDown="SeekSlider_MouseDown"
                             PreviewMouseLeftButtonUp="SeekSlider_MouseUp" ValueChanged="SeekSlider_ValueChanged"/>
-                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00 / 00:00" Foreground="{StaticResource Text2Brush}"
+                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00 / 00:00" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
                 </Grid>
             </Grid>
@@ -193,12 +193,12 @@
                 <StackPanel>
 
                     <!-- Logo File Selection -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🖼️ Logo Watermark File" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                            <TextBlock Text="🖼️ Logo Watermark File" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                             
-                            <Border x:Name="LogoDropBorder" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
+                            <Border x:Name="LogoDropBorder" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,10,0,0" Cursor="Hand"
                                     MouseLeftButtonDown="SelectLogo_Click">
                                 <Grid>
@@ -207,14 +207,14 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Width="40" Height="40" Background="#161B22" CornerRadius="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                    <Border Width="40" Height="40" Background="{DynamicResource SurfaceBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                         <Image x:Name="LogoThumbnail" Stretch="Uniform"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
                                         <TextBlock x:Name="LogoFileNameText" Text="Click to select logo (PNG, JPG)"
-                                                   Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" FontSize="12"
+                                                   Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" FontSize="12"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="Supports PNG transparency" Foreground="{StaticResource MutedBrush}" FontSize="10.5"/>
+                                        <TextBlock Text="Supports PNG transparency" Foreground="{DynamicResource MutedBrush}" FontSize="10.5"/>
                                     </StackPanel>
                                     <Button x:Name="ClearLogoBtn" Grid.Column="2" Content="✕" Style="{StaticResource GhostButton}"
                                              Padding="8,4" Visibility="Collapsed" Click="ClearLogo_Click"/>
@@ -224,11 +224,11 @@
                     </Border>
 
                     <!-- Position & Placement Card (9-Anchor vs Free Drag) -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="📍 Position &amp; Placement" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                                <TextBlock Text="📍 Position &amp; Placement" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <Button x:Name="ModeAnchorBtn" Content="9 Anchors" Style="{StaticResource ActiveToolButton}"
                                             Padding="8,3" FontSize="10.5" Click="ModeAnchor_Click"/>
@@ -239,7 +239,7 @@
 
                             <!-- 9-Position Anchor Grid Panel -->
                             <StackPanel x:Name="AnchorPanel" Margin="0,10,0,0">
-                                <TextBlock Text="Choose watermark anchor location on screen:" Foreground="{StaticResource Text2Brush}" FontSize="11" Margin="0,0,0,8"/>
+                                <TextBlock Text="Choose watermark anchor location on screen:" Foreground="{DynamicResource Text2Brush}" FontSize="11" Margin="0,0,0,8"/>
                                 <UniformGrid Rows="3" Columns="3">
                                     <Button x:Name="PosTL" Content="Top-Left" Style="{StaticResource GhostButton}" Margin="2" Padding="0,8" Click="PosTL_Click"/>
                                     <Button x:Name="PosTC" Content="Top-Center" Style="{StaticResource GhostButton}" Margin="2" Padding="0,8" Click="PosTC_Click"/>
@@ -255,7 +255,7 @@
 
                             <!-- Free Drag / Manual Coordinate Sliders Panel -->
                             <StackPanel x:Name="FreeTransformPanel" Margin="0,10,0,0" Visibility="Collapsed">
-                                <TextBlock Text="💡 Click &amp; drag watermark directly on video or use sliders:" Foreground="{StaticResource AccentBrush}" FontSize="11" Margin="0,0,0,8"/>
+                                <TextBlock Text="💡 Click &amp; drag watermark directly on video or use sliders:" Foreground="{DynamicResource AccentBrush}" FontSize="11" Margin="0,0,0,8"/>
                                 <!-- X Position Slider -->
                                 <Grid Margin="0,4,0,0">
                                     <Grid.ColumnDefinitions>
@@ -263,10 +263,10 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="40"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="X (Pos %)" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                    <TextBlock Text="X (Pos %)" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                     <Slider x:Name="PosXSlider" Grid.Column="1" Minimum="0" Maximum="100" Value="85"
                                             VerticalAlignment="Center" Margin="6,0" ValueChanged="PosXSlider_ValueChanged"/>
-                                    <TextBlock x:Name="PosXText" Grid.Column="2" Text="85%" Foreground="{StaticResource TextBrush}"
+                                    <TextBlock x:Name="PosXText" Grid.Column="2" Text="85%" Foreground="{DynamicResource TextBrush}"
                                                FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
 
@@ -277,10 +277,10 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="40"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Y (Pos %)" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                    <TextBlock Text="Y (Pos %)" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                     <Slider x:Name="PosYSlider" Grid.Column="1" Minimum="0" Maximum="100" Value="85"
                                             VerticalAlignment="Center" Margin="6,0" ValueChanged="PosYSlider_ValueChanged"/>
-                                    <TextBlock x:Name="PosYText" Grid.Column="2" Text="85%" Foreground="{StaticResource TextBrush}"
+                                    <TextBlock x:Name="PosYText" Grid.Column="2" Text="85%" Foreground="{DynamicResource TextBrush}"
                                                FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
                             </StackPanel>
@@ -288,10 +288,10 @@
                     </Border>
 
                     <!-- 🔄 Free Rotation & Angle Transform -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🔄 Rotation &amp; Angle" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                            <TextBlock Text="🔄 Rotation &amp; Angle" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                             
                             <!-- Angle Slider -->
                             <Grid Margin="0,10,0,0">
@@ -300,10 +300,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Angle" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Angle" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <Slider x:Name="RotateSlider" Grid.Column="1" Minimum="-180" Maximum="180" Value="0"
                                         VerticalAlignment="Center" Margin="6,0" ValueChanged="RotateSlider_ValueChanged"/>
-                                <TextBlock x:Name="RotateText" Grid.Column="2" Text="0°" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="RotateText" Grid.Column="2" Text="0°" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                             </Grid>
 
@@ -319,10 +319,10 @@
                     </Border>
 
                     <!-- Scale, Opacity & Margin Sliders -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🎛️ Scaling &amp; Transparency" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                            <TextBlock Text="🎛️ Scaling &amp; Transparency" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
 
                             <!-- Scale Slider -->
                             <Grid Margin="0,10,0,0">
@@ -331,10 +331,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="40"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Size" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Size" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <Slider x:Name="ScaleSlider" Grid.Column="1" Minimum="3" Maximum="80" Value="15"
                                         VerticalAlignment="Center" Margin="6,0" ValueChanged="ScaleSlider_ValueChanged"/>
-                                <TextBlock x:Name="ScaleText" Grid.Column="2" Text="15%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="ScaleText" Grid.Column="2" Text="15%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                             </Grid>
 
@@ -345,10 +345,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="40"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Opacity" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Opacity" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <Slider x:Name="OpacitySlider" Grid.Column="1" Minimum="10" Maximum="100" Value="85"
                                         VerticalAlignment="Center" Margin="6,0" ValueChanged="OpacitySlider_ValueChanged"/>
-                                <TextBlock x:Name="OpacityText" Grid.Column="2" Text="85%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="OpacityText" Grid.Column="2" Text="85%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                             </Grid>
 
@@ -359,30 +359,33 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="40"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Margin" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Margin" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <Slider x:Name="MarginSlider" Grid.Column="1" Minimum="0" Maximum="100" Value="24"
                                         VerticalAlignment="Center" Margin="6,0" ValueChanged="MarginSlider_ValueChanged"/>
-                                <TextBlock x:Name="MarginText" Grid.Column="2" Text="24px" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="MarginText" Grid.Column="2" Text="24px" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                             </Grid>
 
-                            <CheckBox x:Name="GpuCheck" Content="GPU Hardware Acceleration"
-                                      Foreground="{StaticResource SuccessBrush}" FontWeight="SemiBold"
+                            <StackPanel Orientation="Horizontal"   VerticalAlignment="Center">
+                                <CheckBox x:Name="GpuCheck" Content="GPU Hardware Acceleration"
+                                      Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold"
                                       Margin="0,14,0,0" IsChecked="True" Cursor="Hand"/>
+                                <CheckBox x:Name="Av1Check" Content="AV1 Codec" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
                     <!-- FFmpeg Log (Collapsible) -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="Watermark Engine Log" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI"/>
+                                <TextBlock Text="Watermark Engine Log" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI"/>
                                 <Button x:Name="ToggleLogBtn" Content="Show" HorizontalAlignment="Right" Style="{StaticResource GhostButton}"
                                         Padding="8,2" FontSize="10" Click="ToggleLog_Click"/>
                             </Grid>
                             <TextBox x:Name="LogBox" Margin="0,8,0,0" Height="100" Visibility="Collapsed"
-                                     Background="{StaticResource LogBgBrush}" Foreground="{StaticResource LogTextBrush}"
+                                     Background="{DynamicResource LogBgBrush}" Foreground="{DynamicResource LogTextBrush}"
                                      BorderThickness="0" FontFamily="Consolas" FontSize="10.5" IsReadOnly="True"
                                      TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
                         </StackPanel>
@@ -392,7 +395,7 @@
         </Grid>
 
         <!-- ════════════════ OUTPUT & ACTIONS ════════════════ -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -410,16 +413,16 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                 <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file"
-                           Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                           Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
                 <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                 <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
 
                 <!-- Progress Column -->
                 <Grid x:Name="RenderProgressPanel" Grid.Column="5" VerticalAlignment="Center" Visibility="Collapsed">
                     <ProgressBar x:Name="RenderProgressBar" Height="18" Minimum="0" Maximum="100"/>
-                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{StaticResource TextBrush}"
+                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{DynamicResource TextBrush}"
                                FontFamily="Consolas" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
 
@@ -433,17 +436,17 @@
         </Border>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="4" Background="{DynamicResource TitleBarBrush}">
             <Grid Margin="14,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}" Text="Watermark Studio for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedBrush}" Text="Watermark Studio for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
         </Grid>
     </Grid>

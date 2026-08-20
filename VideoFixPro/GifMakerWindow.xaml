@@ -9,7 +9,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -36,14 +36,14 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="GIF &amp; Animated WebP Studio" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                           Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleFileName" Text="No file loaded"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"
                                MaxWidth="400" TextTrimming="CharacterEllipsis"/>
                 </Border>
             </StackPanel>
@@ -58,7 +58,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN CONTENT ════════════════ -->
         <Grid Grid.Row="2" Margin="14,12,14,10">
@@ -79,8 +79,8 @@
 
                 <!-- Drop Zone (before load) -->
                 <Border x:Name="DropZone" Grid.Row="0" Grid.RowSpan="4"
-                        BorderBrush="{StaticResource MutedBrush}" BorderThickness="2" CornerRadius="8"
-                        Background="{StaticResource SurfaceBrush}" Cursor="Hand" MouseLeftButtonDown="DropZone_Click">
+                        BorderBrush="{DynamicResource MutedBrush}" BorderThickness="2" CornerRadius="8"
+                        Background="{DynamicResource SurfaceBrush}" Cursor="Hand" MouseLeftButtonDown="DropZone_Click">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
@@ -93,18 +93,18 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🎞️" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                         <TextBlock Text="GIF &amp; Animated WebP Studio" FontSize="18" FontWeight="Bold"
-                                   Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                   Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                         <TextBlock Text="Drop a video file here to create crystal-clear animations"
-                                   Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="13" HorizontalAlignment="Center"/>
+                                   Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="13" HorizontalAlignment="Center"/>
                         <TextBlock Text="or click to browse  •  2-Pass Palette Engine for 0 Color Banding"
-                                   Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
+                                   Foreground="{DynamicResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
                                    HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 
                 <!-- File Header (after load) -->
                 <Border x:Name="FileHeader" Grid.Row="0" Visibility="Collapsed"
-                        Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -112,18 +112,18 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock x:Name="HeaderFileName" Foreground="{StaticResource AccentBrush}"
+                            <TextBlock x:Name="HeaderFileName" Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="Segoe UI" FontSize="13" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" MaxWidth="450"/>
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
-                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{StaticResource Text2Brush}" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{DynamicResource Text2Brush}" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
-                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{StaticResource Text2Brush}" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{DynamicResource Text2Brush}" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2">
-                                    <TextBlock x:Name="HeaderClipDuration" Text="Clip: 5.0s" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="SemiBold"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2">
+                                    <TextBlock x:Name="HeaderClipDuration" Text="Clip: 5.0s" Foreground="{DynamicResource AccentBrush}" FontSize="11" FontWeight="SemiBold"/>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
@@ -136,7 +136,7 @@
 
                 <!-- Video Player Preview -->
                 <Border x:Name="PlayerBorder" Grid.Row="1" Background="Black" CornerRadius="8"
-                        ClipToBounds="True" Visibility="Collapsed" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        ClipToBounds="True" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
                                       ScrubbingEnabled="True" Volume="0.5" Stretch="Uniform"
@@ -154,17 +154,17 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click"/>
+                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click" Padding="0" FontSize="11"/>
                     <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0" Minimum="0" Maximum="100" Value="0"
                             VerticalAlignment="Center" PreviewMouseLeftButtonDown="SeekSlider_MouseDown"
                             PreviewMouseLeftButtonUp="SeekSlider_MouseUp" ValueChanged="SeekSlider_ValueChanged"/>
-                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00.00 / 00:00.00" Foreground="{StaticResource Text2Brush}"
+                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00.00 / 00:00.00" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
                 </Grid>
 
                 <!-- Trim Range In/Out Markers -->
-                <Border x:Name="TrimRangePanel" Grid.Row="3" Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"
+                <Border x:Name="TrimRangePanel" Grid.Row="3" Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8"
                         Padding="12,8" Margin="0,8,0,0" Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -175,16 +175,16 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="[ Set Start" Style="{StaticResource GhostButton}" Padding="10,5" Click="SetStart_Click"/>
                             <TextBox x:Name="StartTimeBox" Text="00:00.00" Width="80" Margin="8,0,0,0"
-                                     Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                      Padding="6,4" FontFamily="Consolas" FontSize="12" TextAlignment="Center"
                                      LostFocus="StartTimeBox_LostFocus"/>
                         </StackPanel>
                         <Button Grid.Column="1" Content="▶ Play Range" Style="{StaticResource GhostButton}" Padding="12,5" Click="PlayRange_Click"/>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <TextBox x:Name="EndTimeBox" Text="00:05.00" Width="80" Margin="0,0,8,0"
-                                     Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                      Padding="6,4" FontFamily="Consolas" FontSize="12" TextAlignment="Center"
                                      LostFocus="EndTimeBox_LostFocus"/>
                             <Button Content="Set End ]" Style="{StaticResource GhostButton}" Padding="10,5" Click="SetEnd_Click"/>
@@ -198,17 +198,17 @@
                 <StackPanel>
 
                     <!-- Format & FPS -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="🎨 Format &amp; Framerate" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                            <TextBlock Text="🎨 Format &amp; Framerate" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
                             
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Format" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Format" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <ComboBox x:Name="FormatBox" Grid.Column="1" SelectedIndex="0">
                                     <ComboBoxItem Content="GIF (.gif) — Universal Compatibility"/>
                                     <ComboBoxItem Content="Animated WebP (.webp) — 60% Smaller File"/>
@@ -220,7 +220,7 @@
                                     <ColumnDefinition Width="90"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Frame Rate" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Frame Rate" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <ComboBox x:Name="FpsBox" Grid.Column="1" SelectedIndex="2">
                                     <ComboBoxItem Content="12 fps (Retro / Lightweight)"/>
                                     <ComboBoxItem Content="15 fps (Standard GIF)"/>
@@ -235,7 +235,7 @@
                                     <ColumnDefinition Width="90"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Scale Width" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Scale Width" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <ComboBox x:Name="WidthBox" Grid.Column="1" SelectedIndex="1">
                                     <ComboBoxItem Content="320px (Compact Discord/Chat)"/>
                                     <ComboBoxItem Content="480px (Standard Web Preview)"/>
@@ -248,18 +248,18 @@
                     </Border>
 
                     <!-- 2-Pass Palette Engine -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="✨ 2-Pass Color Engine (0 Banding)" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
-                            <TextBlock Text="Generates dynamic color palettes for flawless gradients:" Foreground="{StaticResource Text2Brush}" FontSize="11" Margin="0,4,0,8"/>
+                            <TextBlock Text="✨ 2-Pass Color Engine (0 Banding)" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Generates dynamic color palettes for flawless gradients:" Foreground="{DynamicResource Text2Brush}" FontSize="11" Margin="0,4,0,8"/>
 
                             <Grid Margin="0,4,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Dither Mode" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Dither Mode" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <ComboBox x:Name="DitherBox" Grid.Column="1" SelectedIndex="0">
                                     <ComboBoxItem Content="Bayer Scale 5 (Best Smoothness &amp; Crispness)"/>
                                     <ComboBoxItem Content="Floyd-Steinberg (Classic Error Diffusion)"/>
@@ -273,7 +273,7 @@
                                     <ColumnDefinition Width="90"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Looping" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
+                                <TextBlock Text="Looping" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="11.5"/>
                                 <ComboBox x:Name="LoopBox" Grid.Column="1" SelectedIndex="0">
                                     <ComboBoxItem Content="Infinite Loop (Forever)"/>
                                     <ComboBoxItem Content="Play Once &amp; Stop"/>
@@ -283,16 +283,16 @@
                     </Border>
 
                     <!-- FFmpeg Log (Collapsible) -->
-                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="GIF Engine Log" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI"/>
+                                <TextBlock Text="GIF Engine Log" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI"/>
                                 <Button x:Name="ToggleLogBtn" Content="Show" HorizontalAlignment="Right" Style="{StaticResource GhostButton}"
                                         Padding="8,2" FontSize="10" Click="ToggleLog_Click"/>
                             </Grid>
                             <TextBox x:Name="LogBox" Margin="0,8,0,0" Height="100" Visibility="Collapsed"
-                                     Background="{StaticResource LogBgBrush}" Foreground="{StaticResource LogTextBrush}"
+                                     Background="{DynamicResource LogBgBrush}" Foreground="{DynamicResource LogTextBrush}"
                                      BorderThickness="0" FontFamily="Consolas" FontSize="10.5" IsReadOnly="True"
                                      TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
                         </StackPanel>
@@ -302,7 +302,7 @@
         </Grid>
 
         <!-- ════════════════ OUTPUT & ACTIONS ════════════════ -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -320,16 +320,16 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                 <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file"
-                           Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                           Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
                 <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                 <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
 
                 <!-- Progress Column -->
                 <Grid x:Name="RenderProgressPanel" Grid.Column="5" VerticalAlignment="Center" Visibility="Collapsed">
                     <ProgressBar x:Name="RenderProgressBar" Height="18" Minimum="0" Maximum="100"/>
-                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{StaticResource TextBrush}"
+                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{DynamicResource TextBrush}"
                                FontFamily="Consolas" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
 
@@ -343,17 +343,17 @@
         </Border>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="4" Background="{DynamicResource TitleBarBrush}">
             <Grid Margin="14,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}" Text="GIF &amp; WebP Studio for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedBrush}" Text="GIF &amp; WebP Studio for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
         </Grid>
     </Grid>

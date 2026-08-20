@@ -32,6 +32,7 @@ public partial class ColorGradeWindow : Window
 
     private bool _isInitialized;
     private string _filePath = string.Empty;
+    private string? _lutPath;
     private double _durationSeconds;
     private int _sourceWidth;
     private int _sourceHeight;
@@ -326,6 +327,28 @@ public partial class ColorGradeWindow : Window
         if (PresetPastel != null) PresetPastel.Style = _activePreset == "Pastel" ? active : ghost;
         if (PresetEmerald != null) PresetEmerald.Style = _activePreset == "Emerald" ? active : ghost;
         if (PresetSepia != null) PresetSepia.Style = _activePreset == "Sepia" ? active : ghost;
+    }
+
+    private void BrowseLut_Click(object s, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select 3D LUT",
+            Filter = "3D LUT Files (*.cube)|*.cube|All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            _lutPath = dlg.FileName;
+            if (LutPathText != null) LutPathText.Text = System.IO.Path.GetFileName(_lutPath);
+            TriggerDebouncedFrameRender();
+        }
+    }
+
+    private void ClearLut_Click(object s, RoutedEventArgs e)
+    {
+        _lutPath = null;
+        if (LutPathText != null) LutPathText.Text = "No LUT selected";
+        TriggerDebouncedFrameRender();
     }
 
     private void ResetAll_Click(object s, RoutedEventArgs e)
@@ -632,6 +655,12 @@ public partial class ColorGradeWindow : Window
             double angle = (_vignette / 100.0) * (Math.PI / 3.0);
             string angleStr = angle.ToString("F3", CultureInfo.InvariantCulture);
             filters.Add($"vignette=angle={angleStr}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(_lutPath))
+        {
+            var escapedPath = _lutPath.Replace("\\", "/").Replace(":", "\\:");
+            filters.Add($"lut3d=file='{escapedPath}'");
         }
 
         return filters.Count > 0 ? string.Join(",", filters) : "null";

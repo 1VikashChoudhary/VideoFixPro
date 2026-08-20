@@ -24,23 +24,29 @@ public partial class AudioMuxerWindow : Window
         ["Quality (bigger, better)"] = 8000
     };
 
-    private static readonly (string Name, string Friendly)[] HardwareEncoders =
+        private static readonly (string Name, string Friendly)[] HardwareEncoders =
     {
         ("h264_nvenc", "NVIDIA NVENC H.264"),
         ("hevc_nvenc", "NVIDIA NVENC HEVC"),
+        ("av1_nvenc", "NVIDIA NVENC AV1"),
         ("h264_qsv", "Intel QSV H.264"),
         ("hevc_qsv", "Intel QSV HEVC"),
+        ("av1_qsv", "Intel QSV AV1"),
         ("h264_amf", "AMD AMF H.264"),
-        ("hevc_amf", "AMD AMF HEVC")
+        ("hevc_amf", "AMD AMF HEVC"),
+        ("av1_amf", "AMD AMF AV1")
     };
 
-    private static readonly string[] PreferredHardwareOrder =
+        private static readonly string[] PreferredHardwareOrder =
     {
+        "av1_nvenc",
         "h264_nvenc",
-        "h264_qsv",
-        "h264_amf",
         "hevc_nvenc",
+        "av1_qsv",
+        "h264_qsv",
         "hevc_qsv",
+        "av1_amf",
+        "h264_amf",
         "hevc_amf"
     };
 

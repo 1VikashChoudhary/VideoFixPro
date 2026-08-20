@@ -355,6 +355,7 @@ public partial class VideoMergerWindow : Window
     }
 
     private void ForceReencode_Changed(object s, RoutedEventArgs e) => CheckMergeStrategy();
+    private void Av1Check_Changed(object s, RoutedEventArgs e) => CheckMergeStrategy();
 
     // ── Preview Player ────────────────────────────────────────────────────────
     private void PlaylistGrid_SelectionChanged(object s, SelectionChangedEventArgs e)
@@ -529,7 +530,8 @@ public partial class VideoMergerWindow : Window
 
         double totalDuration = _clips.Sum(c => c.Duration);
         var first = _clips[0];
-        bool forceReencode = ForceReencodeCheck?.IsChecked == true;
+        bool isAv1 = Av1Check?.IsChecked == true;
+        bool forceReencode = (ForceReencodeCheck?.IsChecked == true) || isAv1;
         bool allMatch = _clips.All(c => c.VideoCodec == first.VideoCodec &&
                                        c.Width == first.Width &&
                                        c.Height == first.Height &&
@@ -538,7 +540,7 @@ public partial class VideoMergerWindow : Window
         bool success = false;
         string tempConcatFile = Path.Combine(Path.GetTempPath(), $"vfp_concat_{Guid.NewGuid():N}.txt");
 
-        try
+                try
         {
             if (allMatch && !forceReencode)
             {
@@ -546,15 +548,23 @@ public partial class VideoMergerWindow : Window
                 var sb = new StringBuilder();
                 foreach (var clip in _clips)
                 {
-                    string safePath = clip.FilePath.Replace("'", "'\\''");
+                    string safePath = clip.FilePath.Replace(@"\", "/").Replace("'", @"'\''");
                     sb.AppendLine($"file '{safePath}'");
                 }
                 await File.WriteAllTextAsync(tempConcatFile, sb.ToString(), Encoding.UTF8);
 
                 string args = $"-y -f concat -safe 0 -i \"{tempConcatFile}\" -c copy \"{outputPath}\"";
+                Log($"[CMD Concat] ffmpeg {args}");
                 success = await RunFFmpegAsync(args, totalDuration, _cts.Token);
+
+                if (!success && !_cts.Token.IsCancellationRequested)
+                {
+                    Log("[WARN] Fast lossless stream copy failed (timestamps or format packet mismatch). Auto-escalating to Smart Re-encode...");
+                    SetStatus("Escalating to Smart Re-encode...", "#D29922");
+                }
             }
-            else
+
+            if (!success && !_cts.Token.IsCancellationRequested)
             {
                 // ── Smart Re-encode & Scale Filter Mode ──
                 int masterW = first.Width > 0 ? first.Width : 1920;
@@ -594,14 +604,25 @@ public partial class VideoMergerWindow : Window
                     sbFilters.Append($"{sbConcatMap}concat=n={_clips.Count}:v=1:a=0[outv]");
 
                 bool useGpu = _hasNvidia || _hasAmd || _hasIntel;
-                string vCodecArgs =                                     useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
-useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
-                                    useGpu && _hasIntel ? "-c:v h264_qsv -pix_fmt nv12" :
-                                    "-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p";
+                string vCodecArgs;
+                if (isAv1)
+                {
+                    vCodecArgs = useGpu && _hasNvidia ? "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p" :
+                                 useGpu && _hasAmd ? "-c:v av1_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
+                                 useGpu && _hasIntel ? "-c:v av1_qsv -global_quality 22 -pix_fmt nv12" :
+                                 "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p";
+                }
+                else
+                {
+                    vCodecArgs = useGpu && _hasNvidia ? "-c:v h264_nvenc -pix_fmt yuv420p" :
+                                 useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
+                                 useGpu && _hasIntel ? "-c:v h264_qsv -pix_fmt nv12" :
+                                 "-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p";
+                }
 
                 string audioMapArgs = anyAudio ? "-map \"[outa]\" -c:a aac -b:a 192k " : "";
                 string args = $"-y {sbInputs}-filter_complex \"{sbFilters}\" -map \"[outv]\" {audioMapArgs}{vCodecArgs} \"{outputPath}\"";
-                Log($"[CMD] ffmpeg {args}");
+                Log($"[CMD Re-encode] ffmpeg {args}");
                 success = await RunFFmpegAsync(args, totalDuration, _cts.Token);
 
                 // Auto CPU Fallback if GPU fails
@@ -718,6 +739,14 @@ useGpu && _hasAmd ? "-c:v h264_amf -pix_fmt yuv420p" :
         {
             if (string.IsNullOrEmpty(e.Data)) return;
             string line = e.Data;
+
+            if (line.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("invalid", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("cannot", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("fatal", StringComparison.OrdinalIgnoreCase))
+            {
+                Log($"[FFmpeg] {line}");
+            }
 
             var match = timeRegex.Match(line);
             if (match.Success && totalDuration > 0)

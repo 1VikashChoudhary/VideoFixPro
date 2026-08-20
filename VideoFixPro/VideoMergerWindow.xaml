@@ -9,7 +9,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -36,14 +36,14 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Lossless Video Merger &amp; Stitcher" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                           Foreground="{DynamicResource TextBrush}" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleClipCount" Text="0 clips in playlist"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI"/>
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI"/>
                 </Border>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -57,7 +57,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN CONTENT ════════════════ -->
         <Grid Grid.Row="2" Margin="14,12,14,10">
@@ -76,22 +76,22 @@
                 </Grid.RowDefinitions>
 
                 <!-- Selected Clip Header -->
-                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
                     <Grid>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="PreviewClipTitle" Text="Select a clip from playlist to preview"
-                                       Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" FontSize="12.5"
+                                       Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" FontSize="12.5"
                                        TextTrimming="CharacterEllipsis"/>
                             <TextBlock x:Name="PreviewClipInfo" Text="No video selected"
-                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- Player Border -->
                 <Border Grid.Row="1" Background="Black" CornerRadius="8" ClipToBounds="True"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
                                       ScrubbingEnabled="True" Volume="0.5" Stretch="Uniform"
@@ -109,11 +109,11 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click"/>
+                    <Button x:Name="SeekPlayBtn" Content="▶" Width="30" Height="26" Style="{StaticResource GhostButton}" Click="TogglePlay_Click" Padding="0" FontSize="11"/>
                     <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0" Minimum="0" Maximum="100" Value="0"
                             VerticalAlignment="Center" PreviewMouseLeftButtonDown="SeekSlider_MouseDown"
                             PreviewMouseLeftButtonUp="SeekSlider_MouseUp" ValueChanged="SeekSlider_ValueChanged"/>
-                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00 / 00:00" Foreground="{StaticResource Text2Brush}"
+                    <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00 / 00:00" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
                 </Grid>
             </Grid>
@@ -135,9 +135,9 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Clip Sequence Order" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="8,0,0,0">
-                            <TextBlock x:Name="TotalDurationBadge" Text="Total: 00:00:00" Foreground="{StaticResource Text2Brush}" FontSize="10.5"/>
+                        <TextBlock Text="Clip Sequence Order" Foreground="{DynamicResource TextBrush}" FontWeight="SemiBold" FontSize="13" FontFamily="Segoe UI"/>
+                        <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="8,0,0,0">
+                            <TextBlock x:Name="TotalDurationBadge" Text="Total: 00:00:00" Foreground="{DynamicResource Text2Brush}" FontSize="10.5"/>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -148,14 +148,14 @@
                 </Grid>
 
                 <!-- Clip Playlist DataGrid -->
-                <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" ClipToBounds="True">
                     <DataGrid x:Name="PlaylistGrid" AutoGenerateColumns="False" CanUserAddRows="False"
                               CanUserDeleteRows="False" CanUserResizeRows="False" SelectionMode="Single"
                               SelectionChanged="PlaylistGrid_SelectionChanged"
                               Background="Transparent" BorderThickness="0" RowHeaderWidth="0"
-                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BorderBrush}"
-                              Foreground="{StaticResource TextBrush}">
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                              Foreground="{DynamicResource TextBrush}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Filename" Binding="{Binding FileName}" Width="*" IsReadOnly="True"/>
@@ -179,12 +179,12 @@
                         <Button Content="▼ Move Down" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="MoveDown_Click" ToolTip="Move clip later in sequence"/>
                         <Button Content="✕ Remove" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="RemoveSelected_Click"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="💡 Drag files anywhere on the window to add" Foreground="{StaticResource MutedBrush}"
+                    <TextBlock Grid.Column="1" Text="💡 Drag files anywhere on the window to add" Foreground="{DynamicResource MutedBrush}"
                                FontSize="10.5" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 </Grid>
 
                 <!-- Merge Mode & Analysis Card -->
-                <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -193,15 +193,15 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Merge Strategy:" Foreground="{StaticResource Text2Brush}" FontSize="11.5" VerticalAlignment="Center"/>
+                                <TextBlock Text="Merge Strategy:" Foreground="{DynamicResource Text2Brush}" FontSize="11.5" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="MergeStrategyBadge" Text="⚡ Fast Lossless Concat (0 Re-encoding)"
-                                           Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource SuccessBrush}" FontWeight="Bold" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock x:Name="MergeStrategyHint" Text="All clips share compatible codecs. Merging takes 1-3 seconds with zero quality loss."
-                                       Foreground="{StaticResource MutedBrush}" FontSize="10.5" Margin="0,3,0,0"/>
+                                       Foreground="{DynamicResource MutedBrush}" FontSize="10.5" Margin="0,3,0,0"/>
                         </StackPanel>
                         <CheckBox x:Name="ForceReencodeCheck" Grid.Column="1" Content="Force Re-encode"
-                                  Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center"
+                                  Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center"
                                   Checked="ForceReencode_Changed" Unchecked="ForceReencode_Changed"/>
                     </Grid>
                 </Border>
@@ -209,7 +209,7 @@
         </Grid>
 
         <!-- ════════════════ OUTPUT & ACTIONS ════════════════ -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -227,22 +227,23 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                 <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as first clip"
-                           Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                           Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
                 <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                 <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
 
                 <!-- Progress Column -->
                 <Grid x:Name="RenderProgressPanel" Grid.Column="5" VerticalAlignment="Center" Visibility="Collapsed">
                     <ProgressBar x:Name="RenderProgressBar" Height="18" Minimum="0" Maximum="100"/>
-                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{StaticResource TextBrush}"
+                    <TextBlock x:Name="RenderProgressText" Text="0%" Foreground="{DynamicResource TextBrush}"
                                FontFamily="Consolas" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
 
-                <Button x:Name="CancelBtn" Grid.Column="7" Content="Cancel" Style="{StaticResource DangerButton}"
+                <CheckBox x:Name="Av1Check" Grid.Column="7" Content="AV1 Codec" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" Margin="0,0,10,0" Checked="Av1Check_Changed" Unchecked="Av1Check_Changed"/>
+                        <Button x:Name="CancelBtn" Grid.Column="9" Content="Cancel" Style="{StaticResource DangerButton}"
                         Padding="16,7" Visibility="Collapsed" Click="Cancel_Click"/>
-                <Button x:Name="OpenFolderBtn" Grid.Column="9" Content="Open Folder" Style="{StaticResource GhostButton}"
+                <Button x:Name="OpenFolderBtn" Grid.Column="11" Content="Open Folder" Style="{StaticResource GhostButton}"
                         Padding="12,7" IsEnabled="False" Click="OpenFolder_Click"/>
                 <Button x:Name="MergeBtn" Grid.Column="11" Content="🎬 Merge Video Clips" Style="{StaticResource PrimaryButton}"
                         Padding="24,7" FontWeight="Bold" Click="Merge_Click"/>
@@ -250,17 +251,17 @@
         </Border>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="4" Background="{DynamicResource TitleBarBrush}">
             <Grid Margin="14,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" Text="Ready" FontSize="11" FontFamily="Segoe UI"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}" Text="Video Merger &amp; Stitcher for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedBrush}" Text="Video Merger &amp; Stitcher for VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
         </Grid>
     </Grid>

@@ -87,6 +87,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ThemeManager.ThemeChanged += UpdateThemeButtonIcon;
+        UpdateThemeButtonIcon();
         Loaded += (_, _) => UiTextSanitizer.Apply(this);
 
         // Bind queue list
@@ -535,7 +537,10 @@ public partial class MainWindow : Window
 
     private string GetOutputPath(VideoJob job)
     {
-        var ext    = ((ComboBoxItem)FormatBox.SelectedItem)?.Content?.ToString()?.ToLower() ?? "mp4";
+        var selectedFormat = ((ComboBoxItem)FormatBox.SelectedItem)?.Content?.ToString()?.ToLower() ?? "mp4";
+        var ext = selectedFormat.Contains("mkv") ? "mkv" : 
+                  selectedFormat.Contains("avi") ? "avi" : 
+                  selectedFormat.Contains("mov") ? "mov" : "mp4";
         var dir    = string.IsNullOrEmpty(_customOutputFolder)
                      ? Path.GetDirectoryName(job.FilePath) ?? "."
                      : _customOutputFolder;
@@ -603,6 +608,7 @@ public partial class MainWindow : Window
             RepairMode jobMode;
             bool useGpu = false;
             int qualityPct = 70;
+            bool isAv1 = false;
 
             if (job.PreferredMode != RepairMode.Auto)
             {
@@ -611,12 +617,14 @@ public partial class MainWindow : Window
                 Dispatcher.Invoke(() => {
                     useGpu = GpuCheck.IsChecked == true;
                     qualityPct = (int)QualitySlider.Value;
+var selectedFormat = ((System.Windows.Controls.ComboBoxItem)FormatBox.SelectedItem)?.Content?.ToString()?.ToLower() ?? "";
+isAv1 = selectedFormat.Contains("av1");
                 });
             }
             else
             {
                 // Global settings from UI — read ALL radio buttons including Auto
-                (jobMode, useGpu, qualityPct) = Dispatcher.Invoke(() => {
+                (jobMode, useGpu, qualityPct, isAv1) = Dispatcher.Invoke(() => {
                     // Fix A: ModeAuto must be checked first; without it the ternary
                     // chain fell through to StreamCopy when Auto was selected.
                     var m = ModeAuto.IsChecked        == true ? RepairMode.Auto        :
@@ -624,12 +632,14 @@ public partial class MainWindow : Window
                             ModeReEncode.IsChecked    == true ? RepairMode.ReEncode    :
                             ModeDeepRecover.IsChecked == true ? RepairMode.DeepRecover :
                                                                 RepairMode.Auto;        // safe default
-                    return (m, GpuCheck.IsChecked == true, (int)QualitySlider.Value);
+                    var selectedFormat = ((System.Windows.Controls.ComboBoxItem)FormatBox.SelectedItem)?.Content?.ToString()?.ToLower() ?? "";
+bool isAv1 = selectedFormat.Contains("av1");
+return (m, GpuCheck.IsChecked == true, (int)QualitySlider.Value, isAv1);
                 });
             }
 
             string output = GetOutputPath(job);
-            bool success = await RepairJobAsync(job, output, jobMode, useGpu, qualityPct, idx, pendingJobs.Count, _cts.Token);
+            bool success = await RepairJobAsync(job, output, jobMode, useGpu, qualityPct, isAv1, idx, pendingJobs.Count, _cts.Token);
 
             if (success)
             {
@@ -678,7 +688,7 @@ public partial class MainWindow : Window
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  REPAIR ONE JOB
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-    private async Task<bool> RepairJobAsync(VideoJob job, string output, RepairMode mode, bool useGpu, int qualityPct, int jobIndex, int totalJobs, CancellationToken ct)
+    private async Task<bool> RepairJobAsync(VideoJob job, string output, RepairMode mode, bool useGpu, int qualityPct, bool isAv1, int jobIndex, int totalJobs, CancellationToken ct)
     {
         if (job.DurationSeconds <= 0)
         {
@@ -698,17 +708,17 @@ public partial class MainWindow : Window
         if (mode == RepairMode.Auto)
         {
             Log("[AUTO] Trying Stream Copy…");
-            success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.StreamCopy, useGpu, qualityPct, jobIndex, totalJobs, ct);
+            success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.StreamCopy, useGpu, qualityPct, isAv1, jobIndex, totalJobs, ct);
             if (!success && !ct.IsCancellationRequested)
             {
                 Log("[AUTO] Stream Copy failed → Deep Recover…");
                 job.Progress = 0;
-                success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.DeepRecover, useGpu, qualityPct, jobIndex, totalJobs, ct);
+                success = await RunFFmpegRepairAsync(job, startTime, output, RepairMode.DeepRecover, useGpu, qualityPct, isAv1, jobIndex, totalJobs, ct);
             }
         }
         else
         {
-            success = await RunFFmpegRepairAsync(job, startTime, output, mode, useGpu, qualityPct, jobIndex, totalJobs, ct);
+            success = await RunFFmpegRepairAsync(job, startTime, output, mode, useGpu, qualityPct, isAv1, jobIndex, totalJobs, ct);
         }
 
         if (ct.IsCancellationRequested)
@@ -742,10 +752,10 @@ public partial class MainWindow : Window
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     
     private async Task<bool> RunFFmpegRepairAsync(VideoJob job, DateTime startTime, string output,
-                                                   RepairMode mode, bool useGpu, int qualityPct, 
+                                                   RepairMode mode, bool useGpu, int qualityPct, bool isAv1,
                                                    int jobIndex, int totalJobs, CancellationToken ct)
     {
-        var args = BuildArgs(job.FilePath, output, mode, useGpu, _hasNvidia, _hasAmd, _hasIntel, qualityPct, job.VideoCodec,
+        var args = BuildArgs(job.FilePath, output, mode, useGpu, _hasNvidia, _hasAmd, _hasIntel, qualityPct, isAv1, job.VideoCodec,
                               job.HasTrim ? job.TrimStart : (double?)null,
                               job.HasTrim ? job.TrimEnd   : (double?)null);
         if (job.HasTrim)
@@ -852,7 +862,7 @@ public partial class MainWindow : Window
     }
 
     private static string BuildArgs(string input, string output, RepairMode mode,
-        bool useGpu, bool hasNvidia, bool hasAmd, bool hasIntel, int qualityPercent, string? videoCodec,
+        bool useGpu, bool hasNvidia, bool hasAmd, bool hasIntel, int qualityPercent, bool isAv1, string? videoCodec,
         double? trimStart = null, double? trimEnd = null)
     {
         var ic = System.Globalization.CultureInfo.InvariantCulture;
@@ -899,24 +909,24 @@ public partial class MainWindow : Window
                 break;
             case RepairMode.ReEncode:
                 if (useGpu && hasNvidia)
-                    sb.Append($"-c:v h264_nvenc -preset fast -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_nvenc -preset p5 -cq {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v h264_nvenc -preset fast -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasAmd)
-                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_amf -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasIntel)
-                    sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k " : $"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
-                    sb.Append($"-c:v libx264 -preset fast -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v libsvtav1 -preset 8 -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v libx264 -preset fast -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 break;
             case RepairMode.DeepRecover:
                 sb.Append("-fflags +discardcorrupt ");
                 if (useGpu && hasNvidia)
-                    sb.Append($"-c:v h264_nvenc -preset slow -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_nvenc -preset p4 -cq {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v h264_nvenc -preset slow -rc vbr -cq {quality} -b:v 0 -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasAmd)
-                    sb.Append($"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_amf -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v h264_amf -rc 0 -qp_i {quality} -qp_p {quality} -qp_b {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 else if (useGpu && hasIntel)
-                    sb.Append($"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v av1_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k " : $"-c:v h264_qsv -global_quality {quality} -pix_fmt nv12 -c:a aac -b:a 192k ");
                 else
-                    sb.Append($"-c:v libx264 -preset slow -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
+                    sb.Append(isAv1 ? $"-c:v libsvtav1 -preset 8 -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k " : $"-c:v libx264 -preset slow -crf {quality} -pix_fmt yuv420p -c:a aac -b:a 192k ");
                 break;
         }
 
@@ -1065,6 +1075,24 @@ public partial class MainWindow : Window
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  OPEN OUTPUT FOLDER
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    private void OpenStabilizer_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var w = new StabilizerWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel);
+        w.Owner = this;
+        w.Show();
+    }
+
+    private void OpenVisualizer_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new AudioVisualizerWindow(_hasNvidia, _hasAmd, _hasIntel);
+        w.Owner = this;
+        w.Show();
+    }
+
     private void OpenTrimTool_Click(object sender, RoutedEventArgs e)
     {
         // If a file is selected in the queue, pre-load it in the trim window
@@ -1769,7 +1797,19 @@ public partial class MainWindow : Window
     {
         AboutModal.Visibility = Visibility.Collapsed;
     }
+
+    private void ThemeToggle_Click(object sender, RoutedEventArgs e)
+    {
+        ThemeManager.ToggleTheme();
+    }
+
+    private void UpdateThemeButtonIcon()
+    {
+        if (ThemeToggleBtn != null)
+        {
+            ThemeToggleBtn.Content = ThemeManager.IsDarkTheme ? "☀️" : "🌙";
+            ThemeToggleBtn.ToolTip = ThemeManager.IsDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme";
+        }
+    }
+
 }
-
-
-

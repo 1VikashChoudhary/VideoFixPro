@@ -92,7 +92,7 @@ public partial class VideoToolboxWindow : Window
         _hasAmd = hasAmd;
         _hasIntel = hasIntel;
 
-        OutputFormatBox.ItemsSource = new[] { "MP4", "MKV", "AVI", "MOV", "WebM" };
+        OutputFormatBox.ItemsSource = new[] { "MP4", "MP4 (AV1)", "MKV", "AVI", "MOV", "WebM" };
         OutputFormatBox.SelectedIndex = 0;
 
         QualitySlider.ValueChanged += (_, _) =>
@@ -913,12 +913,12 @@ public partial class VideoToolboxWindow : Window
         if (!_isInitialized) return;
         if (PlayPauseBtn != null)
         {
-            PlayPauseBtn.Content = _isPlayerPlaying ? "||" : "▶";
+            PlayPauseBtn.Content = _isPlayerPlaying ? "⏸" : "▶";
             PlayPauseBtn.Opacity = _isPlayerPlaying ? 0.2 : 0.6;
         }
         if (SeekPlayBtn != null)
         {
-            SeekPlayBtn.Content = _isPlayerPlaying ? "||" : "▶";
+            SeekPlayBtn.Content = _isPlayerPlaying ? "⏸" : "▶";
         }
     }
 
@@ -1663,9 +1663,12 @@ public partial class VideoToolboxWindow : Window
         _cts = new CancellationTokenSource();
 
         // Determine output format and path
-        string ext = quickSave
-            ? (Path.GetExtension(_filePath).ToLowerInvariant())
-            : $".{(OutputFormatBox.SelectedItem?.ToString()?.ToLowerInvariant() ?? "mp4")}";
+        string selFormat = OutputFormatBox.SelectedItem?.ToString()?.ToLowerInvariant() ?? "mp4";
+        string ext = quickSave ? Path.GetExtension(_filePath).ToLowerInvariant() : 
+                     (selFormat.Contains("mkv") ? ".mkv" : 
+                      selFormat.Contains("avi") ? ".avi" : 
+                      selFormat.Contains("mov") ? ".mov" : 
+                      selFormat.Contains("webm") ? ".webm" : ".mp4");
         if (string.IsNullOrEmpty(ext)) ext = ".mp4";
 
         string dir = (quickSave || string.IsNullOrEmpty(_customOutputFolder))

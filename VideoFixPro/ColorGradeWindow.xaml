@@ -9,7 +9,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
@@ -36,16 +36,16 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}"
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}"
               MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Color Grade &amp; Visual FX Studio" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleFileName" Text="No video loaded"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}"
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Segoe UI" MaxWidth="400"
                                TextTrimming="CharacterEllipsis"/>
                 </Border>
@@ -61,7 +61,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN WORKSPACE ════════════════ -->
         <Grid Grid.Row="2" Margin="14,12,14,10">
@@ -82,9 +82,9 @@
 
                 <!-- Drop Zone (visible when empty) -->
                 <Border x:Name="DropZone" Grid.Row="0" Grid.RowSpan="4"
-                        BorderBrush="{StaticResource MutedBrush}"
+                        BorderBrush="{DynamicResource MutedBrush}"
                         BorderThickness="2" CornerRadius="8"
-                        Background="{StaticResource SurfaceBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
                         Cursor="Hand"
                         MouseLeftButtonDown="DropZone_Click">
                     <Border.Style>
@@ -99,20 +99,20 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🎨" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                         <TextBlock Text="Color Grade &amp; Visual FX Studio" FontSize="20" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource AccentBrush}" FontWeight="Bold" Margin="0,0,0,6"/>
+                                   Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" Margin="0,0,0,6"/>
                         <TextBlock Text="Drop a video here to start color grading &amp; applying cinematic filters"
-                                   Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="13"
+                                   Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="13"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="or click to browse  ·  MP4, MKV, MOV, WebM, AVI, FLV"
-                                   Foreground="{StaticResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
+                                   Foreground="{DynamicResource MutedBrush}" FontFamily="Segoe UI" FontSize="11"
                                    HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 
                 <!-- File Header (visible after load) -->
                 <Border x:Name="FileHeader" Grid.Row="0" Visibility="Collapsed"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="12,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -121,18 +121,18 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock x:Name="HeaderFileName" Text="video.mp4"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" MaxWidth="380"/>
                             <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
-                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderDuration" Text="00:00:00" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
-                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                    <TextBlock x:Name="HeaderResolution" Text="1920x1080" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2">
-                                    <TextBlock x:Name="HeaderCodec" Text="H.264" Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2">
+                                    <TextBlock x:Name="HeaderCodec" Text="H.264" Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
@@ -146,7 +146,7 @@
                 <Border x:Name="PlayerBorder" Grid.Row="1" Margin="0,8,0,0"
                         Background="Black" CornerRadius="8" ClipToBounds="True"
                         Visibility="Collapsed" SizeChanged="PlayerBorder_SizeChanged"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <!-- Media Player Element -->
                         <MediaElement x:Name="Player"
@@ -197,9 +197,9 @@
                         <!-- Comparison Mode Badge -->
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12"
                                 Background="#E0161B22" CornerRadius="4" Padding="8,3"
-                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                             <TextBlock x:Name="PreviewBadgeText" Text="✨ Live Preview (Real-Time)"
-                                       Foreground="{StaticResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" FontFamily="Segoe UI"/>
+                                       Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" FontFamily="Segoe UI"/>
                         </Border>
                     </Grid>
                 </Border>
@@ -216,7 +216,7 @@
                     </Grid.ColumnDefinitions>
                     <Button x:Name="SeekPlayBtn" Content="▶" Width="34" Height="28"
                             Style="{StaticResource GhostButton}" Click="TogglePlay_Click"
-                            VerticalAlignment="Center"/>
+                            VerticalAlignment="Center" Padding="0" FontSize="11"/>
                     <Slider x:Name="SeekSlider" Grid.Column="1" Margin="8,0"
                             Minimum="0" Maximum="100" Value="0"
                             VerticalAlignment="Center"
@@ -224,7 +224,7 @@
                             PreviewMouseLeftButtonUp="SeekSlider_MouseUp"
                             ValueChanged="SeekSlider_ValueChanged"/>
                     <TextBlock x:Name="SeekTimeText" Grid.Column="2" Text="00:00:00 / 00:00:00"
-                               Foreground="{StaticResource Text2Brush}" FontFamily="Consolas"
+                               Foreground="{DynamicResource Text2Brush}" FontFamily="Consolas"
                                FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <Button x:Name="CompareBtn" Grid.Column="3" Content="👁️ Hold Original"
                             Style="{StaticResource GhostButton}" Padding="8,4" FontSize="10"
@@ -238,18 +238,18 @@
 
                 <!-- Active Filter Summary Card -->
                 <Border x:Name="FilterSummaryBorder" Grid.Row="3" Margin="0,6,0,0" Visibility="Collapsed"
-                        Background="{StaticResource CardBrush}" CornerRadius="6" Padding="10,6"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        Background="{DynamicResource CardBrush}" CornerRadius="6" Padding="10,6"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Active Grade:" Foreground="{StaticResource Text2Brush}" FontSize="11"
+                        <TextBlock Text="Active Grade:" Foreground="{DynamicResource Text2Brush}" FontSize="11"
                                    FontFamily="Segoe UI" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         <TextBlock x:Name="ActiveFilterSummaryText" Grid.Column="1" Text="Original (No adjustments)"
-                                   Foreground="{StaticResource AccentBrush}" FontSize="11"
+                                   Foreground="{DynamicResource AccentBrush}" FontSize="11"
                                    FontFamily="Segoe UI" Margin="8,0" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
                         <Button Grid.Column="2" Content="Reset All ↺" Style="{StaticResource GhostButton}"
@@ -263,18 +263,18 @@
                 <StackPanel>
 
                     <!-- ── 1. CINEMATIC FILTER PRESETS ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                         <StackPanel>
                             <Grid>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="🎬" FontSize="13" Margin="0,0,6,0"/>
-                                    <TextBlock Text="Cinematic Look Presets" Foreground="{StaticResource TextBrush}"
+                                    <TextBlock Text="Cinematic Look Presets" Foreground="{DynamicResource TextBrush}"
                                                FontWeight="SemiBold" FontSize="12.5" FontFamily="Segoe UI"/>
                                 </StackPanel>
                                 <TextBlock Text="1-Click Apply" HorizontalAlignment="Right"
-                                           Foreground="{StaticResource MutedBrush}" FontSize="10.5" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource MutedBrush}" FontSize="10.5" VerticalAlignment="Center"/>
                             </Grid>
 
                             <WrapPanel Margin="0,10,0,0">
@@ -293,13 +293,13 @@
                     </Border>
 
                     <!-- ── 2. LIGHT & EXPOSURE ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="☀️" FontSize="13" Margin="0,0,6,0"/>
-                                <TextBlock Text="Light &amp; Exposure" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="Light &amp; Exposure" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="12.5" FontFamily="Segoe UI"/>
                             </StackPanel>
 
@@ -310,10 +310,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Brightness" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Brightness" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="BrightnessSlider" Grid.Column="1" Minimum="-100" Maximum="100" Value="0"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="BrightnessText" Grid.Column="2" Text="0%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="BrightnessText" Grid.Column="2" Text="0%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
 
@@ -324,10 +324,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Contrast" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Contrast" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="ContrastSlider" Grid.Column="1" Minimum="0" Maximum="250" Value="100"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="ContrastText" Grid.Column="2" Text="100%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="ContrastText" Grid.Column="2" Text="100%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
 
@@ -338,13 +338,29 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Gamma" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Gamma" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="GammaSlider" Grid.Column="1" Minimum="20" Maximum="250" Value="100"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="GammaText" Grid.Column="2" Text="1.00" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="GammaText" Grid.Column="2" Text="1.00" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
 
+                            <!-- Cinematic LUT (.cube) -->
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="LUT (.cube)" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Background="{DynamicResource CardBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,6,0">
+                                    <TextBlock x:Name="LutPathText" Text="No LUT selected" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center" Padding="6,4" TextTrimming="CharacterEllipsis"/>
+                                </Border>
+                                <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="8,4" FontSize="10" Click="BrowseLut_Click" Margin="0,0,4,0"/>
+                                <Button Grid.Column="3" Content="Clear" Style="{StaticResource GhostButton}" Padding="8,4" FontSize="10" Click="ClearLut_Click"/>
+                            </Grid>
+                            
                             <!-- Clarity / Sharpness -->
                             <Grid Margin="0,4,0,4">
                                 <Grid.ColumnDefinitions>
@@ -352,23 +368,23 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Sharpness" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Sharpness" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="SharpnessSlider" Grid.Column="1" Minimum="0" Maximum="200" Value="0"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="SharpnessText" Grid.Column="2" Text="0.0" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="SharpnessText" Grid.Column="2" Text="0.0" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
                     <!-- ── 3. COLOR & TONE ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="🌈" FontSize="13" Margin="0,0,6,0"/>
-                                <TextBlock Text="Color &amp; Temperature" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="Color &amp; Temperature" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="12.5" FontFamily="Segoe UI"/>
                             </StackPanel>
 
@@ -379,10 +395,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Saturation" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Saturation" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="SaturationSlider" Grid.Column="1" Minimum="0" Maximum="250" Value="100"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="SaturationText" Grid.Column="2" Text="100%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="SaturationText" Grid.Column="2" Text="100%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
 
@@ -393,10 +409,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Warmth" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Warmth" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="TemperatureSlider" Grid.Column="1" Minimum="-100" Maximum="100" Value="0"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="TemperatureText" Grid.Column="2" Text="0" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="TemperatureText" Grid.Column="2" Text="0" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
 
@@ -407,23 +423,23 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Tint" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Tint" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="TintSlider" Grid.Column="1" Minimum="-100" Maximum="100" Value="0"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="TintText" Grid.Column="2" Text="0" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="TintText" Grid.Column="2" Text="0" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
                     <!-- ── 4. ATMOSPHERE & VIGNETTE ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="🌌" FontSize="13" Margin="0,0,6,0"/>
-                                <TextBlock Text="Atmosphere &amp; Vignette" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="Atmosphere &amp; Vignette" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="12.5" FontFamily="Segoe UI"/>
                             </StackPanel>
 
@@ -434,22 +450,22 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Vignette" Foreground="{StaticResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="Vignette" Foreground="{DynamicResource Text2Brush}" FontSize="11" VerticalAlignment="Center"/>
                                 <Slider x:Name="VignetteSlider" Grid.Column="1" Minimum="0" Maximum="100" Value="0"
                                         VerticalAlignment="Center" ValueChanged="Slider_ValueChanged"/>
-                                <TextBlock x:Name="VignetteText" Grid.Column="2" Text="0%" Foreground="{StaticResource TextBrush}"
+                                <TextBlock x:Name="VignetteText" Grid.Column="2" Text="0%" Foreground="{DynamicResource TextBrush}"
                                            FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
                     <!-- ── 5. FFMPEG LOG (COLLAPSIBLE) ── -->
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="12">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="FFmpeg Command &amp; Log" Foreground="{StaticResource TextBrush}"
+                                <TextBlock Text="FFmpeg Command &amp; Log" Foreground="{DynamicResource TextBrush}"
                                            FontWeight="SemiBold" FontSize="12.5" FontFamily="Segoe UI"/>
                                 <Button x:Name="ToggleLogBtn" Content="Show" HorizontalAlignment="Right"
                                         Style="{StaticResource GhostButton}" Padding="8,2" FontSize="10"
@@ -457,8 +473,8 @@
                             </Grid>
                             <TextBox x:Name="LogBox" Margin="0,8,0,0" Height="110"
                                      Visibility="Collapsed"
-                                     Background="{StaticResource LogBgBrush}"
-                                     Foreground="{StaticResource LogTextBrush}"
+                                     Background="{DynamicResource LogBgBrush}"
+                                     Foreground="{DynamicResource LogTextBrush}"
                                      BorderThickness="0" FontFamily="Consolas" FontSize="11"
                                      AcceptsReturn="True" IsReadOnly="True"
                                      TextWrapping="NoWrap"
@@ -472,8 +488,8 @@
         </Grid>
 
         <!-- ════════════════ OUTPUT & RENDER PANEL ════════════════ -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                 Padding="14,10">
             <Grid>
                 <Grid.RowDefinitions>
@@ -494,20 +510,21 @@
                         <ColumnDefinition Width="20"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Format" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Text="Format" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <ComboBox x:Name="OutputFormatBox" Grid.Column="1" SelectedIndex="0">
                         <ComboBoxItem Content="MP4 (.mp4)"/>
+                        <ComboBoxItem Content="MP4 (AV1)"/>
                         <ComboBoxItem Content="MKV (.mkv)"/>
                         <ComboBoxItem Content="MOV (.mov)"/>
                         <ComboBoxItem Content="WebM (.webm)"/>
                     </ComboBox>
-                    <TextBlock Grid.Column="3" Text="Quality" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Grid.Column="3" Text="Quality" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <Slider x:Name="QualitySlider" Grid.Column="4" Minimum="10" Maximum="100" Value="75"
                             VerticalAlignment="Center" Margin="8,0" ValueChanged="QualitySlider_ValueChanged"/>
-                    <TextBlock x:Name="QualityText" Grid.Column="5" Text="75%" Foreground="{StaticResource TextBrush}"
+                    <TextBlock x:Name="QualityText" Grid.Column="5" Text="75%" Foreground="{DynamicResource TextBrush}"
                                FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" MinWidth="35"/>
                     <CheckBox x:Name="GpuCheck" Grid.Column="7" Content="GPU Hardware Acceleration"
-                              Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"
+                              Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
                               IsChecked="True"/>
                 </Grid>
 
@@ -525,9 +542,9 @@
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Output" Foreground="{StaticResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file"
-                               Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"
                                FontSize="12" TextTrimming="CharacterEllipsis"/>
                     <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                     <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="6,0,0,0" Click="ResetOutput_Click"/>
@@ -537,7 +554,7 @@
                         <ProgressBar x:Name="RenderProgressBar" Width="150" Height="22"
                                      Minimum="0" Maximum="100" Visibility="Collapsed"/>
                         <TextBlock x:Name="RenderProgressText" Text="0%"
-                                   Foreground="{StaticResource TextBrush}" FontFamily="Consolas" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}" FontFamily="Consolas" FontSize="11" FontWeight="SemiBold"
                                    VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed"/>
                     </Grid>
 
@@ -557,19 +574,19 @@
         </Border>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="4" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="4" Background="{DynamicResource TitleBarBrush}">
             <Grid Margin="14,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedBrush}"
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}"
                              VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="StatusText" Foreground="{StaticResource Text2Brush}"
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource Text2Brush}"
                                VerticalAlignment="Center" Text="Ready. Drop a video file to begin color grading." FontSize="11" FontFamily="Segoe UI"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Foreground="{StaticResource MutedBrush}"
+                <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedBrush}"
                            Text="Color Grade &amp; Visual FX Studio · VideoFixPro" FontSize="11" VerticalAlignment="Center"/>
             </Grid>
         </Grid>

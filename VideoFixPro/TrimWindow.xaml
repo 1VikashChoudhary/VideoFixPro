@@ -10,7 +10,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         AllowDrop="True"
         Icon="Assets/app_icon.png"
         KeyDown="Window_KeyDown">
@@ -44,7 +44,7 @@
                                 <Setter TargetName="Bd" Property="Background" Value="#1F3152"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardHoverBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -54,16 +54,16 @@
 
         <!-- TextBox style for time inputs -->
         <Style x:Key="TimeInputBox" TargetType="TextBox">
-            <Setter Property="Background"       Value="{StaticResource CardBrush}"/>
-            <Setter Property="Foreground"       Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush"      Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
+            <Setter Property="Foreground"       Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush"      Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness"  Value="1"/>
             <Setter Property="Padding"          Value="8,5"/>
             <Setter Property="FontFamily"       Value="Consolas, Segoe UI"/>
             <Setter Property="FontSize"         Value="13"/>
             <Setter Property="Height"           Value="32"/>
-            <Setter Property="CaretBrush"       Value="{StaticResource AccentBrush}"/>
-            <Setter Property="SelectionBrush"   Value="{StaticResource AccentBrush}"/>
+            <Setter Property="CaretBrush"       Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="SelectionBrush"   Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -77,10 +77,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -105,16 +105,16 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════ TITLE BAR ════════════════ -->
-        <Grid Grid.Row="0" Background="{StaticResource TitleBarBrush}"
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}"
               MouseLeftButtonDown="TitleBar_MouseDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Image Source="Assets/app_icon.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Video Trim Tool" FontSize="12" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                <Border Background="#21262D" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TrimFileName" Text="No file loaded"
-                               FontSize="10" Foreground="{StaticResource Text2Brush}"
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Segoe UI" MaxWidth="360"
                                TextTrimming="CharacterEllipsis"/>
                 </Border>
@@ -130,7 +130,7 @@
         </Grid>
 
         <!-- Separator -->
-        <Rectangle Grid.Row="1" Fill="{StaticResource BorderBrush}"/>
+        <Rectangle Grid.Row="1" Fill="{DynamicResource BorderBrush}"/>
 
         <!-- ════════════════ MAIN CONTENT ════════════════ -->
         <Grid Grid.Row="2">
@@ -156,9 +156,9 @@
                 <Border x:Name="TrimDropZone"
                         Grid.Row="0"
                         Height="100"
-                        BorderBrush="{StaticResource MutedBrush}"
+                        BorderBrush="{DynamicResource MutedBrush}"
                         BorderThickness="2" CornerRadius="8"
-                        Background="{StaticResource SurfaceBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
                         AllowDrop="True"
                         DragEnter="TrimDrop_DragEnter"
                         DragOver="TrimDrop_DragOver"
@@ -178,14 +178,14 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock x:Name="TrimDropIcon" Text="✂"
                                    FontSize="26" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource AccentBrush}"
+                                   Foreground="{DynamicResource AccentBrush}"
                                    Margin="0,0,0,6"/>
                         <TextBlock Text="Drop a video file here to trim"
-                                   Foreground="{StaticResource Text2Brush}"
+                                   Foreground="{DynamicResource Text2Brush}"
                                    FontFamily="Segoe UI" FontSize="13"
                                    HorizontalAlignment="Center"/>
                         <TextBlock Text="or click to browse  •  MP4, MKV, AVI, MOV, WMV, FLV"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    FontFamily="Segoe UI" FontSize="11"
                                    HorizontalAlignment="Center" Margin="0,3,0,0"/>
                     </StackPanel>
@@ -195,8 +195,8 @@
                 <Border x:Name="TrimFileHeader"
                         Grid.Row="0"
                         Visibility="Collapsed"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -208,25 +208,25 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                 <TextBlock Text="🎬 " FontSize="12" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="HeaderFileName"
-                                           Foreground="{StaticResource AccentBrush}"
+                                           Foreground="{DynamicResource AccentBrush}"
                                            FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                                            TextTrimming="CharacterEllipsis" MaxWidth="360"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
                                     <TextBlock x:Name="HeaderDuration" Text="—"
-                                               Foreground="{StaticResource Text2Brush}"
+                                               Foreground="{DynamicResource Text2Brush}"
                                                FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0">
                                     <TextBlock x:Name="HeaderCodec" Text="—"
-                                               Foreground="{StaticResource Text2Brush}"
+                                               Foreground="{DynamicResource Text2Brush}"
                                                FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="3" Padding="6,2">
+                                <Border Background="{DynamicResource CardBrush}" CornerRadius="3" Padding="6,2">
                                     <TextBlock x:Name="HeaderResolution" Text="—"
-                                               Foreground="{StaticResource Text2Brush}"
+                                               Foreground="{DynamicResource Text2Brush}"
                                                FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
                             </StackPanel>
@@ -243,7 +243,7 @@
                 <Border x:Name="PlayerBorder"
                         Grid.Row="1" Margin="0,10,0,0"
                         Background="Black" CornerRadius="8" ClipToBounds="True"
-                        Visibility="Collapsed" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <MediaElement x:Name="TrimPlayer"
                                       LoadedBehavior="Manual"
@@ -274,8 +274,8 @@
                         Grid.Row="2"
                         Margin="0,8,0,0"
                         Height="56"
-                        Background="#090C10"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource BgBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="6"
                         ClipToBounds="True"
                         Visibility="Collapsed">
@@ -285,7 +285,7 @@
                         <!-- Playhead overlay line -->
                         <Rectangle x:Name="FilmstripPlayhead"
                                    Width="2" HorizontalAlignment="Left"
-                                   Fill="{StaticResource AccentBrush}"
+                                   Fill="{DynamicResource AccentBrush}"
                                    Opacity="0.8"/>
                     </Grid>
                 </Border>
@@ -294,8 +294,8 @@
                 <Border x:Name="TimelineBorder"
                         Grid.Row="3"
                         Margin="0,4,0,0"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="6"
                         Visibility="Collapsed"
                         Padding="0">
@@ -318,15 +318,15 @@
                       Margin="2,3,2,0"
                       Visibility="Collapsed">
                     <TextBlock x:Name="LabelTimeStart" Text="00:00.0"
-                               Foreground="{StaticResource MutedBrush}"
+                               Foreground="{DynamicResource MutedBrush}"
                                FontFamily="Segoe UI" FontSize="10"
                                HorizontalAlignment="Left"/>
                     <TextBlock x:Name="LabelTimeCurrent" Text="00:00.0"
-                               Foreground="{StaticResource AccentBrush}"
+                               Foreground="{DynamicResource AccentBrush}"
                                FontFamily="Segoe UI" FontSize="10"
                                HorizontalAlignment="Center"/>
                     <TextBlock x:Name="LabelTimeEnd" Text="00:00.0"
-                               Foreground="{StaticResource MutedBrush}"
+                               Foreground="{DynamicResource MutedBrush}"
                                FontFamily="Segoe UI" FontSize="10"
                                HorizontalAlignment="Right"/>
                 </Grid>
@@ -363,11 +363,11 @@
                     </StackPanel>
 
                     <!-- Selection duration badge -->
-                    <Border Background="{StaticResource CardBrush}" CornerRadius="4"
+                    <Border Background="{DynamicResource CardBrush}" CornerRadius="4"
                             Padding="8,3" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <TextBlock x:Name="SelectionDurationBadge"
                                    Text="Selection: —"
-                                   Foreground="{StaticResource AccentBrush}"
+                                   Foreground="{DynamicResource AccentBrush}"
                                    FontFamily="Segoe UI" FontSize="11"/>
                     </Border>
                 </Grid>
@@ -376,8 +376,8 @@
                 <Border x:Name="SegmentsBorder"
                         Grid.Row="6"
                         Margin="0,12,0,0"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8"
                         Visibility="Collapsed"
                         Padding="12,10">
@@ -386,15 +386,15 @@
                         <Grid Margin="0,0,0,8">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="TRIM SEGMENTS"
-                                           Foreground="{StaticResource Text2Brush}"
+                                           Foreground="{DynamicResource Text2Brush}"
                                            FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                                 <Border x:Name="SegmentCountBadge"
-                                        Background="{StaticResource CardBrush}"
+                                        Background="{DynamicResource CardBrush}"
                                         CornerRadius="8" Padding="6,1" Margin="7,0,0,0"
                                         VerticalAlignment="Center">
                                     <TextBlock x:Name="SegmentCountText" Text="1"
-                                               Foreground="{StaticResource Text2Brush}"
+                                               Foreground="{DynamicResource Text2Brush}"
                                                FontFamily="Segoe UI" FontSize="11"/>
                                 </Border>
                             </StackPanel>
@@ -431,30 +431,30 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Index badge -->
-                                        <Border Grid.Column="0" Background="{StaticResource CardBrush}"
+                                        <Border Grid.Column="0" Background="{DynamicResource CardBrush}"
                                                 CornerRadius="4" Padding="6,2" Margin="0,0,10,0">
                                             <TextBlock Text="{Binding Label}"
-                                                       Foreground="{StaticResource AccentBrush}"
+                                                       Foreground="{DynamicResource AccentBrush}"
                                                        FontFamily="Segoe UI" FontSize="11"/>
                                         </Border>
 
                                         <!-- Times -->
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding StartFormatted}"
-                                                       Foreground="{StaticResource SuccessBrush}"
+                                                       Foreground="{DynamicResource SuccessBrush}"
                                                        FontFamily="Segoe UI" FontSize="11"/>
                                             <TextBlock Text=" → "
-                                                       Foreground="{StaticResource MutedBrush}"
+                                                       Foreground="{DynamicResource MutedBrush}"
                                                        FontFamily="Segoe UI" FontSize="11"/>
                                             <TextBlock Text="{Binding EndFormatted}"
-                                                       Foreground="{StaticResource ErrorBrush}"
+                                                       Foreground="{DynamicResource ErrorBrush}"
                                                        FontFamily="Segoe UI" FontSize="11"/>
                                         </StackPanel>
 
                                         <!-- Duration -->
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding DurationFormatted}"
-                                                   Foreground="{StaticResource MutedBrush}"
+                                                   Foreground="{DynamicResource MutedBrush}"
                                                    FontFamily="Segoe UI" FontSize="11"
                                                    Margin="10,0"
                                                    VerticalAlignment="Center"/>
@@ -473,12 +473,12 @@
                         </ListView>
 
                         <!-- Concat option -->
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="5"
+                        <Border Background="{DynamicResource CardBrush}" CornerRadius="5"
                                 Padding="10,7" Margin="0,8,0,0">
                             <CheckBox x:Name="ConcatCheck"
                                       Content="Merge all segments into one output file"
                                       IsChecked="True"
-                                      Foreground="{StaticResource Text2Brush}"
+                                      Foreground="{DynamicResource Text2Brush}"
                                       FontFamily="Segoe UI" FontSize="11"
                                       Cursor="Hand"
                                       ToolTip="When checked, all segments are trimmed then joined into a single file. When unchecked, each segment produces its own output file."/>
@@ -488,7 +488,7 @@
             </Grid>
 
             <!-- Vertical separator -->
-            <Rectangle Grid.Column="1" Fill="{StaticResource BorderBrush}"/>
+            <Rectangle Grid.Column="1" Fill="{DynamicResource BorderBrush}"/>
 
             <!-- ─────── RIGHT PANEL ─────── -->
             <Grid Grid.Column="2" Margin="10,12,14,10">
@@ -507,12 +507,12 @@
 
                 <!-- ── TRIM POINTS CARD ── -->
                 <Border Grid.Row="0"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,12">
                     <StackPanel>
                         <TextBlock Text="TRIM POINTS"
-                                   Foreground="{StaticResource Text2Brush}"
+                                   Foreground="{DynamicResource Text2Brush}"
                                    FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
                                    Margin="0,0,0,12"/>
 
@@ -529,12 +529,12 @@
                                 <!-- set button -->
                             </Grid.ColumnDefinitions>
                             <Rectangle Grid.Column="0" Width="3" Height="24"
-                                       Fill="{StaticResource SuccessBrush}"
+                                       Fill="{DynamicResource SuccessBrush}"
                                        RadiusX="2" RadiusY="2"
                                        HorizontalAlignment="Left" VerticalAlignment="Center"
                                        Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1" Text="Start"
-                                       Foreground="{StaticResource SuccessBrush}"
+                                       Foreground="{DynamicResource SuccessBrush}"
                                        FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                             <TextBox x:Name="InTimeBox"
@@ -561,12 +561,12 @@
                                 <ColumnDefinition Width="46"/>
                             </Grid.ColumnDefinitions>
                             <Rectangle Grid.Column="0" Width="3" Height="24"
-                                       Fill="{StaticResource ErrorBrush}"
+                                       Fill="{DynamicResource ErrorBrush}"
                                        RadiusX="2" RadiusY="2"
                                        HorizontalAlignment="Left" VerticalAlignment="Center"
                                        Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1" Text="End"
-                                       Foreground="{StaticResource ErrorBrush}"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                             <TextBox x:Name="OutTimeBox"
@@ -585,7 +585,7 @@
                         </Grid>
 
                         <!-- Selection info badge -->
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="6" Padding="10,8">
+                        <Border Background="{DynamicResource CardBrush}" CornerRadius="6" Padding="10,8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -593,22 +593,22 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="SELECTION DURATION"
-                                               Foreground="{StaticResource MutedBrush}"
+                                               Foreground="{DynamicResource MutedBrush}"
                                                FontFamily="Segoe UI" FontSize="9" FontWeight="SemiBold"
                                                Margin="0,0,0,2"/>
                                     <TextBlock x:Name="SelectionDurationText"
                                                Text="—"
-                                               Foreground="{StaticResource AccentBrush}"
+                                               Foreground="{DynamicResource AccentBrush}"
                                                FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="PLAYHEAD"
-                                               Foreground="{StaticResource MutedBrush}"
+                                               Foreground="{DynamicResource MutedBrush}"
                                                FontFamily="Segoe UI" FontSize="9" FontWeight="SemiBold"
                                                Margin="0,0,0,2" HorizontalAlignment="Right"/>
                                     <TextBlock x:Name="PlayheadTimeText"
                                                Text="—"
-                                               Foreground="{StaticResource TextBrush}"
+                                               Foreground="{DynamicResource TextBrush}"
                                                FontFamily="Segoe UI" FontSize="12"
                                                HorizontalAlignment="Right"/>
                                 </StackPanel>
@@ -620,18 +620,18 @@
                 <!-- ── OUTPUT SETTINGS CARD ── -->
                 <Border Grid.Row="1"
                         Margin="0,10,0,0"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,12">
                     <StackPanel>
                         <TextBlock Text="OUTPUT SETTINGS"
-                                   Foreground="{StaticResource Text2Brush}"
+                                   Foreground="{DynamicResource Text2Brush}"
                                    FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
                                    Margin="0,0,0,10"/>
 
                         <!-- Trim mode -->
                         <TextBlock Text="Mode"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    FontFamily="Segoe UI" FontSize="10" FontWeight="SemiBold"
                                    Margin="0,0,0,5"/>
                         <RadioButton x:Name="TrimModeStreamCopy"
@@ -646,11 +646,11 @@
                                      ToolTip="Full H.264 + AAC re-encode. Exact frame-level accuracy. Slower."/>
 
                         <!-- Mode hint -->
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="4"
+                        <Border Background="{DynamicResource CardBrush}" CornerRadius="4"
                                 Padding="8,5" Margin="0,6,0,10">
                             <TextBlock x:Name="TrimModeHint"
                                        Text="Fast lossless cut. Output starts/ends on the nearest keyframe."
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="Segoe UI" FontSize="10"
                                        TextWrapping="Wrap"/>
                         </Border>
@@ -662,10 +662,11 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Format"
-                                       Foreground="{StaticResource Text2Brush}"
+                                       Foreground="{DynamicResource Text2Brush}"
                                        FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
                             <ComboBox x:Name="TrimFormatBox" Grid.Column="1" SelectedIndex="0">
                                 <ComboBoxItem Content="MP4"/>
+                                <ComboBoxItem Content="MP4 (AV1)"/>
                                 <ComboBoxItem Content="MKV"/>
                                 <ComboBoxItem Content="AVI"/>
                                 <ComboBoxItem Content="MOV"/>
@@ -680,16 +681,16 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Folder"
-                                       Foreground="{StaticResource Text2Brush}"
+                                       Foreground="{DynamicResource Text2Brush}"
                                        FontFamily="Segoe UI" FontSize="12" VerticalAlignment="Center"/>
                             <Border Grid.Column="1"
-                                    Background="{StaticResource CardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" CornerRadius="5"
                                     Padding="8,5" Height="32">
                                 <TextBlock x:Name="TrimOutputFolderText"
                                            Text="Same as source"
-                                           Foreground="{StaticResource MutedBrush}"
+                                           Foreground="{DynamicResource MutedBrush}"
                                            FontFamily="Segoe UI" FontSize="12"
                                            TextTrimming="CharacterEllipsis"
                                            VerticalAlignment="Center"/>
@@ -705,7 +706,7 @@
                                 HorizontalAlignment="Left"
                                 Padding="0,3" BorderThickness="0"
                                 FontSize="11" Margin="60,4,0,0"
-                                Foreground="{StaticResource MutedBrush}"
+                                Foreground="{DynamicResource MutedBrush}"
                                 Click="ResetTrimOutput_Click"/>
                     </StackPanel>
                 </Border>
@@ -713,8 +714,8 @@
                 <!-- ── KEYBOARD SHORTCUTS HINT ── -->
                 <Border Grid.Row="2"
                         Margin="0,10,0,0"
-                        Background="{StaticResource CardBrush}"
-                        BorderBrush="{StaticResource Border2Brush}"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource Border2Brush}"
                         BorderThickness="1" CornerRadius="6" Padding="12,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -723,34 +724,34 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="KEYBOARD SHORTCUTS"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="Segoe UI" FontSize="9" FontWeight="SemiBold"
                                        Margin="0,0,0,5"/>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="I" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="I" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — Set In point"/>
                             </TextBlock>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="O" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="O" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — Set Out point"/>
                             </TextBlock>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="Space" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="Space" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — Preview in player"/>
                             </TextBlock>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
                             <TextBlock Text=" " FontSize="9" Margin="0,0,0,5"/>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="← →" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="← →" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — ±1s"/>
                             </TextBlock>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="⇧ ← →" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="⇧ ← →" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — ±10s"/>
                             </TextBlock>
-                            <TextBlock Foreground="{StaticResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
-                                <Run Text="Home / End" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Foreground="{DynamicResource Text2Brush}" FontFamily="Segoe UI" FontSize="10" Margin="0,1">
+                                <Run Text="Home / End" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
                                 <Run Text=" — Jump"/>
                             </TextBlock>
                         </StackPanel>
@@ -793,7 +794,7 @@
                     <!-- Progress text -->
                     <TextBlock x:Name="TrimProgressText"
                                Text=""
-                               Foreground="{StaticResource Text2Brush}"
+                               Foreground="{DynamicResource Text2Brush}"
                                FontFamily="Segoe UI" FontSize="11"
                                HorizontalAlignment="Center"
                                Margin="0,4,0,0"
@@ -826,7 +827,7 @@
         </Grid>
 
         <!-- ════════════════ STATUS BAR ════════════════ -->
-        <Grid Grid.Row="3" Background="{StaticResource TitleBarBrush}">
+        <Grid Grid.Row="3" Background="{DynamicResource TitleBarBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -834,17 +835,17 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                 <Ellipse x:Name="TrimStatusDot"
                          Width="7" Height="7"
-                         Fill="{StaticResource MutedBrush}"
+                         Fill="{DynamicResource MutedBrush}"
                          VerticalAlignment="Center" Margin="0,0,7,0"/>
                 <TextBlock x:Name="TrimStatusText"
                            Text="Load a video file to begin  •  Tip: I = Set In,  O = Set Out"
-                           Foreground="{StaticResource Text2Brush}"
+                           Foreground="{DynamicResource Text2Brush}"
                            FontFamily="Segoe UI" FontSize="11"
                            VerticalAlignment="Center"/>
             </StackPanel>
             <TextBlock Grid.Column="1"
                        Text="✂ Video Trim Tool  •  ffmpeg"
-                       Foreground="{StaticResource MutedBrush}"
+                       Foreground="{DynamicResource MutedBrush}"
                        FontFamily="Segoe UI" FontSize="10"
                        VerticalAlignment="Center" Margin="0,0,12,0"/>
         </Grid>
