@@ -54,8 +54,9 @@
                                     <Setter TargetName="Bd" Property="Background" Value="#1158C7"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Bd" Property="Background" Value="#21262D"/>
-                                    <Setter Property="Foreground" Value="#484F58"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.55"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -94,8 +95,9 @@
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Bd" Property="Background" Value="#21262D"/>
-                                    <Setter Property="Foreground" Value="#484F58"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.55"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -140,9 +142,9 @@
 
             <!-- ══════════════════════ BUTTON: ACTIVE TOOL ══════════════════════ -->
             <Style x:Key="ActiveToolButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-                <Setter Property="Background" Value="#1F3152"/>
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                <Setter Property="Foreground" Value="White"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
             </Style>
 
@@ -506,7 +508,7 @@
                                         <Thumb>
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Border Background="#30363D" CornerRadius="3" Margin="1"/>
+                                                    <Border Background="{DynamicResource BorderBrush}" CornerRadius="3" Margin="1"/>
                                                 </ControlTemplate>
                                             </Thumb.Template>
                                         </Thumb>

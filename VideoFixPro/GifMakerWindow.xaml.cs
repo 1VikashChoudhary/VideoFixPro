@@ -404,6 +404,8 @@ public partial class GifMakerWindow : Window
     // ── Generation Execution ──────────────────────────────────────────────────
     private async void Generate_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRendering) return;
         if (string.IsNullOrEmpty(_filePath) || !File.Exists(_filePath))
         {
@@ -413,6 +415,11 @@ public partial class GifMakerWindow : Window
 
         await ExecuteGenerateAsync();
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e)
     {
@@ -538,7 +545,7 @@ public partial class GifMakerWindow : Window
         };
 
         var tcs = new TaskCompletionSource<bool>();
-        var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _ffmpegProcess = proc;
 
         var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);

@@ -134,6 +134,8 @@ public partial class MetadataCleanerWindow : Window
 
     private async Task LoadFileAsync(string path)
     {
+            try
+            {
         if (!File.Exists(path)) return;
         _filePath = path;
 
@@ -153,6 +155,11 @@ public partial class MetadataCleanerWindow : Window
         await ProbeMetadataAsync(path);
         SetStatus($"Inspected: {_metadataList.Count} tags detected", "#3FB950");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private async Task ProbeMetadataAsync(string path)
     {
@@ -312,6 +319,8 @@ public partial class MetadataCleanerWindow : Window
     // ── Sanitization Execution ────────────────────────────────────────────────
     private async void Sanitize_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRendering) return;
         if (string.IsNullOrEmpty(_filePath) || !File.Exists(_filePath))
         {
@@ -321,6 +330,11 @@ public partial class MetadataCleanerWindow : Window
 
         await ExecuteSanitizeAsync();
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e)
     {
@@ -397,7 +411,7 @@ public partial class MetadataCleanerWindow : Window
         };
 
         var tcs = new TaskCompletionSource<bool>();
-        var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _ffmpegProcess = proc;
 
         proc.ErrorDataReceived += (_, e) =>

@@ -208,6 +208,8 @@ public partial class AudioExtractorWindow : Window
 
     private async void StartQueue_Click(object sender, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRunning) return;
         if (_queue.Count == 0) return;
         if (!File.Exists(FFmpeg))
@@ -251,6 +253,11 @@ public partial class AudioExtractorWindow : Window
         else SetStatus($"Done: {done} succeeded, {failed} failed.", "#3FB950");
         Log($"[DONE] {done} succeeded, {failed} failed.");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void StopQueue_Click(object sender, RoutedEventArgs e)
     {

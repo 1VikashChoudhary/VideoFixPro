@@ -110,58 +110,6 @@ public partial class CompressorWindow : Window
         }
     }
 
-    private static string? _nvCudaDir;
-    private static bool _nvCudaDirSearched;
-
-    private static string? FindNvCudaDir()
-    {
-        if (_nvCudaDirSearched) return _nvCudaDir;
-        _nvCudaDirSearched = true;
-        try
-        {
-            var sys32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-            if (File.Exists(sys32)) { _nvCudaDir = Path.GetDirectoryName(sys32); return _nvCudaDir; }
-
-            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
-            if (!string.IsNullOrEmpty(cudaPath))
-            {
-                var cudaBin = Path.Combine(cudaPath, "bin", "nvcuda.dll");
-                if (File.Exists(cudaBin)) { _nvCudaDir = Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
-            }
-
-            var driverStore = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                           "System32", "DriverStore", "FileRepository");
-            if (Directory.Exists(driverStore))
-            {
-                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                    foreach (var dir in Directory.GetDirectories(driverStore, pattern, SearchOption.TopDirectoryOnly))
-                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                            if (File.Exists(Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-            }
-
-            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
-            {
-                var nvDir = Path.Combine(pf, "NVIDIA Corporation");
-                if (Directory.Exists(nvDir))
-                    try { foreach (var f in Directory.GetFiles(nvDir, "nvcuda*.dll", SearchOption.AllDirectories))
-                        { _nvCudaDir = Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    private static void InjectNvCudaPath(ProcessStartInfo psi)
-    {
-        var nvDir = FindNvCudaDir();
-        if (nvDir != null)
-        {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-            psi.Environment["PATH"] = nvDir + ";" + currentPath;
-        }
-    }
-
     private static async Task<bool> TestHardwareEncoderAsync(string encoder)
     {
         try
@@ -175,7 +123,7 @@ public partial class CompressorWindow : Window
                 CreateNoWindow = true,
                 RedirectStandardError = true
             };
-            if (encoder.Contains("nvenc")) InjectNvCudaPath(psi);
+            if (encoder.Contains("nvenc")) GpuHelper.InjectNvCudaPath(psi);
 
             using var proc = Process.Start(psi);
             if (proc == null) return false;
@@ -593,6 +541,8 @@ public partial class CompressorWindow : Window
     // ── Compression Pipeline Execution ────────────────────────────────────────
     private async void Compress_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRendering) return;
         if (string.IsNullOrEmpty(_filePath) || !File.Exists(_filePath))
         {
@@ -607,6 +557,11 @@ public partial class CompressorWindow : Window
 
         await ExecuteCompressionAsync();
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e)
     {
@@ -759,10 +714,10 @@ public partial class CompressorWindow : Window
             RedirectStandardError = true,
             RedirectStandardOutput = false
         };
-        if (_hasNvidia) InjectNvCudaPath(psi);
+        if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
         var tcs = new TaskCompletionSource<bool>();
-        var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _ffmpegProcess = proc;
 
         var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);

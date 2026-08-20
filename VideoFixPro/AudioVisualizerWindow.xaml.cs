@@ -2,276 +2,341 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace VideoFixPro
 {
     public partial class AudioVisualizerWindow : Window
     {
-        private TimeSpan _totalDuration = TimeSpan.Zero;
-        private Process? _ffmpegProcess;
-        private bool _isCancelled = false;
         private readonly bool _hasNvidia;
         private readonly bool _hasAmd;
         private readonly bool _hasIntel;
 
-        public AudioVisualizerWindow(bool hasNvidia, bool hasAmd, bool hasIntel)
+        private string? _audioPath;
+        private string? _bgImagePath;
+        private string? _outputPath;
+        private string? _customOutputDir;
+        private double _durationSeconds;
+        private CancellationTokenSource? _cts;
+        private Process? _ffmpegProcess;
+        private bool _isProcessing;
+
+        private static string AppDir => AppDomain.CurrentDomain.BaseDirectory;
+        private static string FFmpeg => GetBinPath("ffmpeg.exe");
+        private static string FFprobe => GetBinPath("ffprobe.exe");
+
+        private static string GetBinPath(string name)
+        {
+            var appBin = Path.Combine(AppDir, "ffmpeg", name);
+            if (File.Exists(appBin)) return appBin;
+            var localBin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VideoFixPro", "ffmpeg", name);
+            return File.Exists(localBin) ? localBin : appBin;
+        }
+
+        public AudioVisualizerWindow(bool hasNvidia, bool hasAmd, bool hasIntel) : this(null, hasNvidia, hasAmd, hasIntel) { }
+
+        public AudioVisualizerWindow(string? preloadPath, bool hasNvidia, bool hasAmd, bool hasIntel)
         {
             InitializeComponent();
             _hasNvidia = hasNvidia;
             _hasAmd = hasAmd;
             _hasIntel = hasIntel;
+
+            if (!string.IsNullOrWhiteSpace(preloadPath) && File.Exists(preloadPath))
+            {
+                LoadAudio(preloadPath);
+            }
+        }
+
+        // Window Controls
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
+        private void MinBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+        private void MaxBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void Window_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effects = DragDropEffects.Copy;
+        }
+
+        private void Window_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effects = DragDropEffects.Copy;
         }
 
         private void Window_Drop(object sender, DragEventArgs e)
         {
+            if (_isProcessing) return;
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 if (files.Length > 0)
                 {
-                    string ext = Path.GetExtension(files[0]).ToLower();
-                    if (ext == ".mp3" || ext == ".wav" || ext == ".m4a" || ext == ".flac")
+                    string ext = Path.GetExtension(files[0]).ToLowerInvariant();
+                    if (ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp")
                     {
-                        InputAudioBox.Text = files[0];
+                        SetBackgroundImage(files[0]);
                     }
                     else
                     {
-                        MessageBox.Show("Please drop an audio file (mp3, wav, m4a, flac).", "Invalid file", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        LoadAudio(files[0]);
                     }
                 }
             }
         }
 
+        private void DropZone_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (_isProcessing) return;
+            var ofd = new OpenFileDialog
+            {
+                Title = "Select Audio File",
+                Filter = "Audio Files|*.mp3;*.wav;*.aac;*.m4a;*.flac;*.ogg;*.wma|All Files|*.*"
+            };
+            if (ofd.ShowDialog() == true) LoadAudio(ofd.FileName);
+        }
+
+        private void LoadAudio(string path)
+        {
+            _audioPath = path;
+            InputAudioBox.Text = path;
+            TitleFileName.Text = Path.GetFileName(path);
+            UpdateOutputPath();
+
+            Task.Run(() => {
+                try {
+                    var psi = new ProcessStartInfo {
+                        FileName = FFprobe,
+                        Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{path}\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    };
+                    var proc = Process.Start(psi);
+                    if (proc != null) {
+                        string outStr = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit();
+                        if (double.TryParse(outStr.Trim(), out double d)) _durationSeconds = d;
+                    }
+                } catch { }
+            });
+
+            GenerateBtn.IsEnabled = true;
+            SetStatus($"Loaded audio: {Path.GetFileName(path)}", "#3FB950");
+            Log($"Loaded audio: {Path.GetFileName(path)}");
+        }
+
+        private void SetBackgroundImage(string path)
+        {
+            _bgImagePath = path;
+            BackgroundImageBox.Text = path;
+            Log($"Loaded background image: {Path.GetFileName(path)}");
+        }
+
         private void BrowseBg_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp";
-            if (dlg.ShowDialog() == true)
-            {
-                BackgroundImageBox.Text = dlg.FileName;
-            }
+            var ofd = new OpenFileDialog {
+                Title = "Select Background Image",
+                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.webp|All Files|*.*"
+            };
+            if (ofd.ShowDialog() == true) SetBackgroundImage(ofd.FileName);
         }
 
         private void ClearBg_Click(object sender, RoutedEventArgs e)
         {
-            BackgroundImageBox.Text = string.Empty;
+            _bgImagePath = null;
+            BackgroundImageBox.Text = "";
+        }
+
+        private void UpdateOutputPath()
+        {
+            if (string.IsNullOrEmpty(_audioPath)) return;
+            string dir = !string.IsNullOrEmpty(_customOutputDir) ? _customOutputDir : (Path.GetDirectoryName(_audioPath) ?? "");
+            string name = Path.GetFileNameWithoutExtension(_audioPath) + "_visualizer.mp4";
+            _outputPath = Path.Combine(dir, name);
+            OutputDirBox.Text = !string.IsNullOrEmpty(_customOutputDir) ? _customOutputDir : "Same as source audio folder";
+        }
+
+        private void BrowseOutput_Click(object sender, RoutedEventArgs e)
+        {
+            var fbd = new OpenFolderDialog { Title = "Select Output Folder" };
+            if (fbd.ShowDialog() == true)
+            {
+                _customOutputDir = fbd.FolderName;
+                UpdateOutputPath();
+            }
+        }
+
+        private void ResetOutput_Click(object sender, RoutedEventArgs e)
+        {
+            _customOutputDir = null;
+            UpdateOutputPath();
         }
 
         private async void Generate_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(InputAudioBox.Text) || !File.Exists(InputAudioBox.Text))
-            {
-                MessageBox.Show("Please provide a valid input audio file.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(_audioPath) || string.IsNullOrWhiteSpace(_outputPath)) return;
 
-            string inputAudio = InputAudioBox.Text;
-            string bgImage = BackgroundImageBox.Text;
-            string outPath = Path.Combine(Path.GetDirectoryName(inputAudio)!, Path.GetFileNameWithoutExtension(inputAudio) + "_visualizer.mp4");
-
-            int count = 1;
-            while (File.Exists(outPath))
-            {
-                outPath = Path.Combine(Path.GetDirectoryName(inputAudio)!, Path.GetFileNameWithoutExtension(inputAudio) + $"_visualizer_{count}.mp4");
-                count++;
-            }
-
-            LogBox.Clear();
-            ProcessProgressBar.Value = 0;
-            ProcessProgressText.Text = "0%";
-            _totalDuration = await GetAudioDuration(inputAudio);
-            _isCancelled = false;
-
-            bool hasBg = !string.IsNullOrWhiteSpace(bgImage) && File.Exists(bgImage);
-            string args = "";
-            
-            bool isWaveform = StyleBox.SelectedIndex == 0;
-            string filterCore = isWaveform ? "showwaves=s=1280x720:mode=cline:colors=white" : "showfreqs=s=1280x720:mode=bar:colors=white";
-
-            if (hasBg)
-            {
-                args = $"-i \"{inputAudio}\" -loop 1 -framerate 30 -i \"{bgImage}\" -filter_complex \"[0:a]{filterCore}[wave];[1:v]scale=1280:720[bg];[bg][wave]overlay=format=auto:shortest=1[outv]\" -map \"[outv]\" -map 0:a -c:v libx264 -preset fast -pix_fmt yuv420p \"{outPath}\" -y";
-            }
-            else
-            {
-                args = $"-i \"{inputAudio}\" -filter_complex \"[0:a]{filterCore}[v]\" -map \"[v]\" -map 0:a -c:v libx264 -preset fast -pix_fmt yuv420p \"{outPath}\" -y";
-            }
+            _isProcessing = true;
+            GenerateBtn.IsEnabled = false;
+            CancelBtn.IsEnabled = true;
+            _cts = new CancellationTokenSource();
+            ProgressBar.Visibility = Visibility.Visible;
+            ProgressPercentText.Visibility = Visibility.Visible;
+            ProgressBar.Value = 0;
+            ProgressPercentText.Text = "0%";
+            SetStatus("Generating waveform animation...", "#388BFD");
 
             try
             {
+                bool isAv1 = CodecBox.SelectedIndex == 1;
+                string vCodecArgs;
+                if (isAv1)
+                {
+                    vCodecArgs = _hasNvidia ? "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p" :
+                                 _hasAmd ? "-c:v av1_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
+                                 _hasIntel ? "-c:v av1_qsv -global_quality 22 -pix_fmt nv12" :
+                                 "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p";
+                }
+                else
+                {
+                    vCodecArgs = _hasNvidia ? "-c:v h264_nvenc -preset p4 -cq 22 -pix_fmt yuv420p" :
+                                 _hasAmd ? "-c:v h264_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
+                                 _hasIntel ? "-c:v h264_qsv -global_quality 22 -pix_fmt nv12" :
+                                 "-c:v libx264 -preset fast -pix_fmt yuv420p";
+                }
+
+                string filterGraph;
+                string inputs;
+
+                bool isFreqBars = StyleBox.SelectedIndex == 1;
+                string visFilter = isFreqBars
+                    ? "showfreqs=s=1280x720:mode=bar:ascale=log:fscale=log:colors=cyan|magenta"
+                    : "showwaves=s=1280x720:mode=cline:colors=white|cyan";
+
+                if (string.IsNullOrWhiteSpace(_bgImagePath) || !File.Exists(_bgImagePath))
+                {
+                    inputs = $"-i \"{_audioPath}\"";
+                    filterGraph = $"[0:a]{visFilter}[v]";
+                }
+                else
+                {
+                    inputs = $"-loop 1 -framerate 30 -i \"{_bgImagePath}\" -i \"{_audioPath}\"";
+                    filterGraph = $"[1:a]{visFilter}[wave];[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];[bg][wave]overlay=format=auto:shortest=1[v]";
+                }
+
+                string audioMap = string.IsNullOrWhiteSpace(_bgImagePath) ? "-map 0:a" : "-map 1:a";
+                string args = $"-y {inputs} -filter_complex \"{filterGraph}\" -map \"[v]\" {audioMap} {vCodecArgs} -c:a aac -b:a 192k -shortest \"{_outputPath}\"";
+
+                Log("[CMD] ffmpeg " + args);
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg", "ffmpeg.exe"),
+                    FileName = FFmpeg,
                     Arguments = args,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardError = true,
                     RedirectStandardOutput = true
                 };
-                if (_hasNvidia) InjectNvCudaPath(psi);
+                if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
                 
                 _ffmpegProcess = new Process { StartInfo = psi };
-
                 ProcessGuard.Watch(_ffmpegProcess);
-                
+
+                var tcs = new TaskCompletionSource<bool>();
+                var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);
+
                 _ffmpegProcess.ErrorDataReceived += (s, ev) =>
                 {
-                    if (!string.IsNullOrEmpty(ev.Data))
+                    if (ev.Data == null) return;
+                    var m = timeRegex.Match(ev.Data);
+                    if (m.Success && _durationSeconds > 0)
                     {
-                        Dispatcher.Invoke(() =>
+                        if (int.TryParse(m.Groups[1].Value, out int h) &&
+                            int.TryParse(m.Groups[2].Value, out int min) &&
+                            double.TryParse(m.Groups[3].Value, out double sec))
                         {
-                            LogBox.AppendText(ev.Data + Environment.NewLine);
-                            LogBox.ScrollToEnd();
-                            UpdateProgress(ev.Data);
-                        });
+                            double cur = h * 3600 + min * 60 + sec;
+                            double pct = Math.Clamp((cur / _durationSeconds) * 100.0, 0, 100);
+                            Dispatcher.Invoke(() => {
+                                ProgressBar.Value = pct;
+                                ProgressPercentText.Text = $"{(int)pct}%";
+                            });
+                        }
                     }
                 };
-                
-                _ffmpegProcess.OutputDataReceived += (s, ev) =>
-                {
-                    if (!string.IsNullOrEmpty(ev.Data))
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            LogBox.AppendText(ev.Data + Environment.NewLine);
-                            LogBox.ScrollToEnd();
-                        });
-                    }
-                };
+
+                _ffmpegProcess.Exited += (s, ev) => tcs.TrySetResult(_ffmpegProcess.ExitCode == 0);
+                _ffmpegProcess.EnableRaisingEvents = true;
 
                 _ffmpegProcess.Start();
                 _ffmpegProcess.BeginErrorReadLine();
-                _ffmpegProcess.BeginOutputReadLine();
 
-                await Task.Run(() => _ffmpegProcess.WaitForExit());
+                await using (_cts.Token.Register(() => {
+                    try { if (!_ffmpegProcess.HasExited) _ffmpegProcess.Kill(); } catch { }
+                    tcs.TrySetResult(false);
+                }))
+                {
+                    bool ok = await tcs.Task;
+                    ProcessGuard.Unwatch(_ffmpegProcess);
 
-                if (_ffmpegProcess.ExitCode == 0 && !_isCancelled)
-                {
-                    ProcessProgressBar.Value = 100;
-                    ProcessProgressText.Text = "100%";
-                    MessageBox.Show("Visualizer video generated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else if (_isCancelled)
-                {
-                    LogBox.AppendText("\nProcess cancelled.\n");
-                }
-                else
-                {
-                    MessageBox.Show("FFmpeg exited with error.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (ok && !_cts.Token.IsCancellationRequested)
+                    {
+                        ProgressBar.Value = 100;
+                        ProgressPercentText.Text = "100%";
+                        SetStatus("Visualizer video created successfully!", "#3FB950");
+                        Log("Visualizer completed successfully: " + _outputPath);
+                        MessageBox.Show(this, $"Video Visualizer generated!\nSaved to: {_outputPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                if (!_isCancelled)
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Log("Error: " + ex.Message);
+                SetStatus("Error generating video", "#F85149");
             }
             finally
             {
-                if (_ffmpegProcess != null)
+                _isProcessing = false;
+                GenerateBtn.IsEnabled = true;
+                CancelBtn.IsEnabled = false;
+                if (_cts?.Token.IsCancellationRequested == true)
                 {
-                    ProcessGuard.Unwatch(_ffmpegProcess);
-                    _ffmpegProcess = null;
+                    Log("Cancelled by user.");
+                    SetStatus("Cancelled", "#D29922");
                 }
             }
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            _isCancelled = true;
-            if (_ffmpegProcess != null && !_ffmpegProcess.HasExited)
-            {
-                try
-                {
-                    _ffmpegProcess.Kill();
-                }
-                catch { }
-            }
-            LogBox.AppendText("\nCancellation requested...\n");
-        }
-        
-        private async Task<TimeSpan> GetAudioDuration(string file)
-        {
-            try
-            {
-                var proc = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg", "ffprobe.exe"),
-                        Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\"",
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true
-                    }
-                };
-                proc.Start();
-                string output = await proc.StandardOutput.ReadToEndAsync();
-                await Task.Run(() => proc.WaitForExit());
-                if (double.TryParse(output.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double secs))
-                {
-                    return TimeSpan.FromSeconds(secs);
-                }
-            }
-            catch {}
-            return TimeSpan.Zero;
+            _cts?.Cancel();
+            CancelBtn.IsEnabled = false;
         }
 
-        private void UpdateProgress(string data)
+        private void SetStatus(string text, string colorHex)
         {
-            if (_totalDuration.TotalSeconds <= 0) return;
-
-            var match = Regex.Match(data, @"time=(\d{2}):(\d{2}):(\d{2}\.\d{2})");
-            if (match.Success)
-            {
-                if (TimeSpan.TryParse(match.Value.Substring(5), out TimeSpan current))
-                {
-                    double percent = (current.TotalSeconds / _totalDuration.TotalSeconds) * 100.0;
-                    if (percent > 100) percent = 100;
-                    if (percent < 0) percent = 0;
-                    
-                    ProcessProgressBar.Value = percent;
-                    ProcessProgressText.Text = $"{percent:F1}%";
-                }
-            }
-        }
-    
-        private static string? _nvCudaDir;
-        private static bool _nvCudaDirSearched;
-        private static string? FindNvCudaDir()
-        {
-            if (_nvCudaDirSearched) return _nvCudaDir;
-            _nvCudaDirSearched = true;
-            try
-            {
-                var sys32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-                if (File.Exists(sys32)) { _nvCudaDir = Path.GetDirectoryName(sys32); return _nvCudaDir; }
-                
-                var driverStore = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                            "System32", "DriverStore", "FileRepository");
-                if (Directory.Exists(driverStore))
-                {
-                    foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                        foreach (var dir in Directory.GetDirectories(driverStore, pattern, SearchOption.TopDirectoryOnly))
-                            foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                                if (File.Exists(Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-                }
-            }
-            catch { }
-            return null;
+            Dispatcher.Invoke(() => {
+                StatusText.Text = text;
+                try { StatusDot.Fill = (SolidColorBrush)new BrushConverter().ConvertFromString(colorHex)!; } catch { }
+            });
         }
 
-        private static void InjectNvCudaPath(ProcessStartInfo psi)
+        private void Log(string msg)
         {
-            var nvDir = FindNvCudaDir();
-            if (nvDir != null)
-            {
-                var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-                psi.Environment["PATH"] = nvDir + ";" + currentPath;
-            }
+            Dispatcher.Invoke(() => {
+                LogBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}\n");
+                LogBox.ScrollToEnd();
+            });
         }
-
     }
 }

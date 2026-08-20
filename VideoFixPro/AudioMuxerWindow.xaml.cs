@@ -185,6 +185,8 @@ public partial class AudioMuxerWindow : Window
 
     private async void UpdateSuggestedBitrateAsync(string path)
     {
+            try
+            {
         var info = await Task.Run(() => ProbeOverallBitrateAndResolution(path));
         if (info.BitrateKbps.HasValue)
         {
@@ -201,6 +203,11 @@ public partial class AudioMuxerWindow : Window
         };
         Dispatcher.Invoke(() => SuggestedBitrateText.Text = $"Suggested: {fallback}k");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void UpdateAutoOutputPath(bool forceReplace = false)
     {
@@ -603,6 +610,8 @@ public partial class AudioMuxerWindow : Window
 
     private async void AddCurrentJob_Click(object sender, RoutedEventArgs e)
     {
+            try
+            {
         if (string.IsNullOrWhiteSpace(_videoPath))
         {
             MessageBox.Show(this, "Select a source video first.", "No input", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -645,9 +654,16 @@ public partial class AudioMuxerWindow : Window
         }
         SetStatus("Job added to queue", "#388BFD");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private async void AddFilesToQueue_Click(object sender, RoutedEventArgs e)
     {
+            try
+            {
         var currentOptions = CaptureCurrentOptions();
         var wizard = new BatchMuxWizardWindow(currentOptions.Container == "mkv" ? ".mkv" : ".mp4")
         {
@@ -708,6 +724,11 @@ public partial class AudioMuxerWindow : Window
         }
         SetStatus($"Batch wizard queued {readyRows.Count} video(s)", "#388BFD");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private AudioMuxJob? SelectedJob => JobGrid.SelectedItem as AudioMuxJob;
 
@@ -1169,59 +1190,6 @@ public partial class AudioMuxerWindow : Window
         return (cmd, hardwareActive);
     }
 
-    private static string? _nvCudaDir;
-    private static bool _nvCudaDirSearched;
-
-    private static string? FindNvCudaDir()
-    {
-        if (_nvCudaDirSearched) return _nvCudaDir;
-        _nvCudaDirSearched = true;
-        try
-        {
-            var sys32 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-            if (System.IO.File.Exists(sys32)) { _nvCudaDir = System.IO.Path.GetDirectoryName(sys32); return _nvCudaDir; }
-
-            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
-            if (!string.IsNullOrEmpty(cudaPath))
-            {
-                var cudaBin = System.IO.Path.Combine(cudaPath, "bin", "nvcuda.dll");
-                if (System.IO.File.Exists(cudaBin)) { _nvCudaDir = System.IO.Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
-            }
-
-            var driverStore = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                           "System32", "DriverStore", "FileRepository");
-            if (System.IO.Directory.Exists(driverStore))
-            {
-                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                    foreach (var dir in System.IO.Directory.GetDirectories(driverStore, pattern, System.IO.SearchOption.TopDirectoryOnly))
-                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                            if (System.IO.File.Exists(System.IO.Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-            }
-
-            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
-            {
-                var nvDir = System.IO.Path.Combine(pf, "NVIDIA Corporation");
-                if (System.IO.Directory.Exists(nvDir))
-                    try { foreach (var f in System.IO.Directory.GetFiles(nvDir, "nvcuda*.dll", System.IO.SearchOption.AllDirectories))
-                        { _nvCudaDir = System.IO.Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    private static void InjectNvCudaPath(System.Diagnostics.ProcessStartInfo psi)
-    {
-        var nvDir = FindNvCudaDir();
-        if (nvDir != null)
-        {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-            psi.Environment["PATH"] = nvDir + ";" + currentPath;
-        }
-    }
-
-
     private (bool Success, int ExitCode) RunFfmpegProcess(List<string> command, double? duration, CancellationToken ct)
     {
         AppendLog("\nRunning FFmpeg:\n" + string.Join(" ", command.Select(QuoteArg)) + "\n\n");
@@ -1236,7 +1204,7 @@ public partial class AudioMuxerWindow : Window
         };
         if (command.Contains("nvenc") || command.Contains("h264_nvenc") || command.Contains("hevc_nvenc"))
         {
-            InjectNvCudaPath(psi);
+            GpuHelper.InjectNvCudaPath(psi);
         }
         
         foreach (var arg in command.Skip(1))
@@ -1514,7 +1482,7 @@ public partial class AudioMuxerWindow : Window
                 RedirectStandardError = true,
                 CreateNoWindow = true
             };
-            if (encoder.Contains("nvenc")) InjectNvCudaPath(psi);
+            if (encoder.Contains("nvenc")) GpuHelper.InjectNvCudaPath(psi);
 
             using var proc = new Process { StartInfo = psi };
             foreach (var arg in new[]

@@ -166,6 +166,8 @@ public partial class VideoMergerWindow : Window
 
     private async Task AddFilesAsync(string[] paths)
     {
+            try
+            {
         SetStatus("Analyzing added clips...", "#388BFD");
         foreach (var path in paths)
         {
@@ -200,6 +202,11 @@ public partial class VideoMergerWindow : Window
 
         SetStatus($"Ready — {_clips.Count} clips loaded", "#3FB950");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private async Task ProbeClipAsync(MergerClipItem item)
     {
@@ -496,6 +503,8 @@ public partial class VideoMergerWindow : Window
     // ── Merge Execution ───────────────────────────────────────────────────────
     private async void Merge_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRendering) return;
         if (_clips.Count < 2)
         {
@@ -505,6 +514,11 @@ public partial class VideoMergerWindow : Window
 
         await ExecuteMergeAsync();
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e)
     {
@@ -663,59 +677,6 @@ public partial class VideoMergerWindow : Window
         }
     }
 
-    private static string? _nvCudaDir;
-    private static bool _nvCudaDirSearched;
-
-    private static string? FindNvCudaDir()
-    {
-        if (_nvCudaDirSearched) return _nvCudaDir;
-        _nvCudaDirSearched = true;
-        try
-        {
-            var sys32 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-            if (System.IO.File.Exists(sys32)) { _nvCudaDir = System.IO.Path.GetDirectoryName(sys32); return _nvCudaDir; }
-
-            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
-            if (!string.IsNullOrEmpty(cudaPath))
-            {
-                var cudaBin = System.IO.Path.Combine(cudaPath, "bin", "nvcuda.dll");
-                if (System.IO.File.Exists(cudaBin)) { _nvCudaDir = System.IO.Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
-            }
-
-            var driverStore = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                           "System32", "DriverStore", "FileRepository");
-            if (System.IO.Directory.Exists(driverStore))
-            {
-                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                    foreach (var dir in System.IO.Directory.GetDirectories(driverStore, pattern, System.IO.SearchOption.TopDirectoryOnly))
-                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                            if (System.IO.File.Exists(System.IO.Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-            }
-
-            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
-            {
-                var nvDir = System.IO.Path.Combine(pf, "NVIDIA Corporation");
-                if (System.IO.Directory.Exists(nvDir))
-                    try { foreach (var f in System.IO.Directory.GetFiles(nvDir, "nvcuda*.dll", System.IO.SearchOption.AllDirectories))
-                        { _nvCudaDir = System.IO.Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    private static void InjectNvCudaPath(System.Diagnostics.ProcessStartInfo psi)
-    {
-        var nvDir = FindNvCudaDir();
-        if (nvDir != null)
-        {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-            psi.Environment["PATH"] = nvDir + ";" + currentPath;
-        }
-    }
-
-
     private async Task<bool> RunFFmpegAsync(string args, double totalDuration, CancellationToken token)
     {
         var psi = new ProcessStartInfo
@@ -727,10 +688,10 @@ public partial class VideoMergerWindow : Window
             RedirectStandardError = true,
             RedirectStandardOutput = false
         };
-        if (_hasNvidia) InjectNvCudaPath(psi);
+        if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
         var tcs = new TaskCompletionSource<bool>();
-        var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _ffmpegProcess = proc;
 
         var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);

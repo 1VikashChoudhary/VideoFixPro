@@ -168,58 +168,6 @@ public partial class VideoToolboxWindow : Window
         catch { }
     }
 
-    private static string? _nvCudaDir;
-    private static bool _nvCudaDirSearched;
-
-    private static string? FindNvCudaDir()
-    {
-        if (_nvCudaDirSearched) return _nvCudaDir;
-        _nvCudaDirSearched = true;
-        try
-        {
-            var sys32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-            if (File.Exists(sys32)) { _nvCudaDir = Path.GetDirectoryName(sys32); return _nvCudaDir; }
-
-            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
-            if (!string.IsNullOrEmpty(cudaPath))
-            {
-                var cudaBin = Path.Combine(cudaPath, "bin", "nvcuda.dll");
-                if (File.Exists(cudaBin)) { _nvCudaDir = Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
-            }
-
-            var driverStore = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                           "System32", "DriverStore", "FileRepository");
-            if (Directory.Exists(driverStore))
-            {
-                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                    foreach (var dir in Directory.GetDirectories(driverStore, pattern, SearchOption.TopDirectoryOnly))
-                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                            if (File.Exists(Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-            }
-
-            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
-            {
-                var nvDir = Path.Combine(pf, "NVIDIA Corporation");
-                if (Directory.Exists(nvDir))
-                    try { foreach (var f in Directory.GetFiles(nvDir, "nvcuda*.dll", SearchOption.AllDirectories))
-                        { _nvCudaDir = Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    private static void InjectNvCudaPath(ProcessStartInfo psi)
-    {
-        var nvDir = FindNvCudaDir();
-        if (nvDir != null)
-        {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-            psi.Environment["PATH"] = nvDir + ";" + currentPath;
-        }
-    }
-
     private static async Task<bool> TestHardwareEncoderAsync(string encoder)
     {
         try
@@ -232,7 +180,7 @@ public partial class VideoToolboxWindow : Window
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            if (encoder.Contains("nvenc")) InjectNvCudaPath(psi);
+            if (encoder.Contains("nvenc")) GpuHelper.InjectNvCudaPath(psi);
 
             using var p = Process.Start(psi);
             if (p == null) return false;
@@ -1613,6 +1561,8 @@ public partial class VideoToolboxWindow : Window
     // ═══════════════════════════════════════════════════════════════════════════
     private async void QuickSave_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (string.IsNullOrEmpty(_filePath))
         {
             MessageBox.Show("Load a video file first.", "No File", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1620,9 +1570,16 @@ public partial class VideoToolboxWindow : Window
         }
         await RenderAsync(quickSave: true);
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private async void Render_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (string.IsNullOrEmpty(_filePath))
         {
             MessageBox.Show("Load a video file first.", "No File", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1639,6 +1596,11 @@ public partial class VideoToolboxWindow : Window
 
         await RenderAsync(quickSave: false);
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e) => CancelRender();
 
@@ -1841,7 +1803,7 @@ public partial class VideoToolboxWindow : Window
             RedirectStandardError = true,
             CreateNoWindow = true
         };
-        if (_hasNvidia) InjectNvCudaPath(psi);
+        if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
         using var proc = new Process { StartInfo = psi };
         proc.Start();

@@ -571,6 +571,8 @@ public partial class MainWindow : Window
     // ──────────────────────────────────────────────────────────
     private async void FixAll_Click(object sender, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRunning) return;
         if (_queue.Count == 0)
         {
@@ -676,6 +678,11 @@ return (m, GpuCheck.IsChecked == true, (int)QualitySlider.Value, isAv1);
 
         ShowCompletionNotification(done, failed);
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void ShowCompletionNotification(int done, int failed)
     {

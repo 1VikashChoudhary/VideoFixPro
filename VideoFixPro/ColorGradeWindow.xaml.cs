@@ -114,6 +114,8 @@ public partial class ColorGradeWindow : Window
     }
     private async void Window_Drop(object s, DragEventArgs e)
     {
+            try
+            {
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -121,6 +123,11 @@ public partial class ColorGradeWindow : Window
                 await LoadFileAsync(files[0]);
         }
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     private void DropZone_Click(object s, MouseButtonEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
@@ -136,6 +143,8 @@ public partial class ColorGradeWindow : Window
     // ── File Loading & Probing ────────────────────────────────────────────────
     private async Task LoadFileAsync(string path)
     {
+            try
+            {
         if (!File.Exists(path)) return;
         _filePath = path;
 
@@ -161,6 +170,11 @@ public partial class ColorGradeWindow : Window
         UpdateFilterSummary();
         SetStatus($"Ready to color grade · {Path.GetFileName(path)}", "#3FB950");
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private async Task ProbeVideoAsync(string path)
     {
@@ -659,7 +673,7 @@ public partial class ColorGradeWindow : Window
 
         if (!string.IsNullOrWhiteSpace(_lutPath))
         {
-            var escapedPath = _lutPath.Replace("\\", "/").Replace(":", "\\:");
+            var escapedPath = _lutPath.Replace("\\", "/").Replace(":", "\\:").Replace("'", @"'\''");
             filters.Add($"lut3d=file='{escapedPath}'");
         }
 
@@ -796,6 +810,8 @@ public partial class ColorGradeWindow : Window
     // ── Color Grade Execution Pipeline ────────────────────────────────────────
     private async void ApplyGrade_Click(object s, RoutedEventArgs e)
     {
+            try
+            {
         if (_isRendering) return;
         if (string.IsNullOrEmpty(_filePath) || !File.Exists(_filePath))
         {
@@ -805,6 +821,11 @@ public partial class ColorGradeWindow : Window
 
         await ExecuteColorGradeAsync();
     }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
     private void Cancel_Click(object s, RoutedEventArgs e)
     {
@@ -887,59 +908,6 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
         }
     }
 
-    private static string? _nvCudaDir;
-    private static bool _nvCudaDirSearched;
-
-    private static string? FindNvCudaDir()
-    {
-        if (_nvCudaDirSearched) return _nvCudaDir;
-        _nvCudaDirSearched = true;
-        try
-        {
-            var sys32 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvcuda.dll");
-            if (System.IO.File.Exists(sys32)) { _nvCudaDir = System.IO.Path.GetDirectoryName(sys32); return _nvCudaDir; }
-
-            var cudaPath = Environment.GetEnvironmentVariable("CUDA_PATH");
-            if (!string.IsNullOrEmpty(cudaPath))
-            {
-                var cudaBin = System.IO.Path.Combine(cudaPath, "bin", "nvcuda.dll");
-                if (System.IO.File.Exists(cudaBin)) { _nvCudaDir = System.IO.Path.GetDirectoryName(cudaBin); return _nvCudaDir; }
-            }
-
-            var driverStore = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                                           "System32", "DriverStore", "FileRepository");
-            if (System.IO.Directory.Exists(driverStore))
-            {
-                foreach (var pattern in new[] { "nv_disp*", "nvdsp*", "nvlt*", "nvmi*" })
-                    foreach (var dir in System.IO.Directory.GetDirectories(driverStore, pattern, System.IO.SearchOption.TopDirectoryOnly))
-                        foreach (var name in new[] { "nvcuda64.dll", "nvcuda.dll" })
-                            if (System.IO.File.Exists(System.IO.Path.Combine(dir, name))) { _nvCudaDir = dir; return _nvCudaDir; }
-            }
-
-            foreach (var pf in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                       Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
-            {
-                var nvDir = System.IO.Path.Combine(pf, "NVIDIA Corporation");
-                if (System.IO.Directory.Exists(nvDir))
-                    try { foreach (var f in System.IO.Directory.GetFiles(nvDir, "nvcuda*.dll", System.IO.SearchOption.AllDirectories))
-                        { _nvCudaDir = System.IO.Path.GetDirectoryName(f); return _nvCudaDir; } } catch { }
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    private static void InjectNvCudaPath(System.Diagnostics.ProcessStartInfo psi)
-    {
-        var nvDir = FindNvCudaDir();
-        if (nvDir != null)
-        {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-            psi.Environment["PATH"] = nvDir + ";" + currentPath;
-        }
-    }
-
-
     private async Task<bool> RunFFmpegAsync(string args, double totalDuration, CancellationToken ct)
     {
         if (!File.Exists(FFmpeg))
@@ -960,7 +928,7 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
                     RedirectStandardError = true,
                     CreateNoWindow = true
                 };
-        if (_hasNvidia) InjectNvCudaPath(psi);
+        if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
                 _ffmpegProcess = new Process { StartInfo = psi };
                 _ffmpegProcess.ErrorDataReceived += (s, e) =>
@@ -1059,3 +1027,4 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
         return path;
     }
 }
+
