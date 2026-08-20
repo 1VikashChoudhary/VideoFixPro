@@ -1,20 +1,7 @@
 # VideoFixPro
 
-<p align="center">
-  <img width="1178" height="881" alt="VideoFixPro Main Window" src="https://github.com/user-attachments/assets/45fb1a35-1e3e-4313-8206-a24f47c25b73" />
-</p>
+<img width="1532" height="908" alt="image" src="https://github.com/user-attachments/assets/eebf964b-9919-4d25-9af0-d7190b7b999f" />
 
-<p align="center">
-  <img width="1134" height="775" alt="VideoFixPro Trim Window" src="https://github.com/user-attachments/assets/71023bdd-ba53-4beb-9253-837cfc594b29" />
-</p>
-
-<p align="center">
-  <img width="1366" height="893" alt="VideoFixPro Video Toolbox" src="https://github.com/user-attachments/assets/dd1a9011-0bed-48d7-85e1-926338ab95b2" />
-</p>
-
-<p align="center">
-  <img width="1186" height="793" alt="VideoFixPro Color Grade Studio" src="https://github.com/user-attachments/assets/dc6f9fee-197e-448c-9b32-b68760afff09" />
-</p>
 
 <p align="center">
   <strong>Professional Commercial-Grade Video Repair, Recovery & Studio Suite for Windows</strong><br>
