@@ -1473,31 +1473,55 @@ public partial class MainWindow : Window
             bool qsvCompiled   = encoders.Contains("h264_qsv");
 
             // Perform rapid hardware functionality test
-            _hasNvidia = nvencCompiled && await TestHardwareEncoderAsync("h264_nvenc");
-            _hasAmd    = amfCompiled && await TestHardwareEncoderAsync("h264_amf");
-            _hasIntel  = qsvCompiled && await TestHardwareEncoderAsync("h264_qsv");
+            var nvTest  = nvencCompiled ? await TestHardwareEncoderAsync("h264_nvenc") : new EncoderTestResult(false, "");
+            var amfTest = amfCompiled   ? await TestHardwareEncoderAsync("h264_amf")   : new EncoderTestResult(false, "");
+            var qsvTest = qsvCompiled   ? await TestHardwareEncoderAsync("h264_qsv")   : new EncoderTestResult(false, "");
+
+            _hasNvidia = nvTest.Success;
+            _hasAmd    = amfTest.Success;
+            _hasIntel  = qsvTest.Success;
 
             Dispatcher.Invoke(() =>
             {
-                if (_hasNvidia || _hasAmd || _hasIntel)
+                if (_hasNvidia)
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    var gpuType = _hasNvidia ? "Nvidia NVENC" : (_hasAmd ? "AMD AMF" : "Intel QuickSync");
-                    Log($"[INFO] GPU Acceleration active: {gpuType}");
+                    Log("[INFO] GPU Acceleration active: Nvidia NVENC");
+                }
+                else if (_hasAmd)
+                {
+                    GpuCheck.Visibility = Visibility.Visible;
+                    GpuCheck.IsChecked  = true;
+                    Log("[INFO] GPU Acceleration active: AMD AMF");
+                }
+                else if (_hasIntel)
+                {
+                    GpuCheck.Visibility = Visibility.Visible;
+                    GpuCheck.IsChecked  = true;
+                    if (!string.IsNullOrEmpty(nvTest.Error) && (nvTest.Error.Contains("nvcuda") || nvTest.Error.Contains("Nvenc")))
+                    {
+                        Log("[INFO] GPU Acceleration active: Intel QuickSync (Nvidia NVENC requires updated Nvidia drivers/CUDA runtime)");
+                    }
+                    else
+                    {
+                        Log("[INFO] GPU Acceleration active: Intel QuickSync");
+                    }
                 }
                 else
                 {
                     GpuCheck.Visibility = Visibility.Collapsed;
                     GpuCheck.IsChecked  = false;
-                    Log("[INFO] GPU encoder not present/supported on this device. Using CPU (libx264).");
+                    Log("[INFO] Hardware GPU encoder not available. Using multi-threaded CPU (libx264).");
                 }
             });
         }
         catch { }
     }
 
-    private static async Task<bool> TestHardwareEncoderAsync(string encoder)
+    private record EncoderTestResult(bool Success, string Error);
+
+    private static async Task<EncoderTestResult> TestHardwareEncoderAsync(string encoder)
     {
         try
         {
@@ -1507,22 +1531,25 @@ public partial class MainWindow : Window
                 FileName = FFmpeg,
                 Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 {pixFmt} -c:v {encoder} -f null -",
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardError = true
             };
             using var p = Process.Start(psi);
-            if (p == null) return false;
+            if (p == null) return new EncoderTestResult(false, "Could not start process");
             ProcessGuard.Watch(p);
             try
             {
+                var errTask = p.StandardError.ReadToEndAsync();
                 await p.WaitForExitAsync();
-                return p.ExitCode == 0;
+                string err = (await errTask).Trim();
+                return new EncoderTestResult(p.ExitCode == 0, err);
             }
             finally
             {
                 ProcessGuard.Unwatch(p);
             }
         }
-        catch { return false; }
+        catch (Exception ex) { return new EncoderTestResult(false, ex.Message); }
     }
 
     // ──────────────────────────────────────────────────────────
