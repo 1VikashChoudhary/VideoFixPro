@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private string _lastOutputFolder   = string.Empty;
     private bool _hasNvidia;
     private bool _hasAmd;
+    private bool _hasIntel;
 
     // â”€â”€ FFmpeg paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private static string AppDir => AppDomain.CurrentDomain.BaseDirectory;
@@ -1053,6 +1054,19 @@ public partial class MainWindow : Window
         trim.Show();
     }
 
+    private void OpenVideoToolbox_Click(object sender, RoutedEventArgs e)
+    {
+        string? preloadPath = null;
+        if (QueueList.SelectedItem is VideoJob selectedJob)
+            preloadPath = selectedJob.FilePath;
+
+        var toolbox = new VideoToolboxWindow(preloadPath, _hasNvidia, _hasAmd, _hasIntel)
+        {
+            Owner = this
+        };
+        toolbox.Show();
+    }
+
     private void OpenAudioMuxer_Click(object sender, RoutedEventArgs e)
     {
         string? preloadPath = null;
@@ -1356,25 +1370,52 @@ public partial class MainWindow : Window
         try
         {
             var encoders = await RunProcessAsync(FFmpeg, "-v quiet -encoders");
-            _hasNvidia = encoders.Contains("h264_nvenc");
-            _hasAmd    = encoders.Contains("h264_amf");
+            bool nvencCompiled = encoders.Contains("h264_nvenc");
+            bool amfCompiled   = encoders.Contains("h264_amf");
+            bool qsvCompiled   = encoders.Contains("h264_qsv");
+
+            // Perform rapid hardware functionality test
+            _hasNvidia = nvencCompiled && await TestHardwareEncoderAsync("h264_nvenc");
+            _hasAmd    = amfCompiled && await TestHardwareEncoderAsync("h264_amf");
+            _hasIntel  = qsvCompiled && await TestHardwareEncoderAsync("h264_qsv");
 
             Dispatcher.Invoke(() =>
             {
-                if (_hasNvidia || _hasAmd)
+                if (_hasNvidia || _hasAmd || _hasIntel)
                 {
                     GpuCheck.Visibility = Visibility.Visible;
                     GpuCheck.IsChecked  = true;
-                    var gpuType = _hasNvidia && _hasAmd ? "Nvidia & AMD" : (_hasNvidia ? "Nvidia NVENC" : "AMD AMF");
-                    Log($"[INFO] GPU Acceleration available: {gpuType}");
+                    var gpuType = _hasAmd ? "AMD AMF" : (_hasNvidia ? "Nvidia NVENC" : "Intel QuickSync");
+                    Log($"[INFO] GPU Acceleration active: {gpuType}");
                 }
                 else
                 {
-                    Log("[INFO] No compatible GPU hardware acceleration (NVENC/AMF) detected. Using CPU.");
+                    GpuCheck.Visibility = Visibility.Collapsed;
+                    GpuCheck.IsChecked  = false;
+                    Log("[INFO] GPU encoder not present/supported on this device. Using CPU (libx264).");
                 }
             });
         }
         catch { }
+    }
+
+    private static async Task<bool> TestHardwareEncoderAsync(string encoder)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = FFmpeg,
+                Arguments = $"-v error -f lavfi -i color=c=black:s=320x240:d=0.04 -c:v {encoder} -f null -",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using var p = Process.Start(psi);
+            if (p == null) return false;
+            await p.WaitForExitAsync();
+            return p.ExitCode == 0;
+        }
+        catch { return false; }
     }
 }
 

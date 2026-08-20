@@ -6,7 +6,7 @@
         xmlns:models="clr-namespace:VideoFixPro.Models"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Video Fix Pro"
-        Width="1178" Height="881"
+        Width="1532" Height="883"
         MinWidth="820" MinHeight="560"
         WindowStyle="None"
         ResizeMode="CanResize"
@@ -543,6 +543,8 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="8"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Content="Trim Tool"
@@ -552,13 +554,20 @@
                                 Click="OpenTrimTool_Click"
                                 ToolTip="Open the Video Trim Tool to cut, crop and export segments"/>
                         <Button Grid.Column="2"
+                                Content="Video Toolbox"
+                                Style="{StaticResource GhostButton}"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Click="OpenVideoToolbox_Click"
+                                ToolTip="Open the Video Toolbox for quick editing (rotate, flip, volume, mute, crop, aspect ratio)"/>
+                        <Button Grid.Column="4"
                                 Content="Audio Muxer"
                                 Style="{StaticResource GhostButton}"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Click="OpenAudioMuxer_Click"
                                 ToolTip="Open the Audio Muxer to add one or more external audio tracks to a video"/>
-                        <Button Grid.Column="4"
+                        <Button Grid.Column="6"
                                 Content="Extract Audio"
                                 Style="{StaticResource GhostButton}"
                                 Height="40"
@@ -566,7 +575,7 @@
                                 Click="OpenAudioExtractor_Click"
                                 ToolTip="Extract audio tracks from video files into separate files"/>
                         <Button x:Name="OpenFolderBtn"
-                                Grid.Column="6"
+                                Grid.Column="8"
                                 Content="Open Folder"
                                 Style="{StaticResource GhostButton}"
                                 Height="40"
