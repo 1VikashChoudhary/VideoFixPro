@@ -164,6 +164,22 @@ dotnet run --project .\VideoFixPro\VideoFixPro.csproj
 
 ---
 
+## 💖 Support & Sponsorship
+
+If **VideoFixPro** saved your videos, recovered corrupted footage, or helped your workflow, consider supporting ongoing development:
+
+<p align="left">
+  <a href="https://www.paypal.com/paypalme/1vikash">
+    <img src="https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Donate with PayPal" />
+  </a>
+  &nbsp;
+  <a href="https://github.com/sponsors/1VikashChoudhary">
+    <img src="https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white" alt="Sponsor on GitHub" />
+  </a>
+</p>
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE.txt).
