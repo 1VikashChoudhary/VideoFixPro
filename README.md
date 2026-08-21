@@ -169,7 +169,7 @@ dotnet run --project .\VideoFixPro\VideoFixPro.csproj
 If **VideoFixPro** saved your videos, recovered corrupted footage, or helped your workflow, consider supporting ongoing development:
 
 <p align="left">
-  <a href="https://www.paypal.com/paypalme/1vikash">
+  <a href="https://paypal.me/1vikash">
     <img src="https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Donate with PayPal" />
   </a>
   &nbsp;
