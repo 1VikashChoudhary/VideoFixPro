@@ -52,6 +52,7 @@ public partial class VideoToolboxWindow : Window
     // output
     private string _customOutputFolder = string.Empty;
     private string _lastOutputFolder = string.Empty;
+    private double _fileRotation = 0;
 
     // GPU support
     private bool _hasNvidia;
@@ -323,8 +324,10 @@ public partial class VideoToolboxWindow : Window
         // Load in MediaElement
         try
         {
+            Player.Position = TimeSpan.Zero;
             Player.Source = new Uri(path);
             Player.Play();
+            Player.Pause();
         }
         catch (Exception ex)
         {
@@ -358,8 +361,6 @@ public partial class VideoToolboxWindow : Window
                 double.TryParse(durStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double dur))
             {
                 _durationSeconds = dur;
-                if (SeekSlider != null) SeekSlider.Maximum = dur;
-                if (HeaderDuration != null) HeaderDuration.Text = FormatTime(dur);
             }
 
             var streams = root?["streams"]?.AsArray();
@@ -373,19 +374,60 @@ public partial class VideoToolboxWindow : Window
                         _videoCodec = stream?["codec_name"]?.GetValue<string>()?.ToUpperInvariant() ?? "-";
                         int w = stream?["width"]?.GetValue<int>() ?? 0;
                         int h = stream?["height"]?.GetValue<int>() ?? 0;
-                        _settings.SourceWidth = w;
-                        _settings.SourceHeight = h;
-                        if (HeaderCodec != null) HeaderCodec.Text = _videoCodec;
-                        if (HeaderResolution != null) HeaderResolution.Text = w > 0 ? $"{w}x{h}" : "-";
+
+                        int rot = 0;
+                        var sideRot = stream?["side_data_list"]?.AsArray();
+                        if (sideRot != null)
+                        {
+                            foreach (var sd in sideRot)
+                            {
+                                if (sd?["rotation"]?.GetValue<int>() is int r) { rot = r; break; }
+                            }
+                        }
+                        if (rot == 0)
+                        {
+                            var tags = stream?["tags"];
+                            if (tags?["rotate"]?.GetValue<string>() is string rotStr && int.TryParse(rotStr, out int tr))
+                                rot = tr;
+                        }
+
+                        _fileRotation = 0;
+                        if (rot != 0)
+                        {
+                            _fileRotation = ((-rot % 360) + 360) % 360;
+                            if (rot > 0 && (sideRot == null || sideRot.Count == 0))
+                                _fileRotation = rot % 360;
+                        }
+
+                        if (_fileRotation == 90 || _fileRotation == 270)
+                        {
+                            _settings.SourceWidth = h;
+                            _settings.SourceHeight = w;
+                        }
+                        else
+                        {
+                            _settings.SourceWidth = w;
+                            _settings.SourceHeight = h;
+                        }
                     }
                     else if (codecType == "audio" && _audioCodec == "-")
                     {
                         _audioCodec = stream?["codec_name"]?.GetValue<string>()?.ToUpperInvariant() ?? "-";
                         _audioChannels = stream?["channels"]?.GetValue<int>() ?? 2;
-                        if (HeaderAudioInfo != null) HeaderAudioInfo.Text = $"{_audioCodec} {(_audioChannels >= 2 ? "Stereo" : "Mono")}";
                     }
                 }
             }
+
+            Dispatcher.Invoke(() =>
+            {
+                if (SeekSlider != null) SeekSlider.Maximum = _durationSeconds > 0 ? _durationSeconds : 100;
+                if (HeaderDuration != null) HeaderDuration.Text = FormatTime(_durationSeconds);
+                if (SeekTimeText != null) SeekTimeText.Text = $"{FormatTime(0)} / {FormatTime(_durationSeconds)}";
+                if (HeaderCodec != null) HeaderCodec.Text = _videoCodec;
+                if (HeaderResolution != null) HeaderResolution.Text = (_settings.SourceWidth > 0 && _settings.SourceHeight > 0) ? $"{_settings.SourceWidth}x{_settings.SourceHeight}" : "-";
+                if (HeaderAudioInfo != null) HeaderAudioInfo.Text = $"{_audioCodec} {(_audioChannels >= 2 ? "Stereo" : "Mono")}";
+                ApplyPlayerDimensionsAndRotation();
+            });
 
             Log($"[INFO] Loaded: {Path.GetFileName(path)} | {HeaderDuration?.Text} | {_videoCodec} | {HeaderResolution?.Text} | {HeaderAudioInfo?.Text}");
         }
@@ -406,17 +448,21 @@ public partial class VideoToolboxWindow : Window
 
         try
         {
-            // 1. Live Video Transform (Rotation, Flips, and Live Cropped Zoom)
-            if (PlayerRotate != null) PlayerRotate.Angle = _settings.RotationDegrees;
+            // 1. Live Video Transform (Combined file rotation + user-selected rotation on LayoutTransform)
+            int totalRotation = ((int)_fileRotation + _settings.RotationDegrees) % 360;
+            if (PlayerRotator != null)
+            {
+                if (totalRotation != 0)
+                    PlayerRotator.LayoutTransform = new RotateTransform(totalRotation);
+                else
+                    PlayerRotator.LayoutTransform = Transform.Identity;
+            }
+            if (PlayerRotate != null) PlayerRotate.Angle = 0;
+
             if (PlayerScale != null && PlayerTranslate != null)
             {
                 double pw = PlayerBorder?.ActualWidth ?? 0;
                 double ph = PlayerBorder?.ActualHeight ?? 0;
-                double fitScale = 1.0;
-                if ((_settings.RotationDegrees == 90 || _settings.RotationDegrees == 270) && pw > 0 && ph > 0)
-                {
-                    fitScale = Math.Min(pw / ph, ph / pw);
-                }
 
                 if (_isCroppedLivePreview && _settings.SourceWidth > 0 && _settings.SourceHeight > 0 &&
                     (_settings.CropLeft > 0 || _settings.CropTop > 0 || _settings.CropRight > 0 || _settings.CropBottom > 0))
@@ -438,16 +484,16 @@ public partial class VideoToolboxWindow : Window
                         double offX = (videoCenterX - cropCenterX) * baseScale * zoom;
                         double offY = (videoCenterY - cropCenterY) * baseScale * zoom;
 
-                        PlayerScale.ScaleX = (_settings.FlipHorizontal ? -1 : 1) * zoom * fitScale;
-                        PlayerScale.ScaleY = (_settings.FlipVertical ? -1 : 1) * zoom * fitScale;
+                        PlayerScale.ScaleX = (_settings.FlipHorizontal ? -1 : 1) * zoom;
+                        PlayerScale.ScaleY = (_settings.FlipVertical ? -1 : 1) * zoom;
                         PlayerTranslate.X = offX;
                         PlayerTranslate.Y = offY;
                     }
                 }
                 else
                 {
-                    PlayerScale.ScaleX = (_settings.FlipHorizontal ? -1 : 1) * fitScale;
-                    PlayerScale.ScaleY = (_settings.FlipVertical ? -1 : 1) * fitScale;
+                    PlayerScale.ScaleX = _settings.FlipHorizontal ? -1 : 1;
+                    PlayerScale.ScaleY = _settings.FlipVertical ? -1 : 1;
                     PlayerTranslate.X = 0;
                     PlayerTranslate.Y = 0;
                 }
@@ -799,6 +845,33 @@ public partial class VideoToolboxWindow : Window
         catch { }
     }
 
+    private void ApplyPlayerDimensionsAndRotation()
+    {
+        int rawW = (Player?.NaturalVideoWidth > 0) ? Player.NaturalVideoWidth : (_fileRotation == 90 || _fileRotation == 270 ? _settings.SourceHeight : _settings.SourceWidth);
+        int rawH = (Player?.NaturalVideoHeight > 0) ? Player.NaturalVideoHeight : (_fileRotation == 90 || _fileRotation == 270 ? _settings.SourceWidth : _settings.SourceHeight);
+
+        if (rawW <= 0) rawW = 1920;
+        if (rawH <= 0) rawH = 1080;
+
+        if (Player != null)
+        {
+            Player.Width = rawW;
+            Player.Height = rawH;
+        }
+        if (PlayerTransformHost != null)
+        {
+            PlayerTransformHost.Width = rawW;
+            PlayerTransformHost.Height = rawH;
+        }
+        if (PlayerRotator != null)
+        {
+            PlayerRotator.Width = rawW;
+            PlayerRotator.Height = rawH;
+        }
+
+        ApplyLivePreview();
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     //  VIDEO PLAYBACK
     // ═══════════════════════════════════════════════════════════════════════════
@@ -807,7 +880,18 @@ public partial class VideoToolboxWindow : Window
         if (!_isInitialized || Player == null) return;
         try
         {
+            if (Player.NaturalDuration.HasTimeSpan && _durationSeconds <= 0)
+            {
+                _durationSeconds = Player.NaturalDuration.TimeSpan.TotalSeconds;
+                if (SeekSlider != null) SeekSlider.Maximum = _durationSeconds;
+                if (HeaderDuration != null) HeaderDuration.Text = FormatTime(_durationSeconds);
+            }
+            if (SeekTimeText != null && _durationSeconds > 0)
+                SeekTimeText.Text = $"{FormatTime(0)} / {FormatTime(_durationSeconds)}";
+
+            ApplyPlayerDimensionsAndRotation();
             Player.Pause();
+            Player.Position = TimeSpan.Zero;
             _isPlayerPlaying = false;
             UpdatePlayPauseUI();
         }
@@ -820,8 +904,12 @@ public partial class VideoToolboxWindow : Window
         try
         {
             Player.Pause();
+            Player.Position = TimeSpan.Zero;
             _isPlayerPlaying = false;
             _playheadTimer.Stop();
+            if (SeekSlider != null) SeekSlider.Value = 0;
+            if (SeekTimeText != null) SeekTimeText.Text = $"{FormatTime(0)} / {FormatTime(_durationSeconds)}";
+            UpdateTimelinePlayheads();
             UpdatePlayPauseUI();
         }
         catch { }
@@ -846,8 +934,11 @@ public partial class VideoToolboxWindow : Window
             }
             else
             {
-                if (_durationSeconds > 0 && Player.Position.TotalSeconds >= _durationSeconds - 0.1)
+                if (_durationSeconds > 0 && Player.Position.TotalSeconds >= _durationSeconds - 0.2)
+                {
                     Player.Position = TimeSpan.Zero;
+                    if (SeekSlider != null) SeekSlider.Value = 0;
+                }
                 Player.Play();
                 _isPlayerPlaying = true;
                 _playheadTimer.Start();

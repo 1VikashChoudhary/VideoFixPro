@@ -117,7 +117,11 @@
 
                 <!-- Video Player Preview (Clean) -->
                 <Border x:Name="PlayerBorder" Grid.Row="1" Visibility="Collapsed" Background="Black" CornerRadius="8" ClipToBounds="True">
-                    <MediaElement x:Name="Player" LoadedBehavior="Manual" MediaEnded="Player_MediaEnded" Stretch="Uniform"/>
+                    <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid x:Name="PlayerRotator">
+                            <MediaElement x:Name="Player" LoadedBehavior="Manual" MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded" Stretch="Fill"/>
+                        </Grid>
+                    </Viewbox>
                 </Border>
             </Grid>
 

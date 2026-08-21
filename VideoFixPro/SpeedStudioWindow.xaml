@@ -137,9 +137,13 @@
                 <Border x:Name="PlayerBorder" Grid.Row="1" Background="Black" CornerRadius="8"
                         ClipToBounds="True" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
-                        <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
-                                      ScrubbingEnabled="True" Volume="0.5" Stretch="Uniform"
-                                      MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"/>
+                        <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="PlayerRotator">
+                                <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                              ScrubbingEnabled="True" Volume="0.5" Stretch="Fill"
+                                              MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"/>
+                            </Grid>
+                        </Viewbox>
                         <Button x:Name="PlayPauseBtn" HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Width="54" Height="54" Style="{StaticResource GhostButton}" FontSize="24"
                                 Content="▶" Opacity="0.75" Visibility="Collapsed" Click="TogglePlay_Click"/>

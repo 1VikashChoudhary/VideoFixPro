@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ public partial class CompressorWindow : Window
     private readonly System.Windows.Threading.DispatcherTimer _playheadTimer = new();
     private bool _isPlayerPlaying;
     private bool _isSeeking;
+    private double _videoRotation = 0;
 
     // Rendering & Progress
     private CancellationTokenSource? _cts;
@@ -274,7 +276,7 @@ public partial class CompressorWindow : Window
             var psi = new ProcessStartInfo
             {
                 FileName = FFprobe,
-                Arguments = $"-v error -show_entries format=duration:stream=width,height,codec_name,codec_type -of default=noprint_wrappers=1 \"{path}\"",
+                Arguments = $"-v quiet -print_format json -show_streams -show_format \"{path}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
@@ -284,22 +286,69 @@ public partial class CompressorWindow : Window
             string output = await proc.StandardOutput.ReadToEndAsync();
             await proc.WaitForExitAsync();
 
-            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            var root = JsonNode.Parse(output);
+            if (root?["format"]?["duration"]?.GetValue<string>() is string durStr &&
+                double.TryParse(durStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double dur))
             {
-                var parts = line.Trim().Split('=');
-                if (parts.Length != 2) continue;
-                string k = parts[0].Trim(), v = parts[1].Trim();
+                _durationSeconds = dur;
+            }
 
-                if (k == "duration" && double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
-                    _durationSeconds = d;
-                else if (k == "width" && int.TryParse(v, out int w))
-                    _sourceWidth = w;
-                else if (k == "height" && int.TryParse(v, out int h))
-                    _sourceHeight = h;
-                else if (k == "codec_name")
+            var streams = root?["streams"]?.AsArray();
+            if (streams != null)
+            {
+                foreach (var stream in streams)
                 {
-                    if (_videoCodec == "-") _videoCodec = v.ToUpperInvariant();
-                    else if (_audioCodec == "-") _audioCodec = v.ToUpperInvariant();
+                    var codecType = stream?["codec_type"]?.GetValue<string>();
+                    if (codecType == "video")
+                    {
+                        if (_videoCodec == "-") _videoCodec = stream?["codec_name"]?.GetValue<string>()?.ToUpperInvariant() ?? "-";
+                        int w = stream?["width"]?.GetValue<int>() ?? 0;
+                        int h = stream?["height"]?.GetValue<int>() ?? 0;
+
+                        int rot = 0;
+                        var sideRot = stream?["side_data_list"]?.AsArray();
+                        if (sideRot != null)
+                        {
+                            foreach (var sd in sideRot)
+                            {
+                                if (sd?["rotation"]?.GetValue<int>() is int r) { rot = r; break; }
+                            }
+                        }
+                        if (rot == 0)
+                        {
+                            var tags = stream?["tags"];
+                            if (tags?["rotate"]?.GetValue<string>() is string rotStr && int.TryParse(rotStr, out int tr))
+                                rot = tr;
+                        }
+
+                        _videoRotation = 0;
+                        if (rot != 0)
+                        {
+                            _videoRotation = ((-rot % 360) + 360) % 360;
+                            if (rot > 0 && (sideRot == null || sideRot.Count == 0))
+                                _videoRotation = rot % 360;
+                        }
+
+                        if (_videoRotation == 90 || _videoRotation == 270)
+                        {
+                            _sourceWidth = h;
+                            _sourceHeight = w;
+                        }
+                        else
+                        {
+                            _sourceWidth = w;
+                            _sourceHeight = h;
+                        }
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            ApplyPlayerDimensionsAndRotation();
+                        });
+                    }
+                    else if (codecType == "audio" && _audioCodec == "-")
+                    {
+                        _audioCodec = stream?["codec_name"]?.GetValue<string>()?.ToUpperInvariant() ?? "-";
+                    }
                 }
             }
 
@@ -317,9 +366,31 @@ public partial class CompressorWindow : Window
         catch { }
     }
 
+    private void ApplyPlayerDimensionsAndRotation()
+    {
+        int rawW = (Player?.NaturalVideoWidth > 0) ? Player.NaturalVideoWidth : (_videoRotation == 90 || _videoRotation == 270 ? _sourceHeight : _sourceWidth);
+        int rawH = (Player?.NaturalVideoHeight > 0) ? Player.NaturalVideoHeight : (_videoRotation == 90 || _videoRotation == 270 ? _sourceWidth : _sourceHeight);
+
+        if (rawW <= 0) rawW = 1920;
+        if (rawH <= 0) rawH = 1080;
+
+        if (Player != null) { Player.Width = rawW; Player.Height = rawH; }
+
+        if (PlayerRotator != null)
+        {
+            PlayerRotator.Width = rawW;
+            PlayerRotator.Height = rawH;
+            if (_videoRotation != 0)
+                PlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+            else
+                PlayerRotator.LayoutTransform = Transform.Identity;
+        }
+    }
+
     // ── Player Controls ───────────────────────────────────────────────────────
     private void Player_MediaOpened(object s, RoutedEventArgs e)
     {
+        ApplyPlayerDimensionsAndRotation();
         if (Player.NaturalDuration.HasTimeSpan)
         {
             double sec = Player.NaturalDuration.TimeSpan.TotalSeconds;

@@ -135,21 +135,29 @@
                                 <Border x:Name="BgSolidLayer" Background="Black" Visibility="Collapsed"/>
 
                                 <!-- Layer 2: Dynamic Blurred Video Background Layer -->
-                                <MediaElement x:Name="BgPlayer" LoadedBehavior="Manual" UnloadedBehavior="Stop"
-                                              Stretch="UniformToFill" IsMuted="True" ScrubbingEnabled="True"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <MediaElement.Effect>
-                                        <BlurEffect x:Name="BgBlurEffect" Radius="25" KernelType="Gaussian"/>
-                                    </MediaElement.Effect>
-                                </MediaElement>
+                                <Viewbox x:Name="BgPlayerViewbox" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid x:Name="BgPlayerRotator">
+                                        <MediaElement x:Name="BgPlayer" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                                      Stretch="Fill" IsMuted="True" ScrubbingEnabled="True"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <MediaElement.Effect>
+                                                <BlurEffect x:Name="BgBlurEffect" Radius="25" KernelType="Gaussian"/>
+                                            </MediaElement.Effect>
+                                        </MediaElement>
+                                    </Grid>
+                                </Viewbox>
 
                                 <!-- Layer 3: Main Foreground Video Layer (Sharp & Scaled) -->
-                                <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
-                                              Stretch="Uniform" ScrubbingEnabled="True"
-                                              MediaOpened="Player_MediaOpened"
-                                              MediaEnded="Player_MediaEnded"
-                                              MediaFailed="Player_MediaFailed"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid x:Name="PlayerRotator">
+                                        <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                                      Stretch="Fill" ScrubbingEnabled="True"
+                                                      MediaOpened="Player_MediaOpened"
+                                                      MediaEnded="Player_MediaEnded"
+                                                      MediaFailed="Player_MediaFailed"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Viewbox>
 
                                 <!-- Layer 4: Live Format Overlay Badge (Top-Left) -->
                                 <Border HorizontalAlignment="Left" VerticalAlignment="Top"

@@ -135,9 +135,13 @@
                         ClipToBounds="True" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                         SizeChanged="PlayerBorder_SizeChanged">
                     <Grid x:Name="PlayerContainer">
-                        <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
-                                      ScrubbingEnabled="True" Volume="0.5" Stretch="Uniform"
-                                      MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"/>
+                        <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="PlayerRotator">
+                                <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                              ScrubbingEnabled="True" Volume="0.5" Stretch="Fill"
+                                              MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"/>
+                            </Grid>
+                        </Viewbox>
 
                         <!-- Canvas overlay that tracks exact active video aspect rectangle inside the letterbox -->
                         <Canvas x:Name="VideoFrameOverlay" HorizontalAlignment="Center" VerticalAlignment="Center"

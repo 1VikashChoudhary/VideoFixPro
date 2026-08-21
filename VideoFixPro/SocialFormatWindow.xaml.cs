@@ -26,6 +26,7 @@ namespace VideoFixPro
         private double _durationSeconds;
         private int _sourceWidth;
         private int _sourceHeight;
+        private double _videoRotation = 0;
         private string? _customOutputDir;
         private string? _lastOutputFolder;
         private bool _isRendering;
@@ -390,8 +391,48 @@ namespace VideoFixPro
                     {
                         if (stream?["codec_type"]?.GetValue<string>() == "video")
                         {
-                            _sourceWidth = stream?["width"]?.GetValue<int>() ?? 0;
-                            _sourceHeight = stream?["height"]?.GetValue<int>() ?? 0;
+                            int w = stream?["width"]?.GetValue<int>() ?? 0;
+                            int h = stream?["height"]?.GetValue<int>() ?? 0;
+
+                            int rot = 0;
+                            var sideRot = stream?["side_data_list"]?.AsArray();
+                            if (sideRot != null)
+                            {
+                                foreach (var sd in sideRot)
+                                {
+                                    if (sd?["rotation"]?.GetValue<int>() is int r) { rot = r; break; }
+                                }
+                            }
+                            if (rot == 0)
+                            {
+                                var tags = stream?["tags"];
+                                if (tags?["rotate"]?.GetValue<string>() is string rotStr && int.TryParse(rotStr, out int tr))
+                                    rot = tr;
+                            }
+
+                            _videoRotation = 0;
+                            if (rot != 0)
+                            {
+                                _videoRotation = ((-rot % 360) + 360) % 360;
+                                if (rot > 0 && (sideRot == null || sideRot.Count == 0))
+                                    _videoRotation = rot % 360;
+                            }
+
+                            if (_videoRotation == 90 || _videoRotation == 270)
+                            {
+                                _sourceWidth = h;
+                                _sourceHeight = w;
+                            }
+                            else
+                            {
+                                _sourceWidth = w;
+                                _sourceHeight = h;
+                            }
+
+                            Dispatcher.Invoke(() =>
+                            {
+                                ApplyPlayerDimensionsAndRotation();
+                            });
                             break;
                         }
                     }
@@ -499,6 +540,38 @@ namespace VideoFixPro
             }
         }
 
+        private void ApplyPlayerDimensionsAndRotation()
+        {
+            int rawW = (Player?.NaturalVideoWidth > 0) ? Player.NaturalVideoWidth : (_videoRotation == 90 || _videoRotation == 270 ? _sourceHeight : _sourceWidth);
+            int rawH = (Player?.NaturalVideoHeight > 0) ? Player.NaturalVideoHeight : (_videoRotation == 90 || _videoRotation == 270 ? _sourceWidth : _sourceHeight);
+
+            if (rawW <= 0) rawW = 1920;
+            if (rawH <= 0) rawH = 1080;
+
+            if (Player != null) { Player.Width = rawW; Player.Height = rawH; }
+            if (BgPlayer != null) { BgPlayer.Width = rawW; BgPlayer.Height = rawH; }
+
+            if (PlayerRotator != null)
+            {
+                PlayerRotator.Width = rawW;
+                PlayerRotator.Height = rawH;
+                if (_videoRotation != 0)
+                    PlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+                else
+                    PlayerRotator.LayoutTransform = Transform.Identity;
+            }
+
+            if (BgPlayerRotator != null)
+            {
+                BgPlayerRotator.Width = rawW;
+                BgPlayerRotator.Height = rawH;
+                if (_videoRotation != 0)
+                    BgPlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+                else
+                    BgPlayerRotator.LayoutTransform = Transform.Identity;
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────
         //  PLAYBACK & SCRUBBING CONTROLS
         // ─────────────────────────────────────────────────────────────
@@ -506,6 +579,7 @@ namespace VideoFixPro
         {
             try
             {
+                ApplyPlayerDimensionsAndRotation();
                 Player.Pause();
                 BgPlayer.Pause();
                 _isPlayerPlaying = false;

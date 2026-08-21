@@ -207,25 +207,30 @@
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                         SizeChanged="PlayerBorder_SizeChanged">
                     <Grid>
-                        <!-- Video Host with RenderTransformOrigin and TransformGroup -->
-                        <Grid x:Name="PlayerTransformHost" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <TransformGroup>
-                                    <ScaleTransform x:Name="PlayerScale" ScaleX="1" ScaleY="1"/>
-                                    <TranslateTransform x:Name="PlayerTranslate" X="0" Y="0"/>
-                                    <RotateTransform x:Name="PlayerRotate" Angle="0"/>
-                                </TransformGroup>
-                            </Grid.RenderTransform>
-                            <MediaElement x:Name="Player"
-                                          LoadedBehavior="Manual"
-                                      UnloadedBehavior="Stop"
-                                      ScrubbingEnabled="True"
-                                      Volume="0.5"
-                                      Stretch="Uniform"
-                                      MediaOpened="Player_MediaOpened"
-                                      MediaEnded="Player_MediaEnded"
-                                      MediaFailed="Player_MediaFailed"/>
-                        </Grid>
+                        <!-- Video Viewbox for clean aspect ratio & auto-fit -->
+                        <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="PlayerRotator">
+                                <!-- Video Host with RenderTransformOrigin and TransformGroup -->
+                                <Grid x:Name="PlayerTransformHost" RenderTransformOrigin="0.5,0.5">
+                                    <Grid.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform x:Name="PlayerScale" ScaleX="1" ScaleY="1"/>
+                                            <TranslateTransform x:Name="PlayerTranslate" X="0" Y="0"/>
+                                            <RotateTransform x:Name="PlayerRotate" Angle="0"/>
+                                        </TransformGroup>
+                                    </Grid.RenderTransform>
+                                    <MediaElement x:Name="Player"
+                                                  LoadedBehavior="Manual"
+                                                  UnloadedBehavior="Stop"
+                                                  ScrubbingEnabled="True"
+                                                  Volume="0.5"
+                                                  Stretch="Fill"
+                                                  MediaOpened="Player_MediaOpened"
+                                                  MediaEnded="Player_MediaEnded"
+                                                  MediaFailed="Player_MediaFailed"/>
+                                </Grid>
+                            </Grid>
+                        </Viewbox>
 
                         <!-- Live Interactive Drag-to-Crop Canvas -->
                         <Canvas x:Name="CropCanvas"

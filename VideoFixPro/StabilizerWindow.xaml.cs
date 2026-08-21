@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +24,9 @@ namespace VideoFixPro
         private string? _customOutputDir;
         private string? _lastOutputFolder;
         private double _durationSeconds;
+        private int _sourceWidth;
+        private int _sourceHeight;
+        private double _videoRotation = 0;
         private CancellationTokenSource? _cts;
         private bool _isProcessing;
 
@@ -143,33 +147,82 @@ namespace VideoFixPro
             }
             catch { }
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 try {
                     var psi = new ProcessStartInfo {
                         FileName = FFprobe,
-                        Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{path}\"",
+                        Arguments = $"-v quiet -print_format json -show_streams -show_format \"{path}\"",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         CreateNoWindow = true
                     };
-                    var proc = Process.Start(psi);
+                    using var proc = Process.Start(psi);
                     if (proc != null) {
-                        ProcessGuard.Watch(proc);
-                        try
+                        string outStr = await proc.StandardOutput.ReadToEndAsync();
+                        await proc.WaitForExitAsync();
+                        
+                        var root = JsonNode.Parse(outStr);
+                        if (root?["format"]?["duration"]?.GetValue<string>() is string durStr &&
+                            double.TryParse(durStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
                         {
-                            string outStr = proc.StandardOutput.ReadToEnd();
-                            proc.WaitForExit();
-                            if (double.TryParse(outStr.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
-                            {
-                                _durationSeconds = d;
-                                var ts = TimeSpan.FromSeconds(d);
-                                string durStr = ts.Hours > 0 ? $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}" : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
-                                Dispatcher.Invoke(() => HeaderDuration.Text = durStr);
-                            }
+                            _durationSeconds = d;
+                            var ts = TimeSpan.FromSeconds(d);
+                            string formatted = ts.Hours > 0 ? $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}" : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+                            Dispatcher.Invoke(() => HeaderDuration.Text = formatted);
                         }
-                        finally
+
+                        var streams = root?["streams"]?.AsArray();
+                        if (streams != null)
                         {
-                            ProcessGuard.Unwatch(proc);
+                            foreach (var stream in streams)
+                            {
+                                if (stream?["codec_type"]?.GetValue<string>() == "video")
+                                {
+                                    int w = stream?["width"]?.GetValue<int>() ?? 0;
+                                    int h = stream?["height"]?.GetValue<int>() ?? 0;
+
+                                    int rot = 0;
+                                    var sideRot = stream?["side_data_list"]?.AsArray();
+                                    if (sideRot != null)
+                                    {
+                                        foreach (var sd in sideRot)
+                                        {
+                                            if (sd?["rotation"]?.GetValue<int>() is int r) { rot = r; break; }
+                                        }
+                                    }
+                                    if (rot == 0)
+                                    {
+                                        var tags = stream?["tags"];
+                                        if (tags?["rotate"]?.GetValue<string>() is string rotStr && int.TryParse(rotStr, out int tr))
+                                            rot = tr;
+                                    }
+
+                                    _videoRotation = 0;
+                                    if (rot != 0)
+                                    {
+                                        _videoRotation = ((-rot % 360) + 360) % 360;
+                                        if (rot > 0 && (sideRot == null || sideRot.Count == 0))
+                                            _videoRotation = rot % 360;
+                                    }
+
+                                    if (_videoRotation == 90 || _videoRotation == 270)
+                                    {
+                                        _sourceWidth = h;
+                                        _sourceHeight = w;
+                                    }
+                                    else
+                                    {
+                                        _sourceWidth = w;
+                                        _sourceHeight = h;
+                                    }
+
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        ApplyPlayerDimensionsAndRotation();
+                                    });
+                                    break;
+                                }
+                            }
                         }
                     }
                 } catch { }
@@ -259,6 +312,32 @@ namespace VideoFixPro
         {
             _customOutputDir = null;
             UpdateOutputPath();
+        }
+
+        private void ApplyPlayerDimensionsAndRotation()
+        {
+            int rawW = (Player?.NaturalVideoWidth > 0) ? Player.NaturalVideoWidth : (_videoRotation == 90 || _videoRotation == 270 ? _sourceHeight : _sourceWidth);
+            int rawH = (Player?.NaturalVideoHeight > 0) ? Player.NaturalVideoHeight : (_videoRotation == 90 || _videoRotation == 270 ? _sourceWidth : _sourceHeight);
+
+            if (rawW <= 0) rawW = 1920;
+            if (rawH <= 0) rawH = 1080;
+
+            if (Player != null) { Player.Width = rawW; Player.Height = rawH; }
+
+            if (PlayerRotator != null)
+            {
+                PlayerRotator.Width = rawW;
+                PlayerRotator.Height = rawH;
+                if (_videoRotation != 0)
+                    PlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+                else
+                    PlayerRotator.LayoutTransform = Transform.Identity;
+            }
+        }
+
+        private void Player_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            ApplyPlayerDimensionsAndRotation();
         }
 
         private void Player_MediaEnded(object sender, RoutedEventArgs e)
