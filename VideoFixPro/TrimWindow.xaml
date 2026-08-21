@@ -245,15 +245,19 @@
                         Background="Black" CornerRadius="8" ClipToBounds="True"
                         Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
-                        <MediaElement x:Name="TrimPlayer"
-                                      LoadedBehavior="Manual"
-                                      UnloadedBehavior="Stop"
-                                      ScrubbingEnabled="True"
-                                      Volume="0.5"
-                                      Stretch="Uniform"
-                                      MediaOpened="TrimPlayer_MediaOpened"
-                                      MediaEnded="TrimPlayer_MediaEnded"
-                                      MediaFailed="TrimPlayer_MediaFailed"/>
+                        <Viewbox x:Name="TrimPlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="TrimPlayerRotator">
+                                <MediaElement x:Name="TrimPlayer"
+                                              LoadedBehavior="Manual"
+                                              UnloadedBehavior="Stop"
+                                              ScrubbingEnabled="True"
+                                              Volume="0.5"
+                                              Stretch="Fill"
+                                              MediaOpened="TrimPlayer_MediaOpened"
+                                              MediaEnded="TrimPlayer_MediaEnded"
+                                              MediaFailed="TrimPlayer_MediaFailed"/>
+                            </Grid>
+                        </Viewbox>
 
                         <!-- Playback Overlay -->
                         <Button x:Name="PlayPauseBtn"

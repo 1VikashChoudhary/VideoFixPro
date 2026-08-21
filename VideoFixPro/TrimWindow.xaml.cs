@@ -56,6 +56,9 @@ public partial class TrimWindow : Window
     private string _customOutputFolder = string.Empty;
     private string _lastOutputFolder   = string.Empty;
     private string _videoCodec         = "-";
+    private int    _sourceWidth        = 0;
+    private int    _sourceHeight       = 0;
+    private double _videoRotation      = 0;
 
     // GPU support (passed from main)
     private bool _hasNvidia;
@@ -227,12 +230,17 @@ public partial class TrimWindow : Window
         // Probe
         var info = await ProbeFileAsync(path);
         _durationSeconds = Math.Max(0, info.Duration);
+        _sourceWidth     = info.Width;
+        _sourceHeight    = info.Height;
+        _videoRotation   = info.Rotation;
 
         // Update header badges
         HeaderDuration.Text   = _durationSeconds > 0 ? TrimSegment.FormatTime(_durationSeconds) : "—";
         HeaderCodec.Text      = info.VideoCodec;
         HeaderResolution.Text = info.Resolution;
         _videoCodec           = info.VideoCodec;
+
+        ApplyTrimPlayerDimensionsAndRotation();
 
         // Init trim points to full range
         _inPoint  = 0;
@@ -280,13 +288,15 @@ public partial class TrimWindow : Window
     }
 
     // ── Probe result record ───────────────────────────────────────
-    private record ProbeInfo(double Duration, string VideoCodec, string AudioCodec, string Resolution, string Fps);
+    private record ProbeInfo(double Duration, string VideoCodec, string AudioCodec, string Resolution, string Fps, int Width, int Height, double Rotation);
 
     private async Task<ProbeInfo> ProbeFileAsync(string path)
     {
         double duration = 0;
         string vc = "-", ac = "-", res = "-", fps = "-";
-        if (!File.Exists(FFprobe)) return new(0, vc, ac, res, fps);
+        int width = 0, height = 0;
+        double rotation = 0;
+        if (!File.Exists(FFprobe)) return new(0, vc, ac, res, fps, 0, 0, 0);
         try
         {
             var json = await RunProcessAsync(FFprobe,
@@ -323,6 +333,8 @@ public partial class TrimWindow : Window
                                     int.TryParse(stream["height"]?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int h) &&
                                     w > 0 && h > 0)
                                 {
+                                    width = w;
+                                    height = h;
                                     res = $"{w}x{h}";
                                 }
 
@@ -372,7 +384,11 @@ public partial class TrimWindow : Window
                 var wMatch = System.Text.RegularExpressions.Regex.Match(json, @"""width"":\s*(\d+)");
                 var hMatch = System.Text.RegularExpressions.Regex.Match(json, @"""height"":\s*(\d+)");
                 if (wMatch.Success && hMatch.Success)
-                    res = $"{wMatch.Groups[1].Value}x{hMatch.Groups[1].Value}";
+                {
+                    width = int.Parse(wMatch.Groups[1].Value);
+                    height = int.Parse(hMatch.Groups[1].Value);
+                    res = $"{width}x{height}";
+                }
             }
             if (vc == "-")
             {
@@ -380,10 +396,36 @@ public partial class TrimWindow : Window
                 if (codecMatch.Success)
                     vc = codecMatch.Groups[1].Value.ToUpperInvariant();
             }
+
+            // Extract Rotation
+            int rot = 0;
+            var sideRotMatch = System.Text.RegularExpressions.Regex.Match(json, @"""rotation"":\s*(-?\d+)");
+            if (sideRotMatch.Success && int.TryParse(sideRotMatch.Groups[1].Value, out int sr))
+            {
+                rot = sr;
+            }
+            else
+            {
+                var tagRotMatch = System.Text.RegularExpressions.Regex.Match(json, @"""rotate"":\s*""?(-?\d+)""?");
+                if (tagRotMatch.Success && int.TryParse(tagRotMatch.Groups[1].Value, out int tr))
+                    rot = tr;
+            }
+
+            if (rot != 0)
+            {
+                rotation = ((-rot % 360) + 360) % 360;
+                if (rot > 0 && !sideRotMatch.Success)
+                    rotation = rot % 360;
+            }
+
+            if (rotation == 90 || rotation == 270)
+            {
+                res = $"{height}x{width}";
+            }
         }
         catch { }
 
-        return new(duration, vc, ac, res, fps);
+        return new(duration, vc, ac, res, fps, width, height, rotation);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1442,10 +1484,33 @@ public partial class TrimWindow : Window
         PlayPauseBtn.Opacity = _isPlayerPlaying ? 0.2 : 0.6;
     }
 
+    private void ApplyTrimPlayerDimensionsAndRotation()
+    {
+        int rawW = _sourceWidth > 0 ? _sourceWidth : (TrimPlayer?.NaturalVideoWidth > 0 ? TrimPlayer.NaturalVideoWidth : 1920);
+        int rawH = _sourceHeight > 0 ? _sourceHeight : (TrimPlayer?.NaturalVideoHeight > 0 ? TrimPlayer.NaturalVideoHeight : 1080);
+
+        if (TrimPlayer != null)
+        {
+            TrimPlayer.Width = rawW;
+            TrimPlayer.Height = rawH;
+        }
+
+        if (TrimPlayerRotator != null)
+        {
+            TrimPlayerRotator.Width = rawW;
+            TrimPlayerRotator.Height = rawH;
+            if (_videoRotation != 0)
+                TrimPlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+            else
+                TrimPlayerRotator.LayoutTransform = Transform.Identity;
+        }
+    }
+
     private void TrimPlayer_MediaOpened(object sender, RoutedEventArgs e)
     {
         try
         {
+            ApplyTrimPlayerDimensionsAndRotation();
             if (TrimPlayer.NaturalDuration.HasTimeSpan)
             {
                 TrimPlayer.Pause();

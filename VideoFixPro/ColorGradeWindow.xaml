@@ -150,19 +150,23 @@
                     <Grid>
                         <!-- GPU-Accelerated Color Graded Video Viewport -->
                         <Grid x:Name="VideoViewport">
-                            <!-- Media Player Element -->
-                            <MediaElement x:Name="Player"
-                                          LoadedBehavior="Manual"
-                                          UnloadedBehavior="Stop"
-                                          ScrubbingEnabled="True"
-                                          Volume="0.5"
-                                          Stretch="Uniform"
-                                          MediaOpened="Player_MediaOpened"
-                                          MediaEnded="Player_MediaEnded"/>
+                            <Viewbox x:Name="PlayerViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid x:Name="PlayerRotator">
+                                    <!-- Media Player Element -->
+                                    <MediaElement x:Name="Player"
+                                                  LoadedBehavior="Manual"
+                                                  UnloadedBehavior="Stop"
+                                                  ScrubbingEnabled="True"
+                                                  Volume="0.5"
+                                                  Stretch="Fill"
+                                                  MediaOpened="Player_MediaOpened"
+                                                  MediaEnded="Player_MediaEnded"/>
 
-                            <!-- High-Fidelity Snapshot Image (Active for 3D LUT preview and fine detail) -->
-                            <Image x:Name="GradedFramePreview" Stretch="Uniform" Visibility="Collapsed" IsHitTestVisible="False"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <!-- High-Fidelity Snapshot Image (Active for 3D LUT preview and fine detail) -->
+                                    <Image x:Name="GradedFramePreview" Stretch="Fill" Visibility="Collapsed" IsHitTestVisible="False"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Viewbox>
                         </Grid>
 
                         <!-- Center Play/Pause Overlay Button -->

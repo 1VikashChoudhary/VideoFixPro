@@ -36,6 +36,7 @@ public partial class ColorGradeWindow : Window
     private double _durationSeconds;
     private int _sourceWidth;
     private int _sourceHeight;
+    private double _videoRotation = 0.0;
     private readonly ColorGradeEffect _colorGradeEffect = new();
 
     // Color Grading Parameters
@@ -216,7 +217,38 @@ public partial class ColorGradeWindow : Window
             {
                 _sourceWidth = int.Parse(wMatch.Groups[1].Value);
                 _sourceHeight = int.Parse(hMatch.Groups[1].Value);
-                HeaderResolution.Text = $"{_sourceWidth}x{_sourceHeight}";
+
+                int rotation = 0;
+                var sideRotMatch = Regex.Match(json, @"""rotation"":\s*(-?\d+)");
+                if (sideRotMatch.Success && int.TryParse(sideRotMatch.Groups[1].Value, out int sr))
+                {
+                    rotation = sr;
+                }
+                else
+                {
+                    var tagRotMatch = Regex.Match(json, @"""rotate"":\s*""?(-?\d+)""?");
+                    if (tagRotMatch.Success && int.TryParse(tagRotMatch.Groups[1].Value, out int tr))
+                    {
+                        rotation = tr;
+                    }
+                }
+
+                _videoRotation = 0;
+                if (rotation != 0)
+                {
+                    _videoRotation = ((-rotation % 360) + 360) % 360;
+                    if (rotation > 0 && !sideRotMatch.Success)
+                        _videoRotation = rotation % 360;
+                }
+
+                int displayW = (_videoRotation == 90 || _videoRotation == 270) ? _sourceHeight : _sourceWidth;
+                int displayH = (_videoRotation == 90 || _videoRotation == 270) ? _sourceWidth : _sourceHeight;
+                HeaderResolution.Text = $"{displayW}x{displayH}";
+
+                Dispatcher.Invoke(() =>
+                {
+                    ApplyPlayerDimensionsAndRotation();
+                });
             }
 
             var codecMatch = Regex.Match(json, @"""codec_name"":\s*""([^""]+)""");
@@ -624,6 +656,34 @@ public partial class ColorGradeWindow : Window
         return filters.Count > 0 ? string.Join(",", filters) : "null";
     }
 
+    private void ApplyPlayerDimensionsAndRotation()
+    {
+        int rawW = _sourceWidth > 0 ? _sourceWidth : (Player?.NaturalVideoWidth > 0 ? Player.NaturalVideoWidth : 1920);
+        int rawH = _sourceHeight > 0 ? _sourceHeight : (Player?.NaturalVideoHeight > 0 ? Player.NaturalVideoHeight : 1080);
+
+        if (Player != null)
+        {
+            Player.Width = rawW;
+            Player.Height = rawH;
+        }
+
+        if (GradedFramePreview != null)
+        {
+            GradedFramePreview.Width = rawW;
+            GradedFramePreview.Height = rawH;
+        }
+
+        if (PlayerRotator != null)
+        {
+            PlayerRotator.Width = rawW;
+            PlayerRotator.Height = rawH;
+            if (_videoRotation != 0)
+                PlayerRotator.LayoutTransform = new RotateTransform(_videoRotation);
+            else
+                PlayerRotator.LayoutTransform = Transform.Identity;
+        }
+    }
+
     // ── Player Controls ───────────────────────────────────────────────────────
     private void Player_MediaOpened(object s, RoutedEventArgs e)
     {
@@ -636,9 +696,12 @@ public partial class ColorGradeWindow : Window
         {
             _sourceWidth = Player.NaturalVideoWidth;
             _sourceHeight = Player.NaturalVideoHeight;
-            HeaderResolution.Text = $"{_sourceWidth}x{_sourceHeight}";
+            int displayW = (_videoRotation == 90 || _videoRotation == 270) ? _sourceHeight : _sourceWidth;
+            int displayH = (_videoRotation == 90 || _videoRotation == 270) ? _sourceWidth : _sourceHeight;
+            HeaderResolution.Text = $"{displayW}x{displayH}";
         }
 
+        ApplyPlayerDimensionsAndRotation();
         UpdateLivePreview();
     }
 
