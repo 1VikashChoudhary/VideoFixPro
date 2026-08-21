@@ -654,7 +654,7 @@
                     <!-- Open Folder (Column 7) -->
                     <Button x:Name="OpenFolderBtn" Grid.Column="7" Content="Open Folder"
                             Style="{StaticResource GhostButton}" Padding="14,7" Margin="0,0,8,0"
-                            Visibility="Collapsed" Click="OpenFolder_Click" ToolTip="Open the output folder in Explorer"/>
+                            IsEnabled="False" Click="OpenFolder_Click" ToolTip="Open the output folder in Explorer"/>
 
                     <!-- Quick Save (Column 9) -->
                     <Button x:Name="QuickSaveBtn" Grid.Column="9" Content="Quick Save"

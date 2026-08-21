@@ -1,4 +1,4 @@
-﻿<Window x:Class="VideoFixPro.AudioVisualizerWindow"
+<Window x:Class="VideoFixPro.AudioVisualizerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
@@ -13,6 +13,7 @@
         DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
         Drop="Window_Drop"
+        KeyDown="Window_KeyDown"
         Icon="Assets/app_icon.png">
 
     <Window.TaskbarItemInfo>
@@ -91,8 +92,15 @@
                             
                             <!-- Input Audio -->
                             <TextBlock Text="Input Audio File" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
-                            <TextBox x:Name="InputAudioBox" IsReadOnly="True" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
-                                     BorderBrush="{DynamicResource BorderBrush}" Margin="0,4,0,10" Padding="8,5"/>
+                            <Grid Margin="0,4,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="InputAudioBox" IsReadOnly="True" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}" Padding="8,5"/>
+                                <Button Grid.Column="1" Content="Browse Audio" Style="{StaticResource GhostButton}" Padding="10,4" Margin="6,0,0,0" Click="BrowseAudio_Click"/>
+                            </Grid>
 
                             <!-- Background Image -->
                             <TextBlock Text="Background Image (Optional)" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
@@ -147,6 +155,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="8"/>
@@ -158,10 +167,12 @@
                          Text="Same as source audio folder" Foreground="{DynamicResource Text2Brush}" Background="{DynamicResource CardBrush}"/>
                 <Button Grid.Column="2" Content="Browse" Style="{StaticResource GhostButton}" Padding="10,5" Click="BrowseOutput_Click"/>
                 <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Padding="10,5" Margin="4,0,0,0" Click="ResetOutput_Click"/>
+                <Button x:Name="OpenFolderBtn" Grid.Column="4" Content="Open Folder" Style="{StaticResource GhostButton}"
+                        Padding="10,5" Margin="4,0,0,0" IsEnabled="False" Click="OpenFolder_Click" ToolTip="Open output folder in Explorer"/>
 
-                <Button x:Name="GenerateBtn" Grid.Column="5" Content="⚡ Generate Video" Style="{StaticResource PrimaryButton}"
+                <Button x:Name="GenerateBtn" Grid.Column="6" Content="⚡ Generate Video" Style="{StaticResource PrimaryButton}"
                         Padding="18,7" IsEnabled="False" Click="Generate_Click"/>
-                <Button x:Name="CancelBtn" Grid.Column="7" Content="Cancel" Style="{StaticResource DangerButton}"
+                <Button x:Name="CancelBtn" Grid.Column="8" Content="Cancel" Style="{StaticResource DangerButton}"
                         Padding="14,7" IsEnabled="False" Click="Cancel_Click"/>
             </Grid>
         </Border>

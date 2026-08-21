@@ -56,7 +56,7 @@ public class TrimSegment : INotifyPropertyChanged
     // ── Formatting helper ─────────────────────────────────────────
     public static string FormatTime(double totalSeconds)
     {
-        if (totalSeconds < 0) totalSeconds = 0;
+        if (double.IsNaN(totalSeconds) || double.IsInfinity(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
         var ts = TimeSpan.FromSeconds(totalSeconds);
         return ts.TotalHours >= 1
             ? $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}.{ts.Milliseconds / 100}"

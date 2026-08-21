@@ -225,6 +225,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="8"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
@@ -241,11 +243,11 @@
                 </Grid>
 
                 <CheckBox x:Name="Av1Check" Grid.Column="7" Content="AV1 Codec" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" Margin="0,0,10,0" Checked="Av1Check_Changed" Unchecked="Av1Check_Changed"/>
-                        <Button x:Name="CancelBtn" Grid.Column="9" Content="Cancel" Style="{StaticResource DangerButton}"
+                <Button x:Name="CancelBtn" Grid.Column="9" Content="Cancel" Style="{StaticResource DangerButton}"
                         Padding="16,7" Visibility="Collapsed" Click="Cancel_Click"/>
                 <Button x:Name="OpenFolderBtn" Grid.Column="11" Content="Open Folder" Style="{StaticResource GhostButton}"
-                        Padding="12,7" IsEnabled="False" Click="OpenFolder_Click"/>
-                <Button x:Name="MergeBtn" Grid.Column="11" Content="🎬 Merge Video Clips" Style="{StaticResource PrimaryButton}"
+                        Padding="12,7" IsEnabled="False" Click="OpenFolder_Click" ToolTip="Open output folder in Explorer"/>
+                <Button x:Name="MergeBtn" Grid.Column="13" Content="🎬 Merge Video Clips" Style="{StaticResource PrimaryButton}"
                         Padding="24,7" FontWeight="Bold" Click="Merge_Click"/>
             </Grid>
         </Border>

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace VideoFixPro
         private string? _bgImagePath;
         private string? _outputPath;
         private string? _customOutputDir;
+        private string? _lastOutputFolder;
         private double _durationSeconds;
         private CancellationTokenSource? _cts;
         private Process? _ffmpegProcess;
@@ -62,6 +64,15 @@ namespace VideoFixPro
         private void MaxBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();
 
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.O && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                BrowseAudio_Click(sender, e);
+            }
+        }
+
         private void Window_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effects = DragDropEffects.Copy;
@@ -95,7 +106,19 @@ namespace VideoFixPro
 
         private void DropZone_Click(object sender, MouseButtonEventArgs e)
         {
-            if (_isProcessing) return;
+            BrowseAudio_Click(sender, e);
+        }
+
+        private void BrowseAudio_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isProcessing)
+            {
+                var res = MessageBox.Show("Generating visualizer is in progress. Cancel current render and load a new audio file?",
+                                          "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+                _cts?.Cancel();
+            }
+
             var ofd = new OpenFileDialog
             {
                 Title = "Select Audio File",
@@ -106,10 +129,14 @@ namespace VideoFixPro
 
         private void LoadAudio(string path)
         {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+
             _audioPath = path;
             InputAudioBox.Text = path;
             TitleFileName.Text = Path.GetFileName(path);
             UpdateOutputPath();
+            ProgressBar.Value = 0;
+            ProgressPercentText.Text = "0%";
 
             Task.Run(() => {
                 try {
@@ -122,16 +149,52 @@ namespace VideoFixPro
                     };
                     var proc = Process.Start(psi);
                     if (proc != null) {
-                        string outStr = proc.StandardOutput.ReadToEnd();
-                        proc.WaitForExit();
-                        if (double.TryParse(outStr.Trim(), out double d)) _durationSeconds = d;
+                        ProcessGuard.Watch(proc);
+                        try
+                        {
+                            string outStr = proc.StandardOutput.ReadToEnd();
+                            proc.WaitForExit();
+                            if (double.TryParse(outStr.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double d)) _durationSeconds = d;
+                        }
+                        finally
+                        {
+                            ProcessGuard.Unwatch(proc);
+                        }
                     }
                 } catch { }
             });
 
             GenerateBtn.IsEnabled = true;
+            OpenFolderBtn.IsEnabled = true;
             SetStatus($"Loaded audio: {Path.GetFileName(path)}", "#3FB950");
             Log($"Loaded audio: {Path.GetFileName(path)}");
+        }
+
+        private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? target = null;
+                if (!string.IsNullOrEmpty(_lastOutputFolder) && Directory.Exists(_lastOutputFolder))
+                    target = _lastOutputFolder;
+                else if (!string.IsNullOrEmpty(_customOutputDir) && Directory.Exists(_customOutputDir))
+                    target = _customOutputDir;
+                else if (!string.IsNullOrEmpty(_audioPath) && File.Exists(_audioPath))
+                    target = Path.GetDirectoryName(_audioPath);
+
+                if (!string.IsNullOrEmpty(target) && Directory.Exists(target))
+                {
+                    Process.Start("explorer.exe", target);
+                }
+                else
+                {
+                    MessageBox.Show("Output folder not found or no audio loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SetBackgroundImage(string path)
@@ -233,7 +296,7 @@ namespace VideoFixPro
                 else
                 {
                     inputs = $"-loop 1 -framerate 30 -i \"{_bgImagePath}\" -i \"{_audioPath}\"";
-                    filterGraph = $"[1:a]{visFilter}[wave];[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];[bg][wave]overlay=format=auto:shortest=1[v]";
+                    filterGraph = $"[1:a]{visFilter},format=yuva420p,colorkey=black:0.1:0.1[wave];[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];[bg][wave]overlay=format=auto:shortest=1[v]";
                 }
 
                 string audioMap = string.IsNullOrWhiteSpace(_bgImagePath) ? "-map 0:a" : "-map 1:a";
@@ -248,7 +311,7 @@ namespace VideoFixPro
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardError = true,
-                    RedirectStandardOutput = true
+                    RedirectStandardOutput = false
                 };
                 if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
                 
@@ -294,6 +357,8 @@ namespace VideoFixPro
 
                     if (ok && !_cts.Token.IsCancellationRequested)
                     {
+                        _lastOutputFolder = Path.GetDirectoryName(_outputPath);
+                        OpenFolderBtn.IsEnabled = true;
                         ProgressBar.Value = 100;
                         ProgressPercentText.Text = "100%";
                         SetStatus("Visualizer video created successfully!", "#3FB950");
@@ -312,6 +377,7 @@ namespace VideoFixPro
                 _isProcessing = false;
                 GenerateBtn.IsEnabled = true;
                 CancelBtn.IsEnabled = false;
+                OpenFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_audioPath) || !string.IsNullOrEmpty(_customOutputDir);
                 if (_cts?.Token.IsCancellationRequested == true)
                 {
                     Log("Cancelled by user.");

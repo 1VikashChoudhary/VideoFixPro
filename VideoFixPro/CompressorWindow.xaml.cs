@@ -262,6 +262,7 @@ public partial class CompressorWindow : Window
 
         await ProbeVideoAsync(path);
         RecalculateBitrates();
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = true;
         SetStatus($"Loaded: {Path.GetFileName(path)} ({origMb:F1} MB)", "#3FB950");
     }
 
@@ -516,11 +517,20 @@ public partial class CompressorWindow : Window
     }
     private void OpenFolder_Click(object s, RoutedEventArgs e)
     {
-        string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
-                     !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
-                     Path.GetDirectoryName(_filePath) ?? "";
-        if (Directory.Exists(dir))
-            Process.Start(new ProcessStartInfo { FileName = dir, UseShellExecute = true });
+        try
+        {
+            string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
+                         !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
+                         Path.GetDirectoryName(_filePath) ?? "";
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                Process.Start("explorer.exe", dir);
+            else
+                MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ToggleLog_Click(object s, RoutedEventArgs e)
@@ -749,7 +759,6 @@ public partial class CompressorWindow : Window
         {
             ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
-            proc.Dispose();
         };
 
         try
@@ -763,6 +772,10 @@ public partial class CompressorWindow : Window
             }
         }
         catch { return false; }
+        finally
+        {
+            ProcessGuard.Unwatch(proc);
+        }
     }
 
     private void SetRenderingUI(bool rendering)
@@ -770,7 +783,7 @@ public partial class CompressorWindow : Window
         if (RenderProgressPanel != null) RenderProgressPanel.Visibility = rendering ? Visibility.Visible : Visibility.Collapsed;
         if (CancelBtn != null) CancelBtn.Visibility = rendering ? Visibility.Visible : Visibility.Collapsed;
         if (CompressBtn != null) CompressBtn.IsEnabled = !rendering;
-        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = !rendering && !string.IsNullOrEmpty(_lastOutputFolder);
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = !rendering && (!string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_filePath) || !string.IsNullOrEmpty(_customOutputFolder));
 
         if (TaskbarProgress != null)
             TaskbarProgress.ProgressState = rendering ? TaskbarItemProgressState.Normal : TaskbarItemProgressState.None;

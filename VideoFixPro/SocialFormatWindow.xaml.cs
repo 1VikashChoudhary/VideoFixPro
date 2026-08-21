@@ -27,6 +27,7 @@ namespace VideoFixPro
         private int _sourceWidth;
         private int _sourceHeight;
         private string? _customOutputDir;
+        private string? _lastOutputFolder;
         private bool _isRendering;
         private CancellationTokenSource? _cts;
         private Process? _ffmpegProcess;
@@ -170,6 +171,12 @@ namespace VideoFixPro
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.O && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                OpenVideo_Click(sender, e);
+                return;
+            }
             if (e.Key == Key.Space && !IsKeyboardFocusedOnInput())
             {
                 e.Handled = true;
@@ -217,10 +224,25 @@ namespace VideoFixPro
 
         private async void DropZone_Click(object sender, MouseButtonEventArgs e)
         {
+            OpenVideo_Click(sender, e);
+        }
+
+        private async void OpenVideo_Click(object sender, RoutedEventArgs e)
+        {
             try
             {
+                if (_isRendering)
+                {
+                    var res = MessageBox.Show("Rendering is currently in progress. Cancel current render and load a new video?",
+                                              "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (res != MessageBoxResult.Yes) return;
+                    _cts?.Cancel();
+                    try { _ffmpegProcess?.Kill(); } catch { }
+                }
+
                 var dlg = new Microsoft.Win32.OpenFileDialog
                 {
+                    Title = "Select Video to Format & Resize",
                     Filter = "Video Files|*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.webm;*.ts;*.m4v|All Files|*.*"
                 };
                 if (dlg.ShowDialog() == true)
@@ -236,11 +258,48 @@ namespace VideoFixPro
 
         private async Task LoadFileAsync(string path)
         {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+
+            if (_isRendering)
+            {
+                var res = MessageBox.Show("Rendering is currently in progress. Cancel current render and load new video?",
+                                          "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+                _cts?.Cancel();
+                try { _ffmpegProcess?.Kill(); } catch { }
+            }
+
+            // Stop and release previous playback cleanly
+            try
+            {
+                Player.Stop();
+                BgPlayer.Stop();
+                _playheadTimer.Stop();
+                Player.Source = null;
+                BgPlayer.Source = null;
+            }
+            catch { }
+
             _filePath = path;
             TitleFileName.Text = Path.GetFileName(path);
+            HeaderFileName.Text = Path.GetFileName(path);
+            HeaderDuration.Text = "00:00:00";
+            HeaderResolution.Text = "Detecting...";
+            HeaderRatio.Text = "Detecting...";
+            FileHeader.Visibility = Visibility.Visible;
             DropZone.Visibility = Visibility.Collapsed;
             PreviewHost.Visibility = Visibility.Visible;
             SeekPanel.Visibility = Visibility.Visible;
+            ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressPercentText.Visibility = Visibility.Collapsed;
+            _customOutputDir = null;
+            OutputDirBox.Text = "Same as source file";
+            SeekSlider.Value = 0;
+            SeekTimeText.Text = "00:00:00 / 00:00:00";
+            SeekPlayBtn.Content = "⏸";
+            PlayOverlayBtn.Visibility = Visibility.Collapsed;
+            _isPlayerPlaying = true;
+            _durationSeconds = 0;
 
             var uri = new Uri(path);
             Player.Source = uri;
@@ -251,14 +310,51 @@ namespace VideoFixPro
             // Start loading & decoding
             Player.Play();
             BgPlayer.Play();
-            _isPlayerPlaying = true;
+            _playheadTimer.Start();
 
             StartBtn.IsEnabled = true;
+            OpenFolderBtn.IsEnabled = true;
 
             await ProbeVideoAsync(path);
+            HeaderDuration.Text = FormatTime(_durationSeconds);
+            HeaderResolution.Text = _sourceWidth > 0 ? $"{_sourceWidth}x{_sourceHeight}" : "1920x1080";
+            HeaderRatio.Text = _sourceWidth > 0 ? $"{_sourceWidth}:{_sourceHeight}" : "Video";
             UpdateCanvasLayout();
             UpdateBackgroundMode();
             SetStatus($"Loaded: {Path.GetFileName(path)}", "#3FB950");
+        }
+
+        private void RemoveFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isRendering)
+            {
+                var res = MessageBox.Show("Rendering is in progress. Stop and remove video?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+                _cts?.Cancel();
+                try { _ffmpegProcess?.Kill(); } catch { }
+            }
+
+            try
+            {
+                Player.Stop();
+                BgPlayer.Stop();
+                _playheadTimer.Stop();
+                Player.Source = null;
+                BgPlayer.Source = null;
+            }
+            catch { }
+
+            _filePath = null;
+            TitleFileName.Text = "No file loaded";
+            FileHeader.Visibility = Visibility.Collapsed;
+            PreviewHost.Visibility = Visibility.Collapsed;
+            SeekPanel.Visibility = Visibility.Collapsed;
+            DropZone.Visibility = Visibility.Visible;
+            StartBtn.IsEnabled = false;
+            OpenFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder);
+            ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressPercentText.Visibility = Visibility.Collapsed;
+            SetStatus("Ready — Drag & drop a video file to convert", "#3FB950");
         }
 
         private async Task ProbeVideoAsync(string path)
@@ -659,12 +755,13 @@ namespace VideoFixPro
                     if (bgDownH % 2 != 0) bgDownH++;
 
                     int blurRadius = Math.Clamp(blurVal / 3, 2, 16);
-                    filter = $"[0:v]split=2[bg_in][fg_in]; [bg_in]scale={bgDownW}:{bgDownH}:force_original_aspect_ratio=increase,crop={bgDownW}:{bgDownH},boxblur={blurRadius}:1,scale={outW}:{outH}:flags=bicubic[bg_blurred]; [fg_in]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; [bg_blurred][fg_scaled]overlay=(W-w)/2:(H-h)/2[outv]";
+                    filter = $"[0:v]split=2[bg_in][fg_in]; [bg_in]scale={bgDownW}:{bgDownH}:force_original_aspect_ratio=increase,crop={bgDownW}:{bgDownH},boxblur={blurRadius}:1,scale={outW}:{outH}:flags=bicubic[bg_blurred]; [fg_in]scale={outW}:{outH}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[fg_scaled]; [bg_blurred][fg_scaled]overlay=(W-w)/2:(H-h)/2[outv]";
                 }
                 else // Solid Color Background
                 {
                     string color = BgModeBox.SelectedIndex == 1 ? "black" : "white";
-                    filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease[fg_scaled]; color=c={color}:s={outW}x{outH}:d={_durationSeconds.ToString(CultureInfo.InvariantCulture)}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]";
+                    double safeDur = _durationSeconds > 0 ? _durationSeconds : 1.0;
+                    filter = $"[0:v]scale={outW}:{outH}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[fg_scaled]; color=c={color}:s={outW}x{outH}:d={safeDur.ToString(CultureInfo.InvariantCulture)}[bg]; [bg][fg_scaled]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]";
                 }
 
                 // Codec Options & GPU Hardware Acceleration
@@ -713,6 +810,7 @@ namespace VideoFixPro
                 }
                 else if (success && File.Exists(outputPath))
                 {
+                    _lastOutputFolder = Path.GetDirectoryName(outputPath);
                     var fi = new FileInfo(outputPath);
                     SetRenderProgress(100);
                     SetStatus($"Done! Output: {fi.Length / (1024.0 * 1024.0):F1} MB", "#3FB950");
@@ -723,12 +821,45 @@ namespace VideoFixPro
                     SetStatus("Formatting failed", "#F85149");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                _isRendering = false;
+                SetRenderingUI(false);
+                SetStatus("Cancelled", "#D29922");
+            }
             catch (Exception ex)
             {
                 _isRendering = false;
                 SetRenderingUI(false);
                 SetStatus("Error occurred", "#F85149");
                 MessageBox.Show("An error occurred during formatting: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? target = null;
+                if (!string.IsNullOrEmpty(_lastOutputFolder) && Directory.Exists(_lastOutputFolder))
+                    target = _lastOutputFolder;
+                else if (!string.IsNullOrEmpty(_customOutputDir) && Directory.Exists(_customOutputDir))
+                    target = _customOutputDir;
+                else if (!string.IsNullOrEmpty(_filePath) && File.Exists(_filePath))
+                    target = Path.GetDirectoryName(_filePath);
+
+                if (!string.IsNullOrEmpty(target) && Directory.Exists(target))
+                {
+                    Process.Start("explorer.exe", target);
+                }
+                else
+                {
+                    MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -795,7 +926,7 @@ namespace VideoFixPro
             using var reg = token.Register(() =>
             {
                 try { if (!proc.HasExited) proc.Kill(); } catch { }
-                tcs.TrySetCanceled();
+                tcs.TrySetResult(false);
             });
 
             try
@@ -828,13 +959,21 @@ namespace VideoFixPro
         private void SetStatus(string message, string hexColor)
         {
             StatusText.Text = message;
-            StatusDot.Fill = (SolidColorBrush)new BrushConverter().ConvertFrom(hexColor);
+            try
+            {
+                StatusDot.Fill = (Brush?)new BrushConverter().ConvertFromString(hexColor) ?? Brushes.Gray;
+            }
+            catch
+            {
+                StatusDot.Fill = Brushes.Gray;
+            }
         }
 
         private void SetRenderingUI(bool rendering)
         {
             StartBtn.IsEnabled = !rendering;
             CancelBtn.IsEnabled = rendering;
+            OpenFolderBtn.IsEnabled = !rendering && (!string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_filePath) || !string.IsNullOrEmpty(_customOutputDir));
             RatioBox.IsEnabled = !rendering;
             BgModeBox.IsEnabled = !rendering;
             BlurSlider.IsEnabled = !rendering;

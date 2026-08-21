@@ -818,7 +818,7 @@ public partial class AudioMuxerWindow : Window
         SetStatus("Stopping...", "#D29922");
     }
 
-    private void WorkerQueue(CancellationToken ct)
+    private async Task WorkerQueue(CancellationToken ct)
     {
         while (true)
         {
@@ -842,7 +842,7 @@ public partial class AudioMuxerWindow : Window
                     job.ErrorText = string.Empty;
                     JobGrid.Items.Refresh();
                 });
-                RunSingleJob(job, ct);
+                await RunSingleJob(job, ct);
                 if (!_stopRequested)
                 {
                     _lastQueueSuccessCount++;
@@ -898,7 +898,7 @@ public partial class AudioMuxerWindow : Window
         });
     }
 
-    private void RunSingleJob(AudioMuxJob job, CancellationToken ct)
+    private async Task RunSingleJob(AudioMuxJob job, CancellationToken ct)
     {
         var duration = ProbeDuration(job.InputPath);
         var originalAudioCount = ProbeAudioStreamCount(job.InputPath);
@@ -919,7 +919,7 @@ public partial class AudioMuxerWindow : Window
         }
 
         var (command, hardwareActive) = BuildFfmpegCommand(job.InputPath, job.OutputPath, job.AudioTracks, originalAudioCount ?? 0, job.Options, suggested, false);
-        var result = RunFfmpegProcess(command, duration, ct);
+        var result = await RunFfmpegProcess(command, duration, ct);
 
         if (ct.IsCancellationRequested)
         {
@@ -930,7 +930,7 @@ public partial class AudioMuxerWindow : Window
         {
             AppendLog("\nSelected hardware encoder failed. Retrying automatically with software encoding.\n");
             var (fallbackCommand, _) = BuildFfmpegCommand(job.InputPath, job.OutputPath, job.AudioTracks, originalAudioCount ?? 0, job.Options, suggested, true);
-            result = RunFfmpegProcess(fallbackCommand, duration, ct);
+            result = await RunFfmpegProcess(fallbackCommand, duration, ct);
         }
 
         if (!result.Success)
@@ -1083,7 +1083,7 @@ public partial class AudioMuxerWindow : Window
     private void OpenOutputFolder_Click(object sender, RoutedEventArgs e)
     {
         var folder = _lastOutputFolder;
-        if (SelectedJob != null)
+        if (SelectedJob != null && !string.IsNullOrWhiteSpace(SelectedJob.OutputPath))
         {
             folder = Path.GetDirectoryName(SelectedJob.OutputPath);
         }
@@ -1093,9 +1093,18 @@ public partial class AudioMuxerWindow : Window
             folder = Path.GetDirectoryName(_outputPath);
         }
 
+        if (string.IsNullOrWhiteSpace(folder) && !string.IsNullOrWhiteSpace(_videoPath))
+        {
+            folder = Path.GetDirectoryName(_videoPath);
+        }
+
         if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
         {
             Process.Start("explorer.exe", folder);
+        }
+        else
+        {
+            MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -1215,7 +1224,7 @@ public partial class AudioMuxerWindow : Window
         return (cmd, hardwareActive);
     }
 
-    private (bool Success, int ExitCode) RunFfmpegProcess(List<string> command, double? duration, CancellationToken ct)
+    private async Task<(bool Success, int ExitCode)> RunFfmpegProcess(List<string> command, double? duration, CancellationToken ct)
     {
         AppendLog("\nRunning FFmpeg:\n" + string.Join(" ", command.Select(QuoteArg)) + "\n\n");
 
@@ -1242,28 +1251,46 @@ public partial class AudioMuxerWindow : Window
         ProcessGuard.Watch(proc);
         _activeProcess = proc;
 
-        var readError = Task.Run(async () =>
+        using var cancelReg = ct.Register(() =>
         {
-            while (!proc.StandardError.EndOfStream)
+            try { proc.Kill(); } catch { }
+        });
+
+        try
+        {
+            var readError = Task.Run(async () =>
             {
-                var line = await proc.StandardError.ReadLineAsync();
-                if (line == null) break;
-                HandleFfmpegLogLine(line, duration);
-            }
-        }, ct);
+                while (!proc.StandardError.EndOfStream && !ct.IsCancellationRequested)
+                {
+                    var line = await proc.StandardError.ReadLineAsync();
+                    if (line == null) break;
+                    HandleFfmpegLogLine(line, duration);
+                }
+            }, ct);
 
-        while (!proc.StandardOutput.EndOfStream)
-        {
-            ct.ThrowIfCancellationRequested();
-            var line = proc.StandardOutput.ReadLine();
-            if (line == null) break;
-            HandleFfmpegLogLine(line, duration);
+            var readOut = Task.Run(async () =>
+            {
+                while (!proc.StandardOutput.EndOfStream && !ct.IsCancellationRequested)
+                {
+                    var line = await proc.StandardOutput.ReadLineAsync();
+                    if (line == null) break;
+                    HandleFfmpegLogLine(line, duration);
+                }
+            }, ct);
+
+            await Task.WhenAll(readError, readOut);
+            await proc.WaitForExitAsync(ct);
+            return (proc.ExitCode == 0, proc.ExitCode);
         }
-
-        readError.Wait(ct);
-        proc.WaitForExit();
-        _activeProcess = null;
-        return (proc.ExitCode == 0, proc.ExitCode);
+        catch (OperationCanceledException)
+        {
+            return (false, -1);
+        }
+        finally
+        {
+            ProcessGuard.Unwatch(proc);
+            _activeProcess = null;
+        }
     }
 
     private static string QuoteArg(string arg) => arg.Contains(' ') ? $"\"{arg}\"" : arg;

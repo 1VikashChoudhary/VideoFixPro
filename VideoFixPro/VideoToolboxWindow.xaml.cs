@@ -340,6 +340,7 @@ public partial class VideoToolboxWindow : Window
 
         ApplyLivePreview();
         UpdateAllButtonStyles();
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = true;
         SetStatus("Ready", "#3FB950");
     }
 
@@ -1782,9 +1783,18 @@ public partial class VideoToolboxWindow : Window
 
     private void OpenFolder_Click(object s, RoutedEventArgs e)
     {
-        var folder = string.IsNullOrEmpty(_lastOutputFolder) ? GetDefaultOutputDir() : _lastOutputFolder;
-        if (Directory.Exists(folder))
-            Process.Start("explorer.exe", folder);
+        try
+        {
+            var folder = string.IsNullOrEmpty(_lastOutputFolder) ? GetDefaultOutputDir() : _lastOutputFolder;
+            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+                Process.Start("explorer.exe", folder);
+            else
+                MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private string GetDefaultOutputDir() =>
@@ -1810,78 +1820,84 @@ public partial class VideoToolboxWindow : Window
         ProcessGuard.Watch(proc);
         _ffmpegProcess = proc;
 
-        // Capture stderr for log & telemetry
-        var stderrTask = Task.Run(async () =>
+        try
         {
-            string? line;
-            while ((line = await proc.StandardError.ReadLineAsync()) != null)
+            // Capture stderr for log & telemetry
+            var stderrTask = Task.Run(async () =>
             {
-                if (Dispatcher.HasShutdownStarted) break;
-                string currentLine = line;
-                _ = Dispatcher.BeginInvoke(() =>
+                string? line;
+                while ((line = await proc.StandardError.ReadLineAsync()) != null)
                 {
-                    Log($"  {currentLine}");
-                    UpdateTelemetryFromStderr(currentLine);
-                });
-            }
-        });
-
-        // Parse progress from stdout (-progress pipe:1)
-        await Task.Run(async () =>
-        {
-            string? line;
-            while ((line = await proc.StandardOutput.ReadLineAsync()) != null)
-            {
-                if (ct.IsCancellationRequested || Dispatcher.HasShutdownStarted) break;
-
-                if (line.StartsWith("out_time_us=") &&
-                    long.TryParse(line[12..], out long us) && totalDuration > 0)
-                {
-                    double currentSec = us / 1_000_000.0;
-                    double pct = Math.Min(currentSec / totalDuration * 100, 99.9);
-                    Dispatcher.Invoke(() => SetRenderProgress(pct));
-                }
-                else if (line.StartsWith("out_time_ms=") &&
-                    long.TryParse(line[12..], out long ms) && totalDuration > 0)
-                {
-                    double currentSec = ms / 1_000_000.0;
-                    double pct = Math.Min(currentSec / totalDuration * 100, 99.9);
-                    Dispatcher.Invoke(() => SetRenderProgress(pct));
-                }
-                else if (line.StartsWith("out_time=") && totalDuration > 0)
-                {
-                    string timeStr = line[9..].Trim();
-                    if (TimeSpan.TryParse(timeStr, out var ts))
+                    if (Dispatcher.HasShutdownStarted) break;
+                    string currentLine = line;
+                    _ = Dispatcher.BeginInvoke(() =>
                     {
-                        double pct = Math.Min(ts.TotalSeconds / totalDuration * 100, 99.9);
-                        Dispatcher.Invoke(() => SetRenderProgress(pct));
-                    }
-                }
-                else if (line.StartsWith("speed="))
-                {
-                    string speed = line[6..].Trim();
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (RenderTelemetryText != null)
-                            RenderTelemetryText.Text = $"⚡ {speed}";
+                        Log($"  {currentLine}");
+                        UpdateTelemetryFromStderr(currentLine);
                     });
                 }
+            });
+
+            // Parse progress from stdout (-progress pipe:1)
+            await Task.Run(async () =>
+            {
+                string? line;
+                while ((line = await proc.StandardOutput.ReadLineAsync()) != null)
+                {
+                    if (ct.IsCancellationRequested || Dispatcher.HasShutdownStarted) break;
+
+                    if (line.StartsWith("out_time_us=") &&
+                        long.TryParse(line[12..], out long us) && totalDuration > 0)
+                    {
+                        double currentSec = us / 1_000_000.0;
+                        double pct = Math.Min(currentSec / totalDuration * 100, 99.9);
+                        Dispatcher.Invoke(() => SetRenderProgress(pct));
+                    }
+                    else if (line.StartsWith("out_time_ms=") &&
+                        long.TryParse(line[12..], out long ms) && totalDuration > 0)
+                    {
+                        double currentSec = ms / 1_000_000.0;
+                        double pct = Math.Min(currentSec / totalDuration * 100, 99.9);
+                        Dispatcher.Invoke(() => SetRenderProgress(pct));
+                    }
+                    else if (line.StartsWith("out_time=") && totalDuration > 0)
+                    {
+                        string timeStr = line[9..].Trim();
+                        if (TimeSpan.TryParse(timeStr, out var ts))
+                        {
+                            double pct = Math.Min(ts.TotalSeconds / totalDuration * 100, 99.9);
+                            Dispatcher.Invoke(() => SetRenderProgress(pct));
+                        }
+                    }
+                    else if (line.StartsWith("speed="))
+                    {
+                        string speed = line[6..].Trim();
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (RenderTelemetryText != null)
+                                RenderTelemetryText.Text = $"⚡ {speed}";
+                        });
+                    }
+                }
+            }, ct);
+
+            if (ct.IsCancellationRequested)
+            {
+                try { proc.Kill(); } catch { }
+                return false;
             }
-        }, ct);
 
-        if (ct.IsCancellationRequested)
-        {
-            try { proc.Kill(); } catch { }
-            _ffmpegProcess = null;
-            return false;
+            try { await proc.WaitForExitAsync(ct); }
+            catch (OperationCanceledException) { }
+
+            await stderrTask;
+            return proc.ExitCode == 0;
         }
-
-        try { await proc.WaitForExitAsync(ct); }
-        catch (OperationCanceledException) { }
-
-        await stderrTask;
-        _ffmpegProcess = null;
-        return proc.ExitCode == 0;
+        finally
+        {
+            ProcessGuard.Unwatch(proc);
+            _ffmpegProcess = null;
+        }
     }
 
     private void UpdateTelemetryFromStderr(string line)
@@ -1940,8 +1956,7 @@ public partial class VideoToolboxWindow : Window
                 if (!running) TaskbarProgress.ProgressValue = 0;
             }
             if (OpenFolderBtn != null)
-                OpenFolderBtn.Visibility = !running && !string.IsNullOrEmpty(_lastOutputFolder)
-                    ? Visibility.Visible : Visibility.Collapsed;
+                OpenFolderBtn.IsEnabled = !running && (!string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_filePath) || !string.IsNullOrEmpty(_customOutputFolder));
             if (!running && RenderProgressBar != null && RenderProgressText != null && RenderTelemetryText != null)
             {
                 RenderProgressBar.Value = 0;

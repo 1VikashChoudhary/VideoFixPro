@@ -316,6 +316,7 @@ public partial class VideoMergerWindow : Window
         double totalSec = _clips.Sum(c => c.Duration);
         if (TitleClipCount != null) TitleClipCount.Text = $"{_clips.Count} clips in playlist";
         if (TotalDurationBadge != null) TotalDurationBadge.Text = $"Total: {TimeSpan.FromSeconds(totalSec):hh\\:mm\\:ss}";
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder) || _clips.Count > 0 || !string.IsNullOrEmpty(_customOutputFolder);
     }
 
     private void CheckMergeStrategy()
@@ -493,11 +494,20 @@ public partial class VideoMergerWindow : Window
     }
     private void OpenFolder_Click(object s, RoutedEventArgs e)
     {
-        string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
-                     !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
-                     _clips.Count > 0 ? Path.GetDirectoryName(_clips[0].FilePath) ?? "" : "";
-        if (Directory.Exists(dir))
-            Process.Start(new ProcessStartInfo { FileName = dir, UseShellExecute = true });
+        try
+        {
+            string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
+                         !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
+                         _clips.Count > 0 ? Path.GetDirectoryName(_clips[0].FilePath) ?? "" : "";
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                Process.Start("explorer.exe", dir);
+            else
+                MessageBox.Show("Output folder not found or no video clips added yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     // ── Merge Execution ───────────────────────────────────────────────────────
@@ -727,7 +737,6 @@ public partial class VideoMergerWindow : Window
         {
             ProcessGuard.Unwatch(proc);
             tcs.TrySetResult(proc.ExitCode == 0);
-            proc.Dispose();
         };
 
         try
@@ -741,6 +750,10 @@ public partial class VideoMergerWindow : Window
             }
         }
         catch { return false; }
+        finally
+        {
+            ProcessGuard.Unwatch(proc);
+        }
     }
 
     private void SetRenderingUI(bool rendering)
@@ -748,7 +761,7 @@ public partial class VideoMergerWindow : Window
         if (RenderProgressPanel != null) RenderProgressPanel.Visibility = rendering ? Visibility.Visible : Visibility.Collapsed;
         if (CancelBtn != null) CancelBtn.Visibility = rendering ? Visibility.Visible : Visibility.Collapsed;
         if (MergeBtn != null) MergeBtn.IsEnabled = !rendering;
-        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = !rendering && !string.IsNullOrEmpty(_lastOutputFolder);
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = !rendering && (!string.IsNullOrEmpty(_lastOutputFolder) || _clips.Count > 0 || !string.IsNullOrEmpty(_customOutputFolder));
 
         if (TaskbarProgress != null)
             TaskbarProgress.ProgressState = rendering ? TaskbarItemProgressState.Normal : TaskbarItemProgressState.None;

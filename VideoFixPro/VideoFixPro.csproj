@@ -27,6 +27,7 @@
     </None>
     <Resource Include="Assets\app_icon.png" />
     <Resource Include="Assets\app_icon.ico" />
+    <Resource Include="ColorGradeEffect.ps" />
   </ItemGroup>
 
   <ItemGroup>

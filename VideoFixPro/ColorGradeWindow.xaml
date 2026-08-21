@@ -145,44 +145,24 @@
                 <!-- Video Player Container -->
                 <Border x:Name="PlayerBorder" Grid.Row="1" Margin="0,8,0,0"
                         Background="Black" CornerRadius="8" ClipToBounds="True"
-                        Visibility="Collapsed" SizeChanged="PlayerBorder_SizeChanged"
+                        Visibility="Collapsed"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <Grid>
-                        <!-- Media Player Element -->
-                        <MediaElement x:Name="Player"
-                                      LoadedBehavior="Manual"
-                                      UnloadedBehavior="Stop"
-                                      ScrubbingEnabled="True"
-                                      Volume="0.5"
-                                      Stretch="Uniform"
-                                      MediaOpened="Player_MediaOpened"
-                                      MediaEnded="Player_MediaEnded"/>
+                        <!-- GPU-Accelerated Color Graded Video Viewport -->
+                        <Grid x:Name="VideoViewport">
+                            <!-- Media Player Element -->
+                            <MediaElement x:Name="Player"
+                                          LoadedBehavior="Manual"
+                                          UnloadedBehavior="Stop"
+                                          ScrubbingEnabled="True"
+                                          Volume="0.5"
+                                          Stretch="Uniform"
+                                          MediaOpened="Player_MediaOpened"
+                                          MediaEnded="Player_MediaEnded"/>
 
-                        <!-- High-Fidelity Snapshot Image (Rendered with exact FFmpeg filters when paused or adjusting) -->
-                        <Image x:Name="GradedFramePreview" Stretch="Uniform" Visibility="Collapsed" IsHitTestVisible="False"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                        <!-- Real-Time Visual Overlay Compositor (Active during playback and live slider adjustments) -->
-                        <Grid x:Name="VisualEffectOverlay" IsHitTestVisible="False"
-                              HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <!-- Brightness Lift (White) -->
-                            <Rectangle x:Name="BrightnessWhiteOverlay" Fill="White" Opacity="0"/>
-                            <!-- Brightness Lower (Black) -->
-                            <Rectangle x:Name="BrightnessBlackOverlay" Fill="Black" Opacity="0"/>
-                            <!-- Warmth / Cool Color Tint Overlay -->
-                            <Rectangle x:Name="TemperatureOverlay" Fill="#FFA500" Opacity="0"/>
-                            <!-- Green / Magenta Tint Overlay -->
-                            <Rectangle x:Name="TintOverlay" Fill="#E024C3" Opacity="0"/>
-                            <!-- Vignette Radial Gradient Overlay -->
-                            <Rectangle x:Name="VignetteOverlay" Opacity="0">
-                                <Rectangle.Fill>
-                                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-                                        <GradientStop Color="#00000000" Offset="0.45"/>
-                                        <GradientStop Color="#B0000000" Offset="0.82"/>
-                                        <GradientStop Color="#F0000000" Offset="1.0"/>
-                                    </RadialGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
+                            <!-- High-Fidelity Snapshot Image (Active for 3D LUT preview and fine detail) -->
+                            <Image x:Name="GradedFramePreview" Stretch="Uniform" Visibility="Collapsed" IsHitTestVisible="False"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
 
                         <!-- Center Play/Pause Overlay Button -->
@@ -198,7 +178,7 @@
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12"
                                 Background="#E0161B22" CornerRadius="4" Padding="8,3"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="PreviewBadgeText" Text="✨ Live Preview (Real-Time)"
+                            <TextBlock x:Name="PreviewBadgeText" Text="✨ Real-Time GPU Color Grading"
                                        Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" FontFamily="Segoe UI"/>
                         </Border>
                     </Grid>
@@ -541,6 +521,8 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Output" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" FontSize="12"/>
                     <TextBlock x:Name="OutputPathText" Grid.Column="1" Text="Same as source file"
@@ -558,16 +540,18 @@
                                    VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed"/>
                     </Grid>
 
-                    <!-- Cancel / Open Folder (Column 7) -->
+                    <!-- Cancel (Column 7) -->
                     <Button x:Name="CancelBtn" Grid.Column="7" Content="Cancel"
                             Style="{StaticResource DangerButton}" Padding="16,7"
                             Visibility="Collapsed" Click="Cancel_Click"/>
-                    <Button x:Name="OpenFolderBtn" Grid.Column="7" Content="Open Folder"
+                    
+                    <!-- Open Folder (Column 9) -->
+                    <Button x:Name="OpenFolderBtn" Grid.Column="9" Content="Open Folder"
                             Style="{StaticResource GhostButton}" Padding="14,7"
-                            Visibility="Collapsed" Click="OpenFolder_Click"/>
+                            IsEnabled="False" Click="OpenFolder_Click" ToolTip="Open output folder in Explorer"/>
 
-                    <!-- Export Button (Column 9) -->
-                    <Button x:Name="ApplyGradeBtn" Grid.Column="9" Content="Export Graded Video 🎨"
+                    <!-- Export Button (Column 11) -->
+                    <Button x:Name="ApplyGradeBtn" Grid.Column="11" Content="Export Graded Video 🎨"
                             Style="{StaticResource PrimaryButton}" Padding="22,7" Click="ApplyGrade_Click"/>
                 </Grid>
             </Grid>

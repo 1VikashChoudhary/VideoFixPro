@@ -265,8 +265,9 @@ public partial class TrimWindow : Window
         UpdateSelectionDisplay();
         DrawTimeline();
 
-        TrimBtn.IsEnabled = true;
-        AddToQueueBtn.IsEnabled = true;
+        TrimBtn.IsEnabled         = true;
+        AddToQueueBtn.IsEnabled   = true;
+        OpenTrimFolderBtn.IsEnabled = true;
         SetTrimStatus($"Loaded — {TrimSegment.FormatTime(_durationSeconds)}  •  Press I/O to set trim points", "#3FB950");
 
         _playheadTimer.Start();
@@ -1074,6 +1075,10 @@ public partial class TrimWindow : Window
             "trim_concat_tmp");
         Directory.CreateDirectory(tmpDir);
 
+        var finalOut = BuildOutputPath(suffix: "_merged");
+        var tempExt = System.IO.Path.GetExtension(finalOut);
+        if (string.IsNullOrEmpty(tempExt)) tempExt = ".mp4";
+
         var tmpFiles   = new List<string>();
         string concatList = string.Empty;
         SetTrimStatus($"Trimming {jobs.Count} segments…", "#388BFD");
@@ -1082,7 +1087,7 @@ public partial class TrimWindow : Window
         {
             if (ct.IsCancellationRequested) goto cleanup;
             var seg  = jobs[i];
-            var tmp  = System.IO.Path.Combine(tmpDir, $"seg_{GetHashCode()}_{i:D3}.mkv");
+            var tmp  = System.IO.Path.Combine(tmpDir, $"seg_{GetHashCode()}_{i:D3}{tempExt}");
 
             bool ok = await RunTrimAsync(_filePath, tmp, seg.StartSeconds, seg.EndSeconds,
                 reEncode, seg.DurationSeconds, ct,
@@ -1113,7 +1118,6 @@ public partial class TrimWindow : Window
         File.WriteAllText(concatList, sb.ToString());
 
         // Step 3: concat
-        var finalOut = BuildOutputPath(suffix: "_merged");
         var concatBuilder = new StringBuilder();
         concatBuilder.Append($"-y -fflags +genpts -f concat -safe 0 -i \"{concatList}\" ");
         concatBuilder.Append("-c copy -map_metadata 0 -map_chapters 0 ");
@@ -1373,9 +1377,18 @@ public partial class TrimWindow : Window
 
     private void OpenTrimFolder_Click(object s, RoutedEventArgs e)
     {
-        var folder = string.IsNullOrEmpty(_lastOutputFolder) ? GetOutputDir() : _lastOutputFolder;
-        if (Directory.Exists(folder))
-            Process.Start("explorer.exe", folder);
+        try
+        {
+            var folder = string.IsNullOrEmpty(_lastOutputFolder) ? GetOutputDir() : _lastOutputFolder;
+            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+                Process.Start("explorer.exe", folder);
+            else
+                MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void Preview_Click(object s, RoutedEventArgs e)
@@ -1509,7 +1522,7 @@ public partial class TrimWindow : Window
             if (!running)
             {
                 TrimProgressBar.Value = 0;
-                OpenTrimFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder);
+                OpenTrimFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_filePath) || !string.IsNullOrEmpty(_customOutputFolder);
             }
         });
     }

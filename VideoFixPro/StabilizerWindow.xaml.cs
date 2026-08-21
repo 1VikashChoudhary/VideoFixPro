@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -20,6 +21,7 @@ namespace VideoFixPro
         private string? _videoPath;
         private string? _outputPath;
         private string? _customOutputDir;
+        private string? _lastOutputFolder;
         private double _durationSeconds;
         private CancellationTokenSource? _cts;
         private bool _isProcessing;
@@ -58,6 +60,15 @@ namespace VideoFixPro
         private void MaxBtn_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();
 
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.O && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                OpenVideo_Click(sender, e);
+            }
+        }
+
         private void Window_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effects = DragDropEffects.Copy;
@@ -80,7 +91,19 @@ namespace VideoFixPro
 
         private void DropZone_Click(object sender, MouseButtonEventArgs e)
         {
-            if (_isProcessing) return;
+            OpenVideo_Click(sender, e);
+        }
+
+        private void OpenVideo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isProcessing)
+            {
+                var res = MessageBox.Show("Stabilization is in progress. Cancel current job and load a new video?",
+                                          "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+                _cts?.Cancel();
+            }
+
             var ofd = new OpenFileDialog
             {
                 Title = "Select Video to Stabilize",
@@ -91,12 +114,27 @@ namespace VideoFixPro
 
         private void LoadFile(string path)
         {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+
+            try
+            {
+                Player.Stop();
+                Player.Source = null;
+            }
+            catch { }
+
             _videoPath = path;
             UpdateOutputPath();
             
             TitleFileName.Text = Path.GetFileName(path);
+            HeaderFileName.Text = Path.GetFileName(path);
+            HeaderDuration.Text = "00:00:00";
+            FileHeader.Visibility = Visibility.Visible;
             DropZone.Visibility = Visibility.Collapsed;
             PlayerBorder.Visibility = Visibility.Visible;
+            ProgressBar.Value = 0;
+            ProgressPercentText.Text = "0%";
+
             try
             {
                 Player.Source = new Uri(path);
@@ -116,16 +154,86 @@ namespace VideoFixPro
                     };
                     var proc = Process.Start(psi);
                     if (proc != null) {
-                        string outStr = proc.StandardOutput.ReadToEnd();
-                        proc.WaitForExit();
-                        if (double.TryParse(outStr.Trim(), out double d)) _durationSeconds = d;
+                        ProcessGuard.Watch(proc);
+                        try
+                        {
+                            string outStr = proc.StandardOutput.ReadToEnd();
+                            proc.WaitForExit();
+                            if (double.TryParse(outStr.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
+                            {
+                                _durationSeconds = d;
+                                var ts = TimeSpan.FromSeconds(d);
+                                string durStr = ts.Hours > 0 ? $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}" : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+                                Dispatcher.Invoke(() => HeaderDuration.Text = durStr);
+                            }
+                        }
+                        finally
+                        {
+                            ProcessGuard.Unwatch(proc);
+                        }
                     }
                 } catch { }
             });
 
             StartBtn.IsEnabled = true;
+            OpenFolderBtn.IsEnabled = true;
             SetStatus($"Loaded: {Path.GetFileName(path)}", "#3FB950");
             Log("Loaded: " + Path.GetFileName(path));
+        }
+
+        private void RemoveFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isProcessing)
+            {
+                var res = MessageBox.Show("Stabilization is in progress. Stop and remove video?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+                _cts?.Cancel();
+            }
+
+            try
+            {
+                Player.Stop();
+                Player.Source = null;
+            }
+            catch { }
+
+            _videoPath = null;
+            TitleFileName.Text = "No file loaded";
+            FileHeader.Visibility = Visibility.Collapsed;
+            PlayerBorder.Visibility = Visibility.Collapsed;
+            DropZone.Visibility = Visibility.Visible;
+            StartBtn.IsEnabled = false;
+            OpenFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder);
+            ProgressBar.Value = 0;
+            ProgressPercentText.Text = "0%";
+            SetStatus("Ready — Drag & drop a video file to stabilize", "#3FB950");
+        }
+
+        private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? target = null;
+                if (!string.IsNullOrEmpty(_lastOutputFolder) && Directory.Exists(_lastOutputFolder))
+                    target = _lastOutputFolder;
+                else if (!string.IsNullOrEmpty(_customOutputDir) && Directory.Exists(_customOutputDir))
+                    target = _customOutputDir;
+                else if (!string.IsNullOrEmpty(_videoPath) && File.Exists(_videoPath))
+                    target = Path.GetDirectoryName(_videoPath);
+
+                if (!string.IsNullOrEmpty(target) && Directory.Exists(target))
+                {
+                    Process.Start("explorer.exe", target);
+                }
+                else
+                {
+                    MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void UpdateOutputPath()
@@ -220,11 +328,13 @@ namespace VideoFixPro
                         }
                     }
 
-                    string pass2Args = $"-y -i \"{_videoPath}\" -vf vidstabtransform=input='{escapedTrf}':smoothing={smoothing}:zoom={zoomMode} {vCodecArgs} -c:a copy \"{_outputPath}\"";
+                    string pass2Args = $"-y -i \"{_videoPath}\" -vf vidstabtransform=input='{escapedTrf}':smoothing={smoothing}:zoom={zoomMode} {vCodecArgs} -c:a aac -b:a 192k \"{_outputPath}\"";
                     
                     bool p2 = await RunFFmpegAsync(pass2Args, _durationSeconds, _cts.Token, 2);
                     if (p2 && !_cts.Token.IsCancellationRequested)
                     {
+                        _lastOutputFolder = Path.GetDirectoryName(_outputPath);
+                        OpenFolderBtn.IsEnabled = true;
                         Log("Stabilization completed successfully!");
                         ProgressBar.Value = 100;
                         ProgressPercentText.Text = "100%";
@@ -247,6 +357,7 @@ namespace VideoFixPro
                 _isProcessing = false;
                 StartBtn.IsEnabled = true;
                 CancelBtn.IsEnabled = false;
+                OpenFolderBtn.IsEnabled = !string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_videoPath) || !string.IsNullOrEmpty(_customOutputDir);
                 if (_cts?.Token.IsCancellationRequested == true)
                 {
                     Log("Operation cancelled.");
@@ -293,7 +404,7 @@ namespace VideoFixPro
                 {
                     if (int.TryParse(match.Groups[1].Value, out int h) &&
                         int.TryParse(match.Groups[2].Value, out int m) &&
-                        double.TryParse(match.Groups[3].Value, out double sec))
+                        double.TryParse(match.Groups[3].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double sec))
                     {
                         var ts = new TimeSpan(0, h, m, (int)sec);
                         double progress = (ts.TotalSeconds / durationSeconds) * 50.0;
@@ -313,18 +424,24 @@ namespace VideoFixPro
                 tcs.TrySetResult(process.ExitCode == 0);
             };
 
-            process.Start();
-            process.BeginErrorReadLine();
+            try
+            {
+                process.Start();
+                process.BeginErrorReadLine();
 
-            await using (token.Register(() =>
+                await using (token.Register(() =>
+                {
+                    try { if (!process.HasExited) process.Kill(); } catch { }
+                    tcs.TrySetResult(false);
+                }))
+                {
+                    return await tcs.Task;
+                }
+            }
+            catch { return false; }
+            finally
             {
-                try { if (!process.HasExited) process.Kill(); } catch { }
-                tcs.TrySetResult(false);
-            }))
-            {
-                bool success = await tcs.Task;
                 ProcessGuard.Unwatch(process);
-                return success;
             }
         }
 

@@ -36,6 +36,7 @@ public partial class ColorGradeWindow : Window
     private double _durationSeconds;
     private int _sourceWidth;
     private int _sourceHeight;
+    private readonly ColorGradeEffect _colorGradeEffect = new();
 
     // Color Grading Parameters
     private double _brightness = 0.0;    // -100 to +100
@@ -77,6 +78,9 @@ public partial class ColorGradeWindow : Window
 
         _playheadTimer.Interval = TimeSpan.FromMilliseconds(50);
         _playheadTimer.Tick += PlayheadTimer_Tick;
+
+        if (VideoViewport != null)
+            VideoViewport.Effect = _colorGradeEffect;
 
         _isInitialized = true;
 
@@ -166,8 +170,11 @@ public partial class ColorGradeWindow : Window
         SeekPlayBtn.Content = "▶";
         PlayPauseBtn.Content = "▶";
 
+        if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = true;
+
         await ProbeVideoAsync(path);
         UpdateFilterSummary();
+        UpdateLivePreview();
         SetStatus($"Ready to color grade · {Path.GetFileName(path)}", "#3FB950");
     }
             catch (Exception ex)
@@ -199,6 +206,8 @@ public partial class ColorGradeWindow : Window
             {
                 _durationSeconds = d;
                 HeaderDuration.Text = TimeSpan.FromSeconds(d).ToString(@"hh\:mm\:ss");
+                if (SeekTimeText != null)
+                    SeekTimeText.Text = $"00:00:00 / {TimeSpan.FromSeconds(d):hh\\:mm\\:ss}";
             }
 
             var wMatch = Regex.Match(json, @"""width"":\s*(\d+)");
@@ -285,7 +294,7 @@ public partial class ColorGradeWindow : Window
     private void PresetNordicCold_Click(object s, RoutedEventArgs e) => ApplyPreset("NordicCold", 0, 114, 100, 15, 75, -36, 0, 15);
     private void PresetPastel_Click(object s, RoutedEventArgs e) => ApplyPreset("Pastel", 4, 92, 118, 0, 110, 8, 12, 0);
     private void PresetEmerald_Click(object s, RoutedEventArgs e) => ApplyPreset("Emerald", 0, 116, 100, 20, 110, -10, -28, 8);
-    private void PresetSepia_Click(object s, RoutedEventArgs e) => ApplyPreset("Sepia", 2, 108, 10, 0, 20, 48, -10, 25);
+    private void PresetSepia_Click(object s, RoutedEventArgs e) => ApplyPreset("Sepia", 2, 108, 100, 0, 20, 48, -10, 25);
 
     private void ApplyPreset(string name, double bright, double cont, double gam, double sharp, double sat, double temp, double tint, double vig)
     {
@@ -382,118 +391,40 @@ public partial class ColorGradeWindow : Window
         UpdateLivePreview();
     }
 
-    private void PlayerBorder_SizeChanged(object s, SizeChangedEventArgs e) => UpdateOverlayBounds();
-
-    private void UpdateOverlayBounds()
-    {
-        if (VisualEffectOverlay == null || PlayerBorder == null) return;
-        int vidW = _sourceWidth > 0 ? _sourceWidth : (Player?.NaturalVideoWidth > 0 ? Player.NaturalVideoWidth : 1920);
-        int vidH = _sourceHeight > 0 ? _sourceHeight : (Player?.NaturalVideoHeight > 0 ? Player.NaturalVideoHeight : 1080);
-        double containerW = PlayerBorder.ActualWidth;
-        double containerH = PlayerBorder.ActualHeight;
-        if (containerW < 20 || containerH < 20) return;
-
-        double scale = Math.Min(containerW / vidW, containerH / vidH);
-        double renderedW = vidW * scale;
-        double renderedH = vidH * scale;
-
-        VisualEffectOverlay.Width = renderedW;
-        VisualEffectOverlay.Height = renderedH;
-        if (GradedFramePreview != null)
-        {
-            GradedFramePreview.Width = renderedW;
-            GradedFramePreview.Height = renderedH;
-        }
-    }
-
     private void UpdateLivePreview()
     {
-        UpdateOverlayBounds();
-
         if (_isComparingOriginal)
         {
-            if (BrightnessWhiteOverlay != null) BrightnessWhiteOverlay.Opacity = 0;
-            if (BrightnessBlackOverlay != null) BrightnessBlackOverlay.Opacity = 0;
-            if (TemperatureOverlay != null) TemperatureOverlay.Opacity = 0;
-            if (TintOverlay != null) TintOverlay.Opacity = 0;
-            if (VignetteOverlay != null) VignetteOverlay.Opacity = 0;
+            if (VideoViewport != null) VideoViewport.Effect = null;
             if (GradedFramePreview != null) GradedFramePreview.Visibility = Visibility.Collapsed;
             if (PreviewBadgeText != null) PreviewBadgeText.Text = "👁️ Viewing Original (Unedited)";
             return;
         }
 
+        if (VideoViewport != null && VideoViewport.Effect != _colorGradeEffect)
+            VideoViewport.Effect = _colorGradeEffect;
+
         if (PreviewBadgeText != null)
-            PreviewBadgeText.Text = _activePreset != "Original" ? $"✨ Live Preview ({GetPresetDisplayName(_activePreset)})" : "✨ Live Preview (Real-Time)";
+            PreviewBadgeText.Text = _activePreset != "Original" ? $"✨ GPU Color Grade ({GetPresetDisplayName(_activePreset)})" : "✨ Real-Time GPU Grading";
 
-        // 1. Brightness
-        if (_brightness > 0)
-        {
-            if (BrightnessWhiteOverlay != null) BrightnessWhiteOverlay.Opacity = (_brightness / 100.0) * 0.45;
-            if (BrightnessBlackOverlay != null) BrightnessBlackOverlay.Opacity = 0;
-        }
-        else if (_brightness < 0)
-        {
-            if (BrightnessWhiteOverlay != null) BrightnessWhiteOverlay.Opacity = 0;
-            if (BrightnessBlackOverlay != null) BrightnessBlackOverlay.Opacity = (Math.Abs(_brightness) / 100.0) * 0.55;
-        }
-        else
-        {
-            if (BrightnessWhiteOverlay != null) BrightnessWhiteOverlay.Opacity = 0;
-            if (BrightnessBlackOverlay != null) BrightnessBlackOverlay.Opacity = 0;
-        }
+        // Push real grading math directly to GPU PixelShader (DirectX 60+ FPS)
+        _colorGradeEffect.Brightness = (_brightness / 100.0) * 0.40;
+        _colorGradeEffect.Contrast = _contrast / 100.0;
+        _colorGradeEffect.Gamma = _gamma / 100.0;
+        _colorGradeEffect.Saturation = _saturation / 100.0;
+        _colorGradeEffect.Temperature = _temperature / 100.0;
+        _colorGradeEffect.Tint = _tint / 100.0;
+        _colorGradeEffect.Vignette = _vignette / 100.0;
 
-        // 2. Temperature (Warmth)
-        if (_temperature > 0)
+        // If a 3D LUT is selected, trigger FFmpeg snapshot for LUT preview
+        if (!string.IsNullOrEmpty(_lutPath) && File.Exists(_lutPath))
         {
-            if (TemperatureOverlay != null)
-            {
-                TemperatureOverlay.Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)); // Amber
-                TemperatureOverlay.Opacity = (_temperature / 100.0) * 0.35;
-            }
+            TriggerDebouncedFrameRender();
         }
-        else if (_temperature < 0)
+        else if (GradedFramePreview != null && GradedFramePreview.Visibility == Visibility.Visible)
         {
-            if (TemperatureOverlay != null)
-            {
-                TemperatureOverlay.Fill = new SolidColorBrush(Color.FromRgb(30, 144, 255)); // Blue
-                TemperatureOverlay.Opacity = (Math.Abs(_temperature) / 100.0) * 0.35;
-            }
+            GradedFramePreview.Visibility = Visibility.Collapsed;
         }
-        else
-        {
-            if (TemperatureOverlay != null) TemperatureOverlay.Opacity = 0;
-        }
-
-        // 3. Tint (Green / Magenta)
-        if (_tint > 0)
-        {
-            if (TintOverlay != null)
-            {
-                TintOverlay.Fill = new SolidColorBrush(Color.FromRgb(224, 36, 195)); // Magenta
-                TintOverlay.Opacity = (_tint / 100.0) * 0.25;
-            }
-        }
-        else if (_tint < 0)
-        {
-            if (TintOverlay != null)
-            {
-                TintOverlay.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129)); // Green
-                TintOverlay.Opacity = (Math.Abs(_tint) / 100.0) * 0.25;
-            }
-        }
-        else
-        {
-            if (TintOverlay != null) TintOverlay.Opacity = 0;
-        }
-
-        // 4. Vignette
-        if (VignetteOverlay != null)
-        {
-            VignetteOverlay.Opacity = (_vignette / 100.0);
-        }
-
-        // 5. Debounced WYSIWYG FFmpeg Snapshot Renderer when paused or adjusting
-        TriggerDebouncedFrameRender();
     }
 
     private void TriggerDebouncedFrameRender()
@@ -510,53 +441,66 @@ public partial class ColorGradeWindow : Window
         var token = _previewRenderCts.Token;
 
         double currentTime = Player.Position.TotalSeconds;
+        if (_durationSeconds > 0 && currentTime >= _durationSeconds)
+            currentTime = Math.Max(0, _durationSeconds - 0.1);
+
         string vf = BuildFilterChain();
 
         Task.Run(async () =>
         {
             try
             {
-                await Task.Delay(100, token);
+                await Task.Delay(50, token);
                 if (token.IsCancellationRequested) return;
 
-                string timeStr = currentTime.ToString("F2", CultureInfo.InvariantCulture);
-                string filterArg = vf != "null" ? $"-vf \"{vf}\"" : "";
+                string timeStr = currentTime.ToString("F3", CultureInfo.InvariantCulture);
+                string filterArg = (vf != "null" && !string.IsNullOrWhiteSpace(vf)) ? $"-vf \"{vf}\"" : "";
 
                 var psi = new ProcessStartInfo
                 {
                     FileName = FFmpeg,
-                    Arguments = $"-ss {timeStr} -i \"{_filePath}\" {filterArg} -frames:v 1 -f image2pipe -c:v png -",
+                    Arguments = $"-noautorotate -ss {timeStr} -i \"{_filePath}\" {filterArg} -an -sn -frames:v 1 -f image2pipe -c:v png -",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    RedirectStandardError = false,
                     CreateNoWindow = true
                 };
+                if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
                 using var proc = Process.Start(psi);
                 if (proc == null) return;
+                ProcessGuard.Watch(proc);
 
-                using var ms = new MemoryStream();
-                await proc.StandardOutput.BaseStream.CopyToAsync(ms, token);
-                await proc.WaitForExitAsync(token);
-
-                if (ms.Length > 100 && !token.IsCancellationRequested)
+                try
                 {
-                    ms.Position = 0;
-                    var bmp = new BitmapImage();
-                    bmp.BeginInit();
-                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                    bmp.StreamSource = ms;
-                    bmp.EndInit();
-                    bmp.Freeze();
+                    using var ms = new MemoryStream();
+                    await proc.StandardOutput.BaseStream.CopyToAsync(ms, token);
+                    await proc.WaitForExitAsync(token);
 
-                    Dispatcher.Invoke(() =>
+                    if (ms.Length > 100 && !token.IsCancellationRequested)
                     {
-                        if (!token.IsCancellationRequested && !_isPlayerPlaying && GradedFramePreview != null && !_isComparingOriginal)
+                        ms.Position = 0;
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.StreamSource = ms;
+                        bmp.EndInit();
+                        bmp.Freeze();
+
+                        Dispatcher.Invoke(() =>
                         {
-                            GradedFramePreview.Source = bmp;
-                            GradedFramePreview.Visibility = Visibility.Visible;
-                        }
-                    });
+                            if (!token.IsCancellationRequested && !_isPlayerPlaying && GradedFramePreview != null && !_isComparingOriginal)
+                            {
+                                GradedFramePreview.Source = bmp;
+                                GradedFramePreview.Visibility = Visibility.Visible;
+                            }
+                        });
+                    }
+                }
+                finally
+                {
+                    ProcessGuard.Unwatch(proc);
+                    try { if (!proc.HasExited) proc.Kill(); } catch { }
                 }
             }
             catch { }
@@ -705,7 +649,6 @@ public partial class ColorGradeWindow : Window
         SeekPlayBtn.Content = "▶";
         PlayPauseBtn.Content = "▶";
         _playheadTimer.Stop();
-        TriggerDebouncedFrameRender();
     }
 
     private void TogglePlay_Click(object s, RoutedEventArgs e)
@@ -719,7 +662,6 @@ public partial class ColorGradeWindow : Window
             SeekPlayBtn.Content = "▶";
             PlayPauseBtn.Content = "▶";
             _playheadTimer.Stop();
-            TriggerDebouncedFrameRender();
         }
         else
         {
@@ -748,6 +690,10 @@ public partial class ColorGradeWindow : Window
         {
             double target = (SeekSlider.Value / 100.0) * _durationSeconds;
             Player.Position = TimeSpan.FromSeconds(target);
+            if (!_isPlayerPlaying && !string.IsNullOrEmpty(_lutPath) && File.Exists(_lutPath))
+            {
+                TriggerDebouncedFrameRender();
+            }
         }
     }
     private void SeekSlider_ValueChanged(object s, RoutedPropertyChangedEventArgs<double> e)
@@ -785,11 +731,20 @@ public partial class ColorGradeWindow : Window
 
     private void OpenFolder_Click(object s, RoutedEventArgs e)
     {
-        string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
-                     !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
-                     Path.GetDirectoryName(_filePath) ?? "";
-        if (Directory.Exists(dir))
-            Process.Start(new ProcessStartInfo { FileName = dir, UseShellExecute = true });
+        try
+        {
+            string dir = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
+                         !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
+                         Path.GetDirectoryName(_filePath) ?? "";
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                Process.Start("explorer.exe", dir);
+            else
+                MessageBox.Show("Output folder not found or no video loaded yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ToggleLog_Click(object s, RoutedEventArgs e)
@@ -899,7 +854,7 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
             var fi = new FileInfo(outputPath);
             SetStatus($"Export complete! Size: {fi.Length / 1048576.0:F1} MB", "#3FB950");
             Log($"[SUCCESS] Graded video saved to: {outputPath}");
-            if (OpenFolderBtn != null) OpenFolderBtn.Visibility = Visibility.Visible;
+            if (OpenFolderBtn != null) OpenFolderBtn.IsEnabled = true;
         }
         else
         {
@@ -928,50 +883,68 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
                     RedirectStandardError = true,
                     CreateNoWindow = true
                 };
-        if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
+                if (_hasNvidia) GpuHelper.InjectNvCudaPath(psi);
 
-                _ffmpegProcess = new Process { StartInfo = psi };
-                _ffmpegProcess.ErrorDataReceived += (s, e) =>
+                using var proc = Process.Start(psi);
+                if (proc == null) return false;
+                ProcessGuard.Watch(proc);
+                try
                 {
-                    if (string.IsNullOrEmpty(e.Data)) return;
+                    _ffmpegProcess = proc;
 
-                    var timeMatch = Regex.Match(e.Data, @"time=(\d+):(\d+):(\d+\.?\d*)");
-                    if (timeMatch.Success && totalDuration > 0)
+                    var timeRegex = new Regex(@"time=(\d+):(\d+):(\d+(?:\.\d+)?)", RegexOptions.Compiled);
+                    var fpsRegex = new Regex(@"fps=\s*([\d\.]+)", RegexOptions.Compiled);
+                    var speedRegex = new Regex(@"speed=\s*([\d\.]+)x", RegexOptions.Compiled);
+
+                    string? line;
+                    while ((line = proc.StandardError.ReadLine()) != null)
                     {
-                        double h = double.Parse(timeMatch.Groups[1].Value, CultureInfo.InvariantCulture);
-                        double m = double.Parse(timeMatch.Groups[2].Value, CultureInfo.InvariantCulture);
-                        double sec = double.Parse(timeMatch.Groups[3].Value, CultureInfo.InvariantCulture);
-                        double current = (h * 3600) + (m * 60) + sec;
-
-                        int pct = (int)Math.Clamp((current / totalDuration) * 100.0, 0, 100);
-                        Dispatcher.Invoke(() =>
+                        if (ct.IsCancellationRequested)
                         {
-                            if (RenderProgressBar != null) RenderProgressBar.Value = pct;
-                            if (RenderProgressText != null) RenderProgressText.Text = $"{pct}%";
-                            SetStatus($"Exporting graded video... {pct}%", "#388BFD");
-                        });
+                            try { proc.Kill(); } catch { }
+                            return false;
+                        }
+
+                        var match = timeRegex.Match(line);
+                        if (match.Success && totalDuration > 0)
+                        {
+                            double h = double.Parse(match.Groups[1].Value);
+                            double m = double.Parse(match.Groups[2].Value);
+                            double sec = double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
+                            double currentSeconds = (h * 3600) + (m * 60) + sec;
+                            double percent = Math.Clamp((currentSeconds / totalDuration) * 100, 0, 100);
+
+                            var fpsMatch = fpsRegex.Match(line);
+                            var speedMatch = speedRegex.Match(line);
+                            string speedInfo = speedMatch.Success ? $" · {speedMatch.Groups[1].Value}x" : "";
+                            string fpsInfo = fpsMatch.Success ? $" ({fpsMatch.Groups[1].Value} fps)" : "";
+
+                            Dispatcher.InvokeAsync(() =>
+                            {
+                                if (RenderProgressBar != null) RenderProgressBar.Value = percent;
+                                if (RenderProgressText != null) RenderProgressText.Text = $"{percent:F0}%";
+                                SetStatus($"Color Grading — {percent:F0}%{fpsInfo}{speedInfo}", "#388BFD");
+                            });
+                        }
+                        else if (line.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+                                 line.Contains("invalid", StringComparison.OrdinalIgnoreCase) ||
+                                 line.Contains("fatal", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Dispatcher.InvokeAsync(() => Log($"[FFMPEG] {line}"));
+                        }
                     }
 
-                    Dispatcher.Invoke(() => Log(e.Data));
-                };
-
-                _ffmpegProcess.Start();
-                ProcessGuard.Watch(_ffmpegProcess);
-                _ffmpegProcess.BeginErrorReadLine();
-
-                using (ct.Register(() =>
-                {
-                    try { _ffmpegProcess?.Kill(); } catch { }
-                }))
-                {
-                    _ffmpegProcess.WaitForExit();
+                    proc.WaitForExit();
+                    return proc.ExitCode == 0;
                 }
-
-                return _ffmpegProcess.ExitCode == 0;
+                finally
+                {
+                    ProcessGuard.Unwatch(proc);
+                }
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() => Log($"[EXCEPTION] {ex.Message}"));
+                Log($"[CRITICAL] Process error: {ex.Message}");
                 return false;
             }
             finally
@@ -993,7 +966,8 @@ useGpu && _hasAmd ? $"-c:v h264_amf -rc 0 -qp_i {crf} -qp_p {crf} -qp_b {crf} -p
             if (RenderProgressBar != null) RenderProgressBar.Value = 0;
             if (RenderProgressText != null) RenderProgressText.Text = "0%";
         }
-        if (OpenFolderBtn != null) OpenFolderBtn.Visibility = Visibility.Collapsed;
+        if (OpenFolderBtn != null)
+            OpenFolderBtn.IsEnabled = !rendering && (!string.IsNullOrEmpty(_lastOutputFolder) || !string.IsNullOrEmpty(_filePath) || !string.IsNullOrEmpty(_customOutputFolder));
     }
 
     private void SetStatus(string text, string colorHex)

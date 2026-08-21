@@ -195,15 +195,14 @@ public partial class AudioExtractorWindow : Window
 
     private void OpenOutputFolder_Click(object sender, RoutedEventArgs e)
     {
-        var folder = string.IsNullOrEmpty(_lastOutputFolder)
-                     ? (string.IsNullOrEmpty(_customOutputFolder)
-                         ? (_queue.FirstOrDefault(j => j.Status == JobStatus.Done)?.InputPath is string fp
-                             ? Path.GetDirectoryName(fp) : null)
-                         : _customOutputFolder)
-                     : _lastOutputFolder;
+        var folder = !string.IsNullOrEmpty(_lastOutputFolder) ? _lastOutputFolder :
+                     !string.IsNullOrEmpty(_customOutputFolder) ? _customOutputFolder :
+                     _queue.Count > 0 && !string.IsNullOrEmpty(_queue[0].InputPath) ? Path.GetDirectoryName(_queue[0].InputPath) : null;
 
         if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
             Process.Start("explorer.exe", folder);
+        else
+            MessageBox.Show("Output folder not found or no files in queue yet.", "VideoFixPro", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private async void StartQueue_Click(object sender, RoutedEventArgs e)
