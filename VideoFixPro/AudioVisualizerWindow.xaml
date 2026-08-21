@@ -118,11 +118,12 @@
 
                             <!-- Style -->
                             <TextBlock Text="Waveform Animation Style" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
-                            <ComboBox x:Name="StyleBox" SelectedIndex="0" Margin="0,4,0,10">
+                            <ComboBox x:Name="StyleBox" SelectedIndex="0" Margin="0,4,0,10" SelectionChanged="StyleBox_SelectionChanged">
                                 <ComboBoxItem Content="Smooth Waveform (Podcast / Vocal Line)"/>
                                 <ComboBoxItem Content="SoundCloud Amplitude Bars (Modern EQ)"/>
                                 <ComboBoxItem Content="Studio Frequency Spectrum (Dynamic Multi-Bar)"/>
                                 <ComboBoxItem Content="Minimalist Outline (Clean Line)"/>
+                                <ComboBoxItem Content="None (Static Cover Art Only — Minimal File Size)"/>
                             </ComboBox>
 
                             <!-- Position -->
