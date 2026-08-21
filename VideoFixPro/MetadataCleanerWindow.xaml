@@ -83,7 +83,7 @@
                         <Style TargetType="Border">
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#1C2128"/>
+                                    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

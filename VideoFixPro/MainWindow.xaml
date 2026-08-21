@@ -59,12 +59,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1F3152"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HighlightBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Content" Value="📍"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#21262D"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                             </Trigger>
                             <MultiTrigger>
@@ -72,7 +72,7 @@
                                     <Condition Property="IsMouseOver" Value="True"/>
                                     <Condition Property="IsChecked" Value="True"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="Bd" Property="Background" Value="#2D333B"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardSelectedBrush}"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -448,7 +448,7 @@
                         <Style TargetType="Border">
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#1C2128"/>
+                                    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

@@ -31,7 +31,7 @@
 
         <!-- Active button accent style -->
         <Style x:Key="ActiveToolButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-            <Setter Property="Background" Value="#1F3152"/>
+            <Setter Property="Background" Value="{DynamicResource HighlightBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -56,11 +56,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#21262D"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1F3152"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource HighlightBrush}"/>
                                 <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
@@ -138,7 +138,7 @@
                         <Style TargetType="Border">
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#1C2128"/>
+                                    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

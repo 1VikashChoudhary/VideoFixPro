@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -66,6 +66,7 @@ namespace VideoFixPro
                 SetBrush(res, "SurfaceBrush", "#161B22");
                 SetBrush(res, "CardBrush", "#21262D");
                 SetBrush(res, "CardHoverBrush", "#2D333B");
+                SetBrush(res, "CardSelectedBrush", "#1F3152");
                 SetBrush(res, "BorderBrush", "#30363D");
                 SetBrush(res, "Border2Brush", "#21262D");
                 SetBrush(res, "AccentBrush", "#388BFD");
@@ -82,6 +83,8 @@ namespace VideoFixPro
                 SetBrush(res, "InputBgBrush", "#161B22");
                 SetBrush(res, "BadgeBgBrush", "#1F3152");
                 SetBrush(res, "BadgeTextBrush", "#79C0FF");
+                SetBrush(res, "HighlightBrush", "#1F3152");
+                SetBrush(res, "HighlightBorderBrush", "#388BFD");
             }
             else
             {
@@ -90,6 +93,7 @@ namespace VideoFixPro
                 SetBrush(res, "SurfaceBrush", "#FFFFFF");
                 SetBrush(res, "CardBrush", "#F0F2F5");
                 SetBrush(res, "CardHoverBrush", "#E1E4E8");
+                SetBrush(res, "CardSelectedBrush", "#DDF4FF");
                 SetBrush(res, "BorderBrush", "#D0D7DE");
                 SetBrush(res, "Border2Brush", "#E1E4E8");
                 SetBrush(res, "AccentBrush", "#0969DA");
@@ -106,6 +110,8 @@ namespace VideoFixPro
                 SetBrush(res, "InputBgBrush", "#FFFFFF");
                 SetBrush(res, "BadgeBgBrush", "#DDF4FF");
                 SetBrush(res, "BadgeTextBrush", "#0969DA");
+                SetBrush(res, "HighlightBrush", "#DDF4FF");
+                SetBrush(res, "HighlightBorderBrush", "#0969DA");
             }
         }
 
