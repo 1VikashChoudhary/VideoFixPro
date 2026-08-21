@@ -176,7 +176,7 @@ If **VideoFixPro** saved your videos, recovered corrupted footage, or helped you
   <a href="https://github.com/sponsors/1VikashChoudhary">
     <img src="https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white" alt="Sponsor on GitHub" />
   </a>
-  <img width="643" height="752" alt="upi_qr png" src="https://github.com/user-attachments/assets/b1956993-a81f-446d-a416-c63788feb8d2" />
+  <img width="120" height="140" alt="upi_qr png" src="https://github.com/user-attachments/assets/b1956993-a81f-446d-a416-c63788feb8d2" />
 
 </p>
 
