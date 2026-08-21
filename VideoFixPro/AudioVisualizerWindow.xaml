@@ -119,8 +119,28 @@
                             <!-- Style -->
                             <TextBlock Text="Waveform Animation Style" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
                             <ComboBox x:Name="StyleBox" SelectedIndex="0" Margin="0,4,0,10">
-                                <ComboBoxItem Content="Waveform Line (Smooth Center Line)"/>
-                                <ComboBoxItem Content="Frequency Bars (Dynamic Equalizer)"/>
+                                <ComboBoxItem Content="Smooth Waveform (Podcast / Vocal Line)"/>
+                                <ComboBoxItem Content="SoundCloud Amplitude Bars (Modern EQ)"/>
+                                <ComboBoxItem Content="Studio Frequency Spectrum (Dynamic Multi-Bar)"/>
+                                <ComboBoxItem Content="Minimalist Outline (Clean Line)"/>
+                            </ComboBox>
+
+                            <!-- Position -->
+                            <TextBlock Text="Waveform Placement &amp; Sizing" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
+                            <ComboBox x:Name="PositionBox" SelectedIndex="0" Margin="0,4,0,10">
+                                <ComboBoxItem Content="Bottom (Podcast &amp; Music Standard)"/>
+                                <ComboBoxItem Content="Center (Sleek Midline Waveform)"/>
+                                <ComboBoxItem Content="Full Screen Dynamic (Abstract Canvas)"/>
+                            </ComboBox>
+
+                            <!-- Color Palette -->
+                            <TextBlock Text="Color Theme" Foreground="{DynamicResource Text2Brush}" FontSize="11.5"/>
+                            <ComboBox x:Name="ColorBox" SelectedIndex="0" Margin="0,4,0,10">
+                                <ComboBoxItem Content="Cyan &amp; White Glow (Default Pro)"/>
+                                <ComboBoxItem Content="Neon Pink &amp; Purple (Synthwave)"/>
+                                <ComboBoxItem Content="Emerald &amp; Lime (Studio EQ)"/>
+                                <ComboBoxItem Content="Gold &amp; Amber (Cinematic)"/>
+                                <ComboBoxItem Content="Clean Crisp White"/>
                             </ComboBox>
 
                             <!-- Codec -->

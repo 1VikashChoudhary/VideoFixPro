@@ -265,42 +265,93 @@ namespace VideoFixPro
             {
                 bool isAv1 = CodecBox.SelectedIndex == 1;
                 string vCodecArgs;
+                string gpuInfo = "CPU (Software)";
                 if (isAv1)
                 {
-                    vCodecArgs = _hasNvidia ? "-c:v av1_nvenc -preset p5 -cq 22 -pix_fmt yuv420p" :
-                                 _hasAmd ? "-c:v av1_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
-                                 _hasIntel ? "-c:v av1_qsv -global_quality 22 -pix_fmt nv12" :
-                                 "-c:v libsvtav1 -preset 8 -crf 22 -pix_fmt yuv420p";
+                    if (_hasNvidia) { vCodecArgs = "-c:v av1_nvenc -preset p2 -tune ll -cq 22 -pix_fmt yuv420p"; gpuInfo = "NVIDIA NVENC (AV1)"; }
+                    else if (_hasAmd) { vCodecArgs = "-c:v av1_amf -quality speed -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p"; gpuInfo = "AMD AMF (AV1)"; }
+                    else if (_hasIntel) { vCodecArgs = "-c:v av1_qsv -preset veryfast -global_quality 22 -pix_fmt nv12"; gpuInfo = "Intel QSV (AV1)"; }
+                    else { vCodecArgs = "-c:v libsvtav1 -preset 10 -crf 26 -pix_fmt yuv420p"; }
                 }
                 else
                 {
-                    vCodecArgs = _hasNvidia ? "-c:v h264_nvenc -preset p4 -cq 22 -pix_fmt yuv420p" :
-                                 _hasAmd ? "-c:v h264_amf -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p" :
-                                 _hasIntel ? "-c:v h264_qsv -global_quality 22 -pix_fmt nv12" :
-                                 "-c:v libx264 -preset fast -pix_fmt yuv420p";
+                    if (_hasNvidia) { vCodecArgs = "-c:v h264_nvenc -preset p2 -tune ll -cq 22 -pix_fmt yuv420p"; gpuInfo = "NVIDIA NVENC (H.264)"; }
+                    else if (_hasAmd) { vCodecArgs = "-c:v h264_amf -quality speed -rc cqp -qp_i 22 -qp_p 22 -qp_b 22 -pix_fmt yuv420p"; gpuInfo = "AMD AMF (H.264)"; }
+                    else if (_hasIntel) { vCodecArgs = "-c:v h264_qsv -preset veryfast -global_quality 22 -pix_fmt nv12"; gpuInfo = "Intel QSV (H.264)"; }
+                    else { vCodecArgs = "-c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p"; }
+                }
+
+                Log($"[GPU] Encoder: {gpuInfo}");
+
+                // Color palette
+                string colorParam = ColorBox.SelectedIndex switch
+                {
+                    1 => "0xff007f|0x8a2be2", // Neon Pink & Purple
+                    2 => "0x00ff88|0x00d2ff", // Emerald & Lime
+                    3 => "0xffd700|0xff8c00", // Gold & Amber
+                    4 => "0xffffff|0xd0d7de", // Clean White
+                    _ => "0x00d2ff|0xffffff"  // Cyan & White Glow
+                };
+
+                // Placement & Dimensions
+                int waveW = 1500;
+                int waveH = 160;
+                string overlayPos = "(W-w)/2:H-h-90";
+
+                if (PositionBox.SelectedIndex == 1) // Center
+                {
+                    waveW = 1500;
+                    waveH = 180;
+                    overlayPos = "(W-w)/2:(H-h)/2";
+                }
+                else if (PositionBox.SelectedIndex == 2) // Full Screen
+                {
+                    waveW = 1920;
+                    waveH = 1080;
+                    overlayPos = "0:0";
+                }
+
+                // Animation Style
+                string visFilter;
+                switch (StyleBox.SelectedIndex)
+                {
+                    case 1: // SoundCloud Amplitude Bars
+                        visFilter = $"showwaves=s={waveW}x{waveH}:mode=p2p:colors={colorParam}:scale=sqrt:rate=30";
+                        break;
+                    case 2: // Studio Frequency Spectrum
+                        visFilter = $"showfreqs=s={waveW}x{waveH}:mode=bar:ascale=log:fscale=log:colors={colorParam}:rate=30";
+                        break;
+                    case 3: // Minimalist Outline
+                        visFilter = $"showwaves=s={waveW}x{waveH}:mode=line:colors={colorParam}:scale=sqrt:rate=30";
+                        break;
+                    default: // Smooth Waveform (Podcast / Vocal Line)
+                        visFilter = $"showwaves=s={waveW}x{waveH}:mode=cline:colors={colorParam}:scale=sqrt:rate=30";
+                        break;
                 }
 
                 string filterGraph;
                 string inputs;
 
-                bool isFreqBars = StyleBox.SelectedIndex == 1;
-                string visFilter = isFreqBars
-                    ? "showfreqs=s=1280x720:mode=bar:ascale=log:fscale=log:colors=cyan|magenta"
-                    : "showwaves=s=1280x720:mode=cline:colors=white|cyan";
-
                 if (string.IsNullOrWhiteSpace(_bgImagePath) || !File.Exists(_bgImagePath))
                 {
                     inputs = $"-i \"{_audioPath}\"";
-                    filterGraph = $"[0:a]{visFilter}[v]";
+                    string fullVis = StyleBox.SelectedIndex switch
+                    {
+                        1 => $"showwaves=s=1920x1080:mode=p2p:colors={colorParam}:scale=sqrt:rate=30",
+                        2 => $"showfreqs=s=1920x1080:mode=bar:ascale=log:fscale=log:colors={colorParam}:rate=30",
+                        3 => $"showwaves=s=1920x1080:mode=line:colors={colorParam}:scale=sqrt:rate=30",
+                        _ => $"showwaves=s=1920x1080:mode=cline:colors={colorParam}:scale=sqrt:rate=30"
+                    };
+                    filterGraph = $"[0:a]{fullVis}[v]";
                 }
                 else
                 {
-                    inputs = $"-loop 1 -framerate 30 -i \"{_bgImagePath}\" -i \"{_audioPath}\"";
-                    filterGraph = $"[1:a]{visFilter},format=yuva420p,colorkey=black:0.1:0.1[wave];[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];[bg][wave]overlay=format=auto:shortest=1[v]";
+                    inputs = $"-i \"{_bgImagePath}\" -i \"{_audioPath}\"";
+                    filterGraph = $"[0:v]scale=1920:1080:force_original_aspect_ratio=decrease:eval=init,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:eval=init,setsar=1,loop=loop=-1:size=1:start=0[bg];[1:a]{visFilter},format=yuva420p,colorkey=black:0.1:0.1[wave];[bg][wave]overlay={overlayPos}:format=auto:shortest=1[v]";
                 }
 
                 string audioMap = string.IsNullOrWhiteSpace(_bgImagePath) ? "-map 0:a" : "-map 1:a";
-                string args = $"-y {inputs} -filter_complex \"{filterGraph}\" -map \"[v]\" {audioMap} {vCodecArgs} -c:a aac -b:a 192k -shortest \"{_outputPath}\"";
+                string args = $"-y -threads 0 -filter_threads 0 {inputs} -filter_complex \"{filterGraph}\" -map \"[v]\" {audioMap} {vCodecArgs} -c:a aac -b:a 192k -shortest \"{_outputPath}\"";
 
                 Log("[CMD] ffmpeg " + args);
 
